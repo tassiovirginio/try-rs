@@ -112,7 +112,7 @@ fn run_app(
                     let date_str = date.format("%Y-%m-%d %H:%M");
 
                     let content = Line::from(vec![
-                        Span::raw(format!("{:<30}", entry.name)),
+                        Span::raw(format!("📁{:<30}", entry.name)),
                         Span::styled(
                             format!("({})", date_str),
                             Style::default().fg(Color::DarkGray),
