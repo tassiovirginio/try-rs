@@ -399,6 +399,38 @@ end
     Ok(())
 }
 
+fn setup_zsh() -> Result<()> {
+    let config_dir = dirs::config_dir().unwrap_or_else(|| {
+        dirs::home_dir().expect("Could not find home directory").join(".config")
+    });
+
+    let app_config_dir = config_dir.join("try-rs");
+
+    if !app_config_dir.exists() {
+        fs::create_dir_all(&app_config_dir)?;
+    }
+
+    let file_path = app_config_dir.join("try-rs.zsh");
+    let content = r#"try-rs() {
+    # Captures the output of the binary (stdout) which is the "cd" command
+    # The TUI is rendered on stderr, so it doesn't interfere.
+    local output
+    output=$(command try-rs "$@")
+
+    if [ -n "$output" ]; then
+        eval "$output"
+    fi
+}
+"#;
+
+    fs::write(&file_path, content)?;
+    println!("ZSH function file created at: {}", file_path.display());
+    println!("You need to source this file in your ~/.zshrc:");
+    println!("source {}", file_path.display());
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let tries_dir = get_configuration_path();
 
@@ -410,8 +442,12 @@ fn main() -> Result<()> {
     // 2. Check command line arguments
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() > 2 && args[1] == "--setup" && args[2] == "fish" {
-        return setup_fish();
+    if args.len() > 2 && args[1] == "--setup" {
+        match args[2].as_str() {
+            "fish" => return setup_fish(),
+            "zsh" => return setup_zsh(),
+            _ => {}
+        }
     }
 
     // The 'selection' variable will hold the chosen name or URL.
