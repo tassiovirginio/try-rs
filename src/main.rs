@@ -340,12 +340,13 @@ fn get_configuration_path() -> PathBuf {
     });
 
     // 2. Build the path: ~/.config/try-rs/config.toml
-    let config_file = config_dir.join("try-rs").join("config.toml");
+    let app_config_dir = config_dir.join("try-rs");
+    let config_file = app_config_dir.join("config.toml");
 
     // 3. Define the old default (fallback)
     let default_path = dirs::home_dir()
         .expect("Folder not found")
-        .join("src/tries");
+        .join("work/tries");
 
     // 4. If the file exists, try to read it
     if config_file.exists() {
@@ -355,6 +356,12 @@ fn get_configuration_path() -> PathBuf {
                     return expand_path(&path_str);
                 }
             }
+        }
+    } else {
+        // Create default config if it doesn't exist
+        if fs::create_dir_all(&app_config_dir).is_ok() {
+            let default_content = "tries_path = \"~/work/tries\"";
+            let _ = fs::write(&config_file, default_content);
         }
     }
 
