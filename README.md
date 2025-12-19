@@ -47,6 +47,16 @@ cd try-rs
 cargo install --path . --bin try-rs
 ```
 
+### Cargo install try-rs
+```bash
+cargo install try-rs
+```
+
+### Install in Archlinux
+```bash
+yay -S try-rs-bin
+```
+
 ⚙️ Configuration
 
 1. Setup the Shell Integration
@@ -55,18 +65,8 @@ Since try-rs needs to change your shell's current directory, it requires a small
 
 🐟 Fish Shell (Recommended)
 
-Create the file ~/.config/fish/functions/try-rs.fish:
-
-```
-function try-rs
-    # Captures the output of the binary (stdout) which is the "cd" command
-    # The TUI is rendered on stderr, so it doesn't interfere.
-    set command (command try-rs $argv | string collect)
-
-    if test -n "$command"
-        eval $command
-    end
-end
+```bash
+try-rs --setup fish
 ```
 
 (Optional) Create an abbreviation:
@@ -75,26 +75,40 @@ end
 abbr --add try try-rs
 ```
 
-🐚 Bash / Zsh
-
-Add this to your .bashrc or .zshrc:
+🐚 Zsh
 
 ```bash
-try-rs() {
-    # Run the binary and capture stdout
-    local cmd=$(command try-rs "$@")
-    # Evaluate the cd command
-    eval "$cmd"
-}
+try-rs --setup zsh
 ```
 
-2. Config File (Optional)
-By default, experiments are stored in ~/src/tries. To change this, create ~/.config/try-rs/config.toml:
+🐚 Bash
+
+```bash
+try-rs --setup bash
+```
+
+
+2. Config File
+By default, experiments are stored in ~/src/tries, and colors. To change this, create ~/.config/try-rs/config.toml:
 
 ```toml
 # ~/.config/try-rs/config.toml
 tries_path = "~/Development/playground"
+
+[colors]
+title_try = "Magenta"
+title_rs = "White"
+search_box = "Green"
+list_date = "Blue"
+list_highlight_bg = "Magenta"
+list_highlight_fg = "Black"
+help_text = "DarkGray"
+status_message = "Yellow"
+popup_bg = "DarkGray"
+popup_text = "LightRed"
 ```
+
+
 
 🚀 Usage
 
@@ -119,6 +133,7 @@ You can also bypass the UI:
 | `try-rs`                                     | Opens the TUI                                |
 | `try-rs <name>`                              | Create (or jump to) a named experiment       |
 | `try-rs <https://github.com/user/repo>` | Clones a repository into a dated folder      |
+| `try-rs --setup <shell>` | setup shell integration (fish, zsh, bash)    |
 
 🤝 Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
