@@ -218,7 +218,9 @@ fn run_app(
             let title = Paragraph::new(Line::from(vec![
                 Span::styled("🦀 try", Style::default().fg(app.theme.title_try).add_modifier(Modifier::BOLD)),
                 Span::styled("-", Style::default().fg(Color::DarkGray)),
-                Span::styled("rs 🦀", Style::default().fg(app.theme.title_rs).add_modifier(Modifier::BOLD)),
+                Span::styled("rs", Style::default().fg(app.theme.title_rs).add_modifier(Modifier::BOLD)),
+                Span::styled(format!(" v{} ", env!("CARGO_PKG_VERSION")), Style::default().fg(Color::DarkGray)),
+                Span::styled("🦀", Style::default().fg(app.theme.title_rs).add_modifier(Modifier::BOLD)),
             ]))
             .alignment(Alignment::Center);
             f.render_widget(title, chunks[0]);
