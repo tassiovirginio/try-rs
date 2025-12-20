@@ -7,7 +7,7 @@
 
 **try-rs** is a CLI tool designed to manage the chaos of temporary projects. Instead of cluttering your Desktop or `/tmp` with `test1`, `new-test`, and `final-test`, `try-rs` organizes them into date-prefixed directories, offering a robust TUI (Terminal User Interface) to create, navigate, and clean up your experiments.
 
-![sample.png](sample.png)
+![sample2.png](sample2.png)
 
 ## 💡 Inspiration
 
