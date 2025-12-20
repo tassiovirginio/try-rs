@@ -1,6 +1,6 @@
 [package]
 name = "try-rs"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2024"
 description = "Temporary workspace manager for fast experimentation in the terminal"
 readme = "README.md"
