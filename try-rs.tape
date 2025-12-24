@@ -38,6 +38,8 @@ Escape
 Sleep 5s
 Type "try-rs --help"
 Sleep 5s
+Enter
+Sleep 5s
 Type "exit"
 
 
