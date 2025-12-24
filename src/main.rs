@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Local};
+use chrono::{Local};
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
