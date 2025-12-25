@@ -56,6 +56,12 @@ cargo install try-rs
 yay -S try-rs-bin
 ```
 
+### Nix Install (flakes)
+```bash
+nix profile install github:tassiovirginio/try-rs
+```
+ 
+
 ⚙️ Configuration
 
 1. Setup the Shell Integration
