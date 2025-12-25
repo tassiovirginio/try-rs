@@ -6,8 +6,8 @@ description = "Temporary workspace manager for fast experimentation in the termi
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/tassiovirginio/try-rs"
-keywords = ["cli", "workspace", "tui", "rust"]
-categories = ["command-line-utilities"]
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["tui", "workspace", "experiments", "cli", "ratatui"]
 
 [dependencies]
 ratatui = "0.29"
