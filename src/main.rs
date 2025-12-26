@@ -375,8 +375,8 @@ fn run_app(
                     Span::raw(": Delete  "),
                     Span::styled("Ctrl-E", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(": Edit    "),
-                    Span::styled("Esc", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Cancel"),
+                    Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(": Exit"),
                 ])
             };
 
@@ -402,8 +402,12 @@ fn run_app(
                 match app.mode {
                     AppMode::Normal => match key.code {
                         KeyCode::Char(c) => {
+                            // Ctrl+C to quit
+                            if c == 'c' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                                app.should_quit = true;
+                            }
                             // Ctrl+D to delete
-                            if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            else if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                                 // Only enter delete mode if something is selected
                                 if !app.filtered_entries.is_empty() {
                                     app.mode = AppMode::DeleteConfirm;
@@ -467,6 +471,9 @@ fn run_app(
                         }
                         KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
                             app.mode = AppMode::Normal;
+                        }
+                        KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                            app.should_quit = true;
                         }
                         _ => {}
                     },
