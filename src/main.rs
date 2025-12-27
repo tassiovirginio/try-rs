@@ -1,5 +1,6 @@
 use anyhow::Result;
-use chrono::{Local};
+use chrono::Local;
+use clap::{Parser, ValueEnum};
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
@@ -11,7 +12,12 @@ use ratatui::{prelude::*, widgets::*};
 use serde::Deserialize;
 use std::process::Stdio;
 use std::str::FromStr;
-use std::{fs, io::{self, Write}, path::PathBuf, time::SystemTime};
+use std::{
+    fs,
+    io::{self, Write},
+    path::PathBuf,
+    time::SystemTime,
+};
 
 #[derive(Clone, Copy, PartialEq)]
 enum AppMode {
@@ -81,17 +87,17 @@ impl App {
         let mut entries = Vec::new();
         if let Ok(read_dir) = fs::read_dir(&path) {
             for entry in read_dir.flatten() {
-                if let Ok(metadata) = entry.metadata() {
-                    if metadata.is_dir() {
-                        let name = entry.file_name().to_string_lossy().to_string();
-                        let is_git = entry.path().join(".git").exists();
-                        entries.push(TryEntry {
-                            name,
-                            modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                            score: 0,
-                            is_git,
-                        });
-                    }
+                if let Ok(metadata) = entry.metadata()
+                    && metadata.is_dir()
+                {
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let is_git = entry.path().join(".git").exists();
+                    entries.push(TryEntry {
+                        name,
+                        modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                        score: 0,
+                        is_git,
+                    });
                 }
             }
         }
@@ -265,7 +271,9 @@ fn run_app(
                 .iter()
                 .map(|entry| {
                     let now = SystemTime::now();
-                    let elapsed = now.duration_since(entry.modified).unwrap_or(std::time::Duration::ZERO);
+                    let elapsed = now
+                        .duration_since(entry.modified)
+                        .unwrap_or(std::time::Duration::ZERO);
                     let secs = elapsed.as_secs();
                     let days = secs / 86400;
                     let hours = (secs % 86400) / 3600;
@@ -275,7 +283,7 @@ fn run_app(
                     // Calculate available width (block borders take 2 columns)
                     let width = content_chunks[0].width.saturating_sub(5) as usize;
 
-                    let date_text = format!("{}", date_str);
+                    let date_text = date_str.to_string();
                     let date_width = date_text.chars().count();
                     let git_icon = if entry.is_git { " " } else { "" };
                     let git_width = if entry.is_git { 2 } else { 0 };
@@ -328,16 +336,17 @@ fn run_app(
 
                 if let Ok(entries) = fs::read_dir(&preview_path) {
                     // Limit items to height of block to avoid reading too much
-                    for entry in entries.take(content_chunks[1].height.saturating_sub(2) as usize) {
-                        if let Ok(e) = entry {
-                            let file_name = e.file_name().to_string_lossy().to_string();
-                            let is_dir = e.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                            let icon = if is_dir { "📁 " } else { "📄 " };
-                            preview_lines.push(Line::from(vec![
-                                Span::styled(icon, Style::default().fg(app.theme.title_try)),
-                                Span::raw(file_name),
-                            ]));
-                        }
+                    for e in entries
+                        .take(content_chunks[1].height.saturating_sub(2) as usize)
+                        .flatten()
+                    {
+                        let file_name = e.file_name().to_string_lossy().to_string();
+                        let is_dir = e.file_type().map(|t| t.is_dir()).unwrap_or(false);
+                        let icon = if is_dir { "📁 " } else { "📄 " };
+                        preview_lines.push(Line::from(vec![
+                            Span::styled(icon, Style::default().fg(app.theme.title_try)),
+                            Span::raw(file_name),
+                        ]));
                     }
                 }
 
@@ -387,97 +396,94 @@ fn run_app(
             f.render_widget(help_message, chunks[3]);
 
             // --- DRAWING THE POPUP (If in DeleteConfirm mode) ---
-            if app.mode == AppMode::DeleteConfirm {
-                if let Some(selected) = app.filtered_entries.get(app.selected_index) {
-                    let msg = format!("Delete '{}'? (y/n)", selected.name);
-                    draw_popup(f, " WARNING ", &msg, &app.theme);
-                }
+            if app.mode == AppMode::DeleteConfirm
+                && let Some(selected) = app.filtered_entries.get(app.selected_index)
+            {
+                let msg = format!("Delete '{}'? (y/n)", selected.name);
+                draw_popup(f, " WARNING ", &msg, &app.theme);
             }
         })?;
 
         // --- KEY HANDLING ---
-        if event::poll(std::time::Duration::from_millis(50))? {
-            if let Event::Key(key) = event::read()? {
-                // Behavior depends on the mode
-                match app.mode {
-                    AppMode::Normal => match key.code {
-                        KeyCode::Char(c) => {
-                            // Ctrl+C to quit
-                            if c == 'c' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
-                                app.should_quit = true;
+        if event::poll(std::time::Duration::from_millis(50))?
+            && let Event::Key(key) = event::read()?
+        {
+            // Behavior depends on the mode
+            match app.mode {
+                AppMode::Normal => match key.code {
+                    KeyCode::Char(c) => {
+                        // Ctrl+C to quit
+                        if c == 'c' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            app.should_quit = true;
+                        }
+                        // Ctrl+D to delete
+                        else if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            // Only enter delete mode if something is selected
+                            if !app.filtered_entries.is_empty() {
+                                app.mode = AppMode::DeleteConfirm;
                             }
-                            // Ctrl+D to delete
-                            else if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
-                                // Only enter delete mode if something is selected
+                        } else if c == 'e' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            // Ctrl+E to open editor
+                            if app.editor_cmd.is_some() {
                                 if !app.filtered_entries.is_empty() {
-                                    app.mode = AppMode::DeleteConfirm;
-                                }
-                            } else if c == 'e'
-                                && key.modifiers.contains(event::KeyModifiers::CONTROL)
-                            {
-                                // Ctrl+E to open editor
-                                if app.editor_cmd.is_some() {
-                                    if !app.filtered_entries.is_empty() {
-                                        app.final_selection = Some(
-                                            app.filtered_entries[app.selected_index].name.clone(),
-                                        );
-                                        app.wants_editor = true;
-                                        app.should_quit = true;
-                                    } else if !app.query.is_empty() {
-                                        app.final_selection = Some(app.query.clone());
-                                        app.wants_editor = true;
-                                        app.should_quit = true;
-                                    }
-                                } else {
-                                    app.status_message =
-                                        Some("No editor configured in config.toml".to_string());
+                                    app.final_selection =
+                                        Some(app.filtered_entries[app.selected_index].name.clone());
+                                    app.wants_editor = true;
+                                    app.should_quit = true;
+                                } else if !app.query.is_empty() {
+                                    app.final_selection = Some(app.query.clone());
+                                    app.wants_editor = true;
+                                    app.should_quit = true;
                                 }
                             } else {
-                                app.query.push(c);
-                                app.status_message = None; // Clear status on type
-                                app.update_search();
+                                app.status_message =
+                                    Some("No editor configured in config.toml".to_string());
                             }
-                        }
-                        KeyCode::Backspace => {
-                            app.query.pop();
+                        } else {
+                            app.query.push(c);
+                            app.status_message = None; // Clear status on type
                             app.update_search();
                         }
-                        KeyCode::Up => {
-                            if app.selected_index > 0 {
-                                app.selected_index -= 1;
-                            }
+                    }
+                    KeyCode::Backspace => {
+                        app.query.pop();
+                        app.update_search();
+                    }
+                    KeyCode::Up => {
+                        if app.selected_index > 0 {
+                            app.selected_index -= 1;
                         }
-                        KeyCode::Down => {
-                            if app.selected_index < app.filtered_entries.len().saturating_sub(1) {
-                                app.selected_index += 1;
-                            }
+                    }
+                    KeyCode::Down => {
+                        if app.selected_index < app.filtered_entries.len().saturating_sub(1) {
+                            app.selected_index += 1;
                         }
-                        KeyCode::Enter => {
-                            if !app.filtered_entries.is_empty() {
-                                app.final_selection =
-                                    Some(app.filtered_entries[app.selected_index].name.clone());
-                            } else if !app.query.is_empty() {
-                                app.final_selection = Some(app.query.clone());
-                            }
-                            app.should_quit = true;
+                    }
+                    KeyCode::Enter => {
+                        if !app.filtered_entries.is_empty() {
+                            app.final_selection =
+                                Some(app.filtered_entries[app.selected_index].name.clone());
+                        } else if !app.query.is_empty() {
+                            app.final_selection = Some(app.query.clone());
                         }
-                        KeyCode::Esc => app.should_quit = true,
-                        _ => {}
-                    },
+                        app.should_quit = true;
+                    }
+                    KeyCode::Esc => app.should_quit = true,
+                    _ => {}
+                },
 
-                    AppMode::DeleteConfirm => match key.code {
-                        KeyCode::Char('y') | KeyCode::Char('Y') => {
-                            app.delete_selected();
-                        }
-                        KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
-                            app.mode = AppMode::Normal;
-                        }
-                        KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
-                            app.should_quit = true;
-                        }
-                        _ => {}
-                    },
-                }
+                AppMode::DeleteConfirm => match key.code {
+                    KeyCode::Char('y') | KeyCode::Char('Y') => {
+                        app.delete_selected();
+                    }
+                    KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.should_quit = true;
+                    }
+                    _ => {}
+                },
             }
         }
     }
@@ -509,11 +515,11 @@ struct Config {
 
 // Helper function to replace "~" with the actual home path
 fn expand_path(path_str: &str) -> PathBuf {
-    if path_str.starts_with("~/") {
-        if let Some(home) = dirs::home_dir() {
-            // Remove "~/" (first 2 chars) and join with home
-            return home.join(&path_str[2..]);
-        }
+    if path_str.starts_with("~/")
+        && let Some(home) = dirs::home_dir()
+    {
+        // Remove "~/" (first 2 chars) and join with home
+        return home.join(&path_str[2..]);
     }
     PathBuf::from(path_str)
 }
@@ -547,36 +553,36 @@ fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
 
     // 4. If the file exists, try to read it
     if config_file.exists() {
-        if let Ok(contents) = fs::read_to_string(&config_file) {
-            if let Ok(config) = toml::from_str::<Config>(&contents) {
-                if let Some(path_str) = config.tries_path
-                    && !try_path_specified
-                {
-                    final_path = expand_path(&path_str);
-                }
-                if let Some(editor) = config.editor {
-                    editor_cmd = Some(editor);
-                }
-                if let Some(colors) = config.colors {
-                    // Helper to parse color string to Color enum
-                    let parse = |opt: Option<String>, def: Color| -> Color {
-                        opt.and_then(|s| Color::from_str(&s).ok()).unwrap_or(def)
-                    };
+        if let Ok(contents) = fs::read_to_string(&config_file)
+            && let Ok(config) = toml::from_str::<Config>(&contents)
+        {
+            if let Some(path_str) = config.tries_path
+                && !try_path_specified
+            {
+                final_path = expand_path(&path_str);
+            }
+            if let Some(editor) = config.editor {
+                editor_cmd = Some(editor);
+            }
+            if let Some(colors) = config.colors {
+                // Helper to parse color string to Color enum
+                let parse = |opt: Option<String>, def: Color| -> Color {
+                    opt.and_then(|s| Color::from_str(&s).ok()).unwrap_or(def)
+                };
 
-                    let def = Theme::default();
-                    theme = Theme {
-                        title_try: parse(colors.title_try, def.title_try),
-                        title_rs: parse(colors.title_rs, def.title_rs),
-                        search_box: parse(colors.search_box, def.search_box),
-                        list_date: parse(colors.list_date, def.list_date),
-                        list_highlight_bg: parse(colors.list_highlight_bg, def.list_highlight_bg),
-                        list_highlight_fg: parse(colors.list_highlight_fg, def.list_highlight_fg),
-                        help_text: parse(colors.help_text, def.help_text),
-                        status_message: parse(colors.status_message, def.status_message),
-                        popup_bg: parse(colors.popup_bg, def.popup_bg),
-                        popup_text: parse(colors.popup_text, def.popup_text),
-                    };
-                }
+                let def = Theme::default();
+                theme = Theme {
+                    title_try: parse(colors.title_try, def.title_try),
+                    title_rs: parse(colors.title_rs, def.title_rs),
+                    search_box: parse(colors.search_box, def.search_box),
+                    list_date: parse(colors.list_date, def.list_date),
+                    list_highlight_bg: parse(colors.list_highlight_bg, def.list_highlight_bg),
+                    list_highlight_fg: parse(colors.list_highlight_fg, def.list_highlight_fg),
+                    help_text: parse(colors.help_text, def.help_text),
+                    status_message: parse(colors.status_message, def.status_message),
+                    popup_bg: parse(colors.popup_bg, def.popup_bg),
+                    popup_text: parse(colors.popup_text, def.popup_text),
+                };
             }
         }
     } else {
@@ -731,21 +737,29 @@ fn setup_bash() -> Result<()> {
     Ok(())
 }
 
-fn print_help() {
-    eprintln!("🦀 try-rs {}", env!("CARGO_PKG_VERSION"));
-    eprintln!("A blazing fast, Rust-based workspace manager for your temporary experiments.");
-    eprintln!();
-    eprintln!("Usage:");
-    eprintln!("  try-rs [NAME|URL]     Create or jump to an experiment / Clone a repo");
-    eprintln!("  try-rs                Open the TUI (Terminal User Interface)");
-    eprintln!();
-    eprintln!("Options:");
-    eprintln!("  --setup <shell>       Generate shell integration code (fish, zsh, bash)");
-    eprintln!("  --version             Show version information");
-    eprintln!("  --help, -h            Show this help message");
+#[derive(Parser)]
+#[command(name = "try-rs")]
+#[command(about = format!("🦀 try-rs {}\nA blazing fast, Rust-based workspace manager for your temporary experiments.", env!("CARGO_PKG_VERSION")), long_about = None)]
+#[command(version = env!("CARGO_PKG_VERSION"))]
+struct Cli {
+    /// Create or jump to an experiment / Clone a repo. Starts the TUI (Terminal User Interface) if omitted.
+    #[arg(value_name = "NAME_OR_URL")]
+    name_or_url: Option<String>,
+
+    /// Generate shell integration code
+    #[arg(long)]
+    setup: Option<Shell>,
+}
+
+#[derive(ValueEnum, Clone, Copy, PartialEq, Eq, Debug)]
+enum Shell {
+    Fish,
+    Zsh,
+    Bash,
 }
 
 fn main() -> Result<()> {
+    let cli = Cli::parse();
     let (tries_dir, theme, editor_cmd, is_first_run) = load_configuration();
 
     // Ensure the directory exists (either from config or default)
@@ -753,57 +767,45 @@ fn main() -> Result<()> {
         fs::create_dir_all(&tries_dir)?;
     }
 
-    // 2. Check command line arguments
-    let args: Vec<String> = std::env::args().collect();
-
-    if args.len() > 1 && (args[1] == "--help" || args[1] == "-h") {
-        print_help();
+    // Handle Shell Setup
+    if let Some(shell) = cli.setup {
+        match shell {
+            Shell::Fish => setup_fish()?,
+            Shell::Zsh => setup_zsh()?,
+            Shell::Bash => setup_bash()?,
+        }
         return Ok(());
     }
 
-    if args.len() > 1 && args[1] == "--version" {
-        eprintln!("try-rs {}", env!("CARGO_PKG_VERSION"));
-        return Ok(());
-    }
+    // Handle First Run / Interactive Setup
+    if is_first_run && cli.setup.is_none() {
+        let shell = std::env::var("SHELL").unwrap_or_default();
+        let shell_type = if shell.contains("fish") {
+            Some(Shell::Fish)
+        } else if shell.contains("zsh") {
+            Some(Shell::Zsh)
+        } else if shell.contains("bash") {
+            Some(Shell::Bash)
+        } else {
+            None
+        };
 
-    if is_first_run {
-        let is_setup = args.len() > 1 && args[1] == "--setup";
-        if !is_setup {
-            let shell = std::env::var("SHELL").unwrap_or_default();
-            let shell_type = if shell.contains("fish") {
-                Some("fish")
-            } else if shell.contains("zsh") {
-                Some("zsh")
-            } else if shell.contains("bash") {
-                Some("bash")
-            } else {
-                None
-            };
-
-            if let Some(s) = shell_type {
-                eprintln!("Detected shell: {}", s);
-                eprint!("Shell integration not configured. Do you want to set it up for {}? [Y/n] ", s);
-                io::stderr().flush()?;
-                let mut input = String::new();
-                io::stdin().read_line(&mut input)?;
-                if input.trim().is_empty() || input.trim().eq_ignore_ascii_case("y") {
-                    match s {
-                        "fish" => setup_fish()?,
-                        "zsh" => setup_zsh()?,
-                        "bash" => setup_bash()?,
-                        _ => {}
-                    }
+        if let Some(s) = shell_type {
+            eprintln!("Detected shell: {:?}", s);
+            eprint!(
+                "Shell integration not configured. Do you want to set it up for {:?}? [Y/n] ",
+                s
+            );
+            io::stderr().flush()?;
+            let mut input = String::new();
+            io::stdin().read_line(&mut input)?;
+            if input.trim().is_empty() || input.trim().eq_ignore_ascii_case("y") {
+                match s {
+                    Shell::Fish => setup_fish()?,
+                    Shell::Zsh => setup_zsh()?,
+                    Shell::Bash => setup_bash()?,
                 }
             }
-        }
-    }
-
-    if args.len() > 2 && args[1] == "--setup" {
-        match args[2].as_str() {
-            "fish" => return setup_fish(),
-            "zsh" => return setup_zsh(),
-            "bash" => return setup_bash(),
-            _ => {}
         }
     }
 
@@ -812,10 +814,10 @@ fn main() -> Result<()> {
     let selection_result: Option<String>;
     let mut open_editor = false;
 
-    if args.len() > 1 {
+    if let Some(name) = cli.name_or_url {
         // CLI MODE: The user passed an argument (e.g., try-rs https://...)
         // We skip the graphical interface entirely.
-        selection_result = Some(args[1].clone());
+        selection_result = Some(name);
     } else {
         // TUI MODE: No arguments, open the visual interface.
 
@@ -841,12 +843,8 @@ fn main() -> Result<()> {
 
         // CASE 1: Does the folder already exist? Enter it.
         if target_path.exists() {
-            if open_editor && editor_cmd.is_some() {
-                println!(
-                    "{} '{}'",
-                    editor_cmd.unwrap(),
-                    target_path.to_string_lossy()
-                );
+            if open_editor && let Some(cmd) = editor_cmd {
+                println!("{} '{}'", cmd, target_path.to_string_lossy());
             } else {
                 println!("cd '{}'", target_path.to_string_lossy());
             }
@@ -872,8 +870,8 @@ fn main() -> Result<()> {
 
                 match status {
                     Ok(s) if s.success() => {
-                        if open_editor && editor_cmd.is_some() {
-                            println!("{} '{}'", editor_cmd.unwrap(), new_path.to_string_lossy());
+                        if open_editor && let Some(cmd) = editor_cmd {
+                            println!("{} '{}'", cmd, new_path.to_string_lossy());
                         } else {
                             println!("cd '{}'", new_path.to_string_lossy());
                         }
@@ -895,8 +893,8 @@ fn main() -> Result<()> {
 
                 let new_path = tries_dir.join(&new_name);
                 fs::create_dir_all(&new_path)?;
-                if open_editor && editor_cmd.is_some() {
-                    println!("{} '{}'", editor_cmd.unwrap(), new_path.to_string_lossy());
+                if open_editor && let Some(cmd) = editor_cmd {
+                    println!("{} '{}'", cmd, new_path.to_string_lossy());
                 } else {
                     println!("cd '{}'", new_path.to_string_lossy());
                 }
@@ -921,10 +919,10 @@ fn extract_repo_name(url: &str) -> String {
     let clean_url = url.trim_end_matches(".git");
 
     // Get the last part after the '/' or ':' (common in ssh)
-    if let Some(last_part) = clean_url.rsplit(|c| c == '/' || c == ':').next() {
-        if !last_part.is_empty() {
-            return last_part.to_string();
-        }
+    if let Some(last_part) = clean_url.rsplit(['/', ':']).next()
+        && !last_part.is_empty()
+    {
+        return last_part.to_string();
     }
     // Generic name if detection fails
     "cloned-repo".to_string()
