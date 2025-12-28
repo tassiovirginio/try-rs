@@ -1,6 +1,8 @@
 [package]
 name = "try-rs"
-version = "0.1.19"
+version = "0.1.20"
+authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
+homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
 description = "Temporary workspace manager for fast experimentation in the terminal"
 readme = "README.md"
