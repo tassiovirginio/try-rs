@@ -131,7 +131,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Enter`  | Select directory (or create new if text doesn't match) |
 | `Ctrl+D` | Delete the selected directory (triggers popup)       |
 | `Ctrl+E` | Open in editor (configured in config.toml)           |
-| `Esc`    | Cancel / Close Popup                                 |
+| `Esc/Ctrl+C`    | Cancel / Close Popup / Exit                                 |
 
 ### CLI Commands
 
