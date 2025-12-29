@@ -1,0 +1,43 @@
+name: Update AUR
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AUR_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan aur.archlinux.org >> ~/.ssh/known_hosts
+
+      - name: Clone AUR repo
+        run: |
+          git clone ssh://aur@aur.archlinux.org/try-rs.git aur
+          
+      - name: Update PKGBUILD
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          cd aur
+
+          sed -i "s/^pkgver=.*/pkgver=$VERSION/" PKGBUILD
+          updpkgsums
+          makepkg --printsrcinfo > .SRCINFO
+
+      - name: Commit and push
+        run: |
+          cd aur
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add PKGBUILD .SRCINFO
+          git commit -m "Update to v${GITHUB_REF#refs/tags/v}"
+          git push

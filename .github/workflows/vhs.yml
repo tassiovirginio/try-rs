@@ -1,0 +1,41 @@
+name: Generate GIF (VHS)
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  vhs:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y golang-go
+          
+
+      - name: Install VHS
+        run: |
+          go install github.com/charmbracelet/vhs@latest
+
+      - name: Build try-rs
+        run: cargo build --release
+
+      - name: Run VHS
+        run: |
+          export PATH="$PWD/target/release:$PATH"
+          vhs vhs/try-rs.tape
+
+      - name: Attach GIF to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: try-rs.gif

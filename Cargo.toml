@@ -1,0 +1,23 @@
+[package]
+name = "try-rs"
+version = "0.1.27"
+authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
+homepage = "https://github.com/tassiovirginio/try-rs"
+edition = "2024"
+description = "Temporary workspace manager for fast experimentation in the terminal"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/tassiovirginio/try-rs"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["tui", "workspace", "experiments", "cli", "ratatui"]
+
+[dependencies]
+ratatui = "0.30.0"
+crossterm = "0.29.0"
+dirs = "6.0.0"
+fuzzy-matcher = "0.3"
+chrono = "0.4"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+clap = { version = "4.5.53", features = ["derive"] }
