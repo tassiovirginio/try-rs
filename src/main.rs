@@ -940,12 +940,14 @@ fn main() -> Result<()> {
 
         let app = App::new(tries_dir.clone(), theme, editor_cmd.clone());
         // Run the app and capture the result
-        (selection_result, open_editor) = run_app(&mut terminal, app)?;
+        let res = run_app(&mut terminal, app);
 
         // Restore the terminal
         disable_raw_mode()?;
         execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
         terminal.show_cursor()?;
+
+        (selection_result, open_editor) = res?;
     }
 
     // 3. Process the result (Common for both modes)
@@ -967,7 +969,7 @@ fn main() -> Result<()> {
                 let folder_name = repo_name;
                 let new_path = tries_dir.join(&folder_name);
 
-                eprintln!("A clonar {} para {}...", selection, folder_name);
+                eprintln!("Cloning {} into {}...", selection, folder_name);
 
                 let status = std::process::Command::new("git")
                     .arg("clone")
@@ -1013,12 +1015,13 @@ fn is_git_url(s: &str) -> bool {
         || s.starts_with("https://")
         || s.starts_with("git@")
         || s.starts_with("ssh://")
+        || s.ends_with(".git")
 }
 
 // Extracts a clean repository name (e.g., "github.com/tobi/try.git" -> "try")
 fn extract_repo_name(url: &str) -> String {
-    // Remove the .git suffix if it exists
-    let clean_url = url.trim_end_matches(".git");
+    // Remove trailing slash and .git suffix
+    let clean_url = url.trim_end_matches('/').trim_end_matches(".git");
 
     // Get the last part after the '/' or ':' (common in ssh)
     if let Some(last_part) = clean_url.rsplit(['/', ':']).next()

@@ -11,18 +11,12 @@
 
 ![try-rs.gif](try-rs.gif)
 
-## 💡 Inspiration
-
-This project is a Rust port and re-imagination of the excellent [try](https://github.com/tobi/try) tool by **Tobi Lütke**.
-
-While the original is a lightweight Ruby script, **try-rs** aims to bring the same philosophy, "Your experiments deserve a home", but with the performance, type safety, and modern TUI capabilities (using [Ratatui](https://github.com/ratatui/ratatui)) of the Rust ecosystem.
-
 ## ✨ Features
 
 | Feature | Description |
 | :--- | :--- |
 | **🏎️ Blazing Fast** | Built in Rust, compiled to native binary. No interpreter lag. |
-| **🖼️ Rich TUI** | Beautiful terminal interface built with Ratatui. |
+| **🖼️ Rich TUI** | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
 | **🔍 Fuzzy Search** | Instantly find old experiments with smart matching. |
 | **📅 Auto-Dating** | Creates directories like `rust-test` automatically. |
 | **� Git Integration** | Auto-clones URLs (`try-rs <url>`) and marks repos with (). |
@@ -94,7 +88,7 @@ try-rs --setup zsh
 try-rs --setup bash
 ```
 
- Powershell
+🐚 Power-shell
 
 ```bash
 try-rs --setup powershell
@@ -151,7 +145,15 @@ You can also bypass the UI:
 | `try-rs --version`                           | Show application version                     |
 | `try-rs --help`                              | Show help message                            |
 
-🤝 Contributing
+
+## 💡 Inspiration
+
+This project is a Rust port and re-imagination of the excellent [try](https://github.com/tobi/try) tool by **Tobi Lütke**.
+
+While the original is a lightweight Ruby script, **try-rs** aims to bring the same philosophy, "Your experiments deserve a home", but with the performance, type safety, and modern TUI capabilities (using [Ratatui](https://github.com/ratatui/ratatui)) of the Rust ecosystem.
+
+
+## 🤝 Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
 📄 License
