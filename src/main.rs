@@ -300,13 +300,19 @@ fn run_app(
                     let cargo_icon = if entry.is_cargo { " " } else { "" };
                     let cargo_width = if entry.is_cargo { 2 } else { 0 };
                     let icon_width = 2; // "📁" takes 2 columns
-                    
+
                     let created_dt: chrono::DateTime<Local> = entry.created.into();
                     let created_text = created_dt.format("%Y-%m-%d").to_string();
                     let created_width = created_text.chars().count();
 
                     // Calculate space for name
-                    let reserved = date_width + git_width + mise_width + cargo_width + icon_width + created_width + 2; // +2 for gaps
+                    let reserved = date_width
+                        + git_width
+                        + mise_width
+                        + cargo_width
+                        + icon_width
+                        + created_width
+                        + 2; // +2 for gaps
                     let available_for_name = width.saturating_sub(reserved);
                     let name_len = entry.name.chars().count();
 
@@ -317,7 +323,16 @@ fn run_app(
                     } else {
                         (
                             entry.name.clone(),
-                            width.saturating_sub(icon_width + created_width + 1 + name_len + date_width + git_width + mise_width + cargo_width),
+                            width.saturating_sub(
+                                icon_width
+                                    + created_width
+                                    + 1
+                                    + name_len
+                                    + date_width
+                                    + git_width
+                                    + mise_width
+                                    + cargo_width,
+                            ),
                         )
                     };
 
@@ -784,12 +799,21 @@ function try-rs {
 }
 "#;
     fs::write(&file_path, content.trim())?;
-    eprintln!("PowerShell function file created at: {}", file_path.display());
+    eprintln!(
+        "PowerShell function file created at: {}",
+        file_path.display()
+    );
 
     // 2. Find the PowerShell profile and add the source command
     let home_dir = dirs::home_dir().expect("Could not find home directory");
-    let profile_path_ps7 = home_dir.join("Documents").join("PowerShell").join("Microsoft.PowerShell_profile.ps1");
-    let profile_path_ps5 = home_dir.join("Documents").join("WindowsPowerShell").join("Microsoft.PowerShell_profile.ps1");
+    let profile_path_ps7 = home_dir
+        .join("Documents")
+        .join("PowerShell")
+        .join("Microsoft.PowerShell_profile.ps1");
+    let profile_path_ps5 = home_dir
+        .join("Documents")
+        .join("WindowsPowerShell")
+        .join("Microsoft.PowerShell_profile.ps1");
 
     let profile_path = if profile_path_ps7.exists() {
         profile_path_ps7
@@ -818,17 +842,28 @@ function try-rs {
             writeln!(file, "{}", source_cmd)?;
             eprintln!("Added configuration to {}", profile_path.display());
         } else {
-            eprintln!("Configuration already present in {}", profile_path.display());
+            eprintln!(
+                "Configuration already present in {}",
+                profile_path.display()
+            );
         }
     } else {
         let mut file = fs::File::create(&profile_path)?;
         writeln!(file, "# try-rs integration")?;
         writeln!(file, "{}", source_cmd)?;
-        eprintln!("PowerShell profile created and configured at: {}", profile_path.display());
+        eprintln!(
+            "PowerShell profile created and configured at: {}",
+            profile_path.display()
+        );
     }
 
-    eprintln!("You may need to restart your shell or run '. {}' to apply changes.", profile_path.display());
-    eprintln!("If you get an error about running scripts, you may need to run: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned");
+    eprintln!(
+        "You may need to restart your shell or run '. {}' to apply changes.",
+        profile_path.display()
+    );
+    eprintln!(
+        "If you get an error about running scripts, you may need to run: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned"
+    );
 
     Ok(())
 }
