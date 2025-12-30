@@ -35,6 +35,8 @@ struct TryEntry {
     is_git: bool,
     is_mise: bool,
     is_cargo: bool,
+    is_maven: bool,
+    is_flutter: bool,
 }
 
 #[derive(Clone)]
@@ -97,6 +99,8 @@ impl App {
                     let is_git = entry.path().join(".git").exists();
                     let is_mise = entry.path().join("mise.toml").exists();
                     let is_cargo = entry.path().join("Cargo.toml").exists();
+                    let is_maven = entry.path().join("pom.xml").exists();
+                    let is_flutter = entry.path().join("pubspec.yaml").exists();
                     entries.push(TryEntry {
                         name,
                         modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -105,6 +109,8 @@ impl App {
                         is_git,
                         is_mise,
                         is_cargo,
+                        is_maven,
+                        is_flutter,
                     });
                 }
             }
@@ -299,6 +305,10 @@ fn run_app(
                     let mise_width = if entry.is_mise { 2 } else { 0 };
                     let cargo_icon = if entry.is_cargo { " " } else { "" };
                     let cargo_width = if entry.is_cargo { 2 } else { 0 };
+                    let maven_icon = if entry.is_maven { " " } else { "" };
+                    let maven_width = if entry.is_maven { 2 } else { 0 };
+                    let flutter_icon = if entry.is_flutter { " " } else { "" };
+                    let flutter_width = if entry.is_flutter { 2 } else { 0 };
                     let icon_width = 2; // "📁" takes 2 columns
 
                     let created_dt: chrono::DateTime<Local> = entry.created.into();
@@ -310,6 +320,8 @@ fn run_app(
                         + git_width
                         + mise_width
                         + cargo_width
+                        + maven_width
+                        + flutter_width
                         + icon_width
                         + created_width
                         + 2; // +2 for gaps
@@ -331,7 +343,9 @@ fn run_app(
                                     + date_width
                                     + git_width
                                     + mise_width
-                                    + cargo_width,
+                                    + cargo_width
+                                    + maven_width
+                                    + flutter_width,
                             ),
                         )
                     };
@@ -342,6 +356,8 @@ fn run_app(
                         Span::raw(format!(" {}", display_name)),
                         Span::raw(" ".repeat(padding)),
                         Span::styled(cargo_icon, Style::default().fg(Color::Rgb(230, 100, 50))),
+                        Span::styled(maven_icon, Style::default().fg(Color::Rgb(255, 150, 50))),
+                        Span::styled(flutter_icon, Style::default().fg(Color::Rgb(2, 123, 222))),
                         Span::styled(mise_icon, Style::default().fg(Color::Rgb(250, 179, 135))),
                         Span::styled(git_icon, Style::default().fg(Color::Rgb(240, 80, 50))),
                         Span::styled(date_text, Style::default().fg(app.theme.list_date)),
