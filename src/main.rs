@@ -38,6 +38,7 @@ struct TryEntry {
     is_maven: bool,
     is_flutter: bool,
     is_go: bool,
+    is_python: bool,
 }
 
 #[derive(Clone)]
@@ -103,6 +104,8 @@ impl App {
                     let is_maven = entry.path().join("pom.xml").exists();
                     let is_flutter = entry.path().join("pubspec.yaml").exists();
                     let is_go = entry.path().join("go.mod").exists();
+                    let is_python = entry.path().join("pyproject.toml").exists()
+                        || entry.path().join("requirements.txt").exists();
                     entries.push(TryEntry {
                         name,
                         modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
@@ -114,6 +117,7 @@ impl App {
                         is_maven,
                         is_flutter,
                         is_go,
+                        is_python,
                     });
                 }
             }
@@ -314,6 +318,8 @@ fn run_app(
                     let flutter_width = if entry.is_flutter { 2 } else { 0 };
                     let go_icon = if entry.is_go { " " } else { "" };
                     let go_width = if entry.is_go { 2 } else { 0 };
+                    let python_icon = if entry.is_python { " " } else { "" };
+                    let python_width = if entry.is_python { 2 } else { 0 };
                     let icon_width = 2; // "📁" takes 2 columns
 
                     let created_dt: chrono::DateTime<Local> = entry.created.into();
@@ -328,6 +334,7 @@ fn run_app(
                         + maven_width
                         + flutter_width
                         + go_width
+                        + python_width
                         + icon_width
                         + created_width
                         + 2; // +2 for gaps
@@ -352,7 +359,8 @@ fn run_app(
                                     + cargo_width
                                     + maven_width
                                     + flutter_width
-                                    + go_width,
+                                    + go_width
+                                    + python_width,
                             ),
                         )
                     };
@@ -366,6 +374,7 @@ fn run_app(
                         Span::styled(maven_icon, Style::default().fg(Color::Rgb(255, 150, 50))),
                         Span::styled(flutter_icon, Style::default().fg(Color::Rgb(2, 123, 222))),
                         Span::styled(go_icon, Style::default().fg(Color::Rgb(0, 173, 216))),
+                        Span::styled(python_icon, Style::default().fg(Color::Yellow)),
                         Span::styled(mise_icon, Style::default().fg(Color::Rgb(250, 179, 135))),
                         Span::styled(git_icon, Style::default().fg(Color::Rgb(240, 80, 50))),
                         Span::styled(date_text, Style::default().fg(app.theme.list_date)),
