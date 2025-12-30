@@ -937,6 +937,10 @@ struct Cli {
     /// Generate shell integration code
     #[arg(long)]
     setup: Option<Shell>,
+
+    /// Shallow clone
+    #[arg(short, long)]
+    shallow_clone: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq, Debug)]
@@ -1073,10 +1077,18 @@ fn main() -> Result<()> {
 
                 eprintln!("Cloning {} into {}...", selection, folder_name);
 
-                let status = std::process::Command::new("git")
-                    .arg("clone")
+                let mut cmd = std::process::Command::new("git");
+                cmd.arg("clone");
+
+                if cli.shallow_clone {
+                    cmd.arg("--depth").arg("1");
+                }
+
+                let status = cmd
                     .arg(&selection)
                     .arg(&new_path)
+                    .arg("--recurse-submodules")
+                    .arg("--no-single-branch")
                     .stdout(Stdio::null())
                     .stderr(Stdio::inherit())
                     .status();
