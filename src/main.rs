@@ -299,7 +299,7 @@ fn run_app(
                     let days = secs / 86400;
                     let hours = (secs % 86400) / 3600;
                     let minutes = (secs % 3600) / 60;
-                    let date_str = format!("({:02} days {:02}h {:02}m)", days, hours, minutes);
+                    let date_str = format!("({:02}d {:02}h {:02}m)", days, hours, minutes);
 
                     // Calculate available width (block borders take 2 columns)
                     let width = content_chunks[0].width.saturating_sub(5) as usize;
@@ -961,7 +961,7 @@ fn setup_nushell() -> Result<()> {
 
 #[derive(Parser)]
 #[command(name = "try-rs")]
-#[command(about = format!("🦀 try-rs {}\nA blazing fast, Rust-based workspace manager for your temporary experiments.", env!("CARGO_PKG_VERSION")), long_about = None)]
+#[command(about = format!("🦀 try-rs {} 🦀\nA blazing fast, Rust-based workspace manager for your temporary experiments.", env!("CARGO_PKG_VERSION")), long_about = None)]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 struct Cli {
     /// Create or jump to an experiment / Clone a repo. Starts the TUI (Terminal User Interface) if omitted.
