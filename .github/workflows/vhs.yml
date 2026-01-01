@@ -17,10 +17,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install System Dependencies
-        # ADICIONADO: 'fish' (porque seu tape pede 'Set Shell fish')
+        # ADICIONADO: 'fish' (porque seu tape pede 'Set Shell fish') chromium-browser
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg chromium-browser libnss3 libxss1 libasound2t64 fish ttyd
+          sudo apt-get install -y ffmpeg libnss3 libxss1 libasound2t64 fish ttyd 
 
       - name: Setup Go
         uses: actions/setup-go@v5
