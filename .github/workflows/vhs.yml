@@ -24,11 +24,12 @@ jobs:
         with:
           # Importante: busca o histórico completo para evitar problemas de merge/push
           fetch-depth: 0 
-
-      - name: Install System Dependencies
+      
+      # chromium-browser
+      - name: Install System Dependencies 
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg chromium-browser libnss3 libxss1 libasound2t64 fish ttyd
+          sudo apt-get install -y ffmpeg libnss3 libxss1 libasound2t64 fish ttyd
 
       - name: Setup Go
         uses: actions/setup-go@v5
