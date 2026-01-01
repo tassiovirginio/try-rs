@@ -1,26 +1,34 @@
 name: Generate GIF (VHS)
 
 on:
+  # É melhor rodar quando há mudanças na main (código ou tape)
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - '**.rs'        # Só roda se mudar código Rust
+      - 'try-rs.tape'  # Ou se mudar o script do VHS
+  
+  # Gatilho manual continua útil
   workflow_dispatch:
 
 jobs:
   vhs:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Permissão CRÍTICA para poder fazer push
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Importante: busca o histórico completo para evitar problemas de merge/push
+          fetch-depth: 0 
 
       - name: Install System Dependencies
-        # ADICIONADO: 'fish' (porque seu tape pede 'Set Shell fish') chromium-browser
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg libnss3 libxss1 libasound2t64 fish ttyd 
+          sudo apt-get install -y ffmpeg chromium-browser libnss3 libxss1 libasound2t64 fish ttyd
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -38,19 +46,21 @@ jobs:
 
       - name: Run VHS
         run: |
-          # Adiciona o binário ao PATH para o comando 'Require try-rs' funcionar
           export PATH="$PWD/target/release:$PATH"
-          
-          # Debug: Confirma que o try-rs e o fish estão acessíveis
-          which try-rs
-          which fish
-
-          # Roda o VHS apontando para o arquivo na RAIZ (baseado no seu link)
-          # Se o arquivo estiver numa pasta, mude para: vhs vhs/try-rs.tape
           vhs try-rs.tape
 
-      - name: Attach GIF to Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: try-rs.gif
+      - name: Commit and Push GIF
+        run: |
+          git config user.name "Tássio Virginio"
+          git config user.email "tassio.virginio@ufba.br"
+          
+          git add try-rs.gif
+          
+          # Verifica se o GIF mudou antes de tentar commitar
+          if git diff --staged --quiet; then
+            echo "⚠️ O GIF gerado é idêntico ao atual. Nada para commitar."
+          else
+            git commit -m "docs: update demo gif [skip ci]"
+            git push
+            echo "✅ GIF atualizado no repositório com sucesso!"
+          fi
