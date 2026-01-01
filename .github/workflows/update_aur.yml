@@ -1,13 +1,18 @@
 name: Update AUR
 
 on:
-  release:
-    types: [published]
+  # Em vez de 'push' ou 'release', ele escuta outro workflow
+  workflow_run:
+    workflows: ["Release"]       # O "name:" exato do seu arquivo de release
+    types:
+      - completed
 
 jobs:
   aur:
+    # IMPORTANTE: Só roda se o workflow anterior foi SUCESSO
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    container: archlinux:base-devel # 1. Usa container com ferramentas Arch
+    container: archlinux:base-devel
 
     steps:
       - name: Checkout
