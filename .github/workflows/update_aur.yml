@@ -3,7 +3,7 @@ name: Update AUR
 on:
   # Em vez de 'push' ou 'release', ele escuta outro workflow
   workflow_run:
-    workflows: ["Release"]       # O "name:" exato do seu arquivo de release
+    workflows: ["GitHub Release"]       # O "name:" exato do seu arquivo de release
     types:
       - completed
 
