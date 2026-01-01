@@ -20,7 +20,7 @@ jobs:
         # ADICIONADO: 'fish' (porque seu tape pede 'Set Shell fish')
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg chromium-browser libnss3 libxss1 libasound2 fish
+          sudo apt-get install -y ffmpeg chromium-browser libnss3 libxss1 libasound2t64 fish
 
       - name: Setup Go
         uses: actions/setup-go@v5
