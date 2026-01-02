@@ -18,7 +18,7 @@ description = "try-rs: Temporary workspace manager with TUI";
       {
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "try-rs";
-          version = "0.1.34";  # atualize quando lançar nova
+          version = "0.1.35";  # atualize quando lançar nova
 
           src = self;  # usa o próprio repo como source
 

@@ -110,6 +110,7 @@ pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
 
             let def = Theme::default();
             theme = Theme {
+                name: "Custom".to_string(),
                 title_try: parse(colors.title_try, def.title_try),
                 title_rs: parse(colors.title_rs, def.title_rs),
                 search_box: parse(colors.search_box, def.search_box),

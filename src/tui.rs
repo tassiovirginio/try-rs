@@ -16,6 +16,7 @@ use std::{
 pub enum AppMode {
     Normal,
     DeleteConfirm,
+    ThemeSelect,
 }
 
 // Data model (same as before)
@@ -36,6 +37,7 @@ pub struct TryEntry {
 
 #[derive(Clone)]
 pub struct Theme {
+    pub name: String,
     pub title_try: Color,
     pub title_rs: Color,
     pub search_box: Color,
@@ -50,8 +52,14 @@ pub struct Theme {
 
 impl Default for Theme {
     fn default() -> Self {
+        Self::catppuccin_mocha()
+    }
+}
+
+impl Theme {
+    pub fn catppuccin_mocha() -> Self {
         Self {
-            // Catppuccin Mocha Palette
+            name: "Catppuccin Mocha".to_string(),
             title_try: Color::Rgb(137, 180, 250),         // Blue
             title_rs: Color::Rgb(243, 139, 168),          // Red
             search_box: Color::Rgb(250, 179, 135),        // Peach
@@ -62,6 +70,86 @@ impl Default for Theme {
             status_message: Color::Rgb(249, 226, 175),    // Yellow
             popup_bg: Color::Rgb(30, 30, 46),             // Base
             popup_text: Color::Rgb(243, 139, 168),        // Red
+        }
+    }
+
+    pub fn dracula() -> Self {
+        Self {
+            name: "Dracula".to_string(),
+            title_try: Color::Rgb(189, 147, 249),      // Purple
+            title_rs: Color::Rgb(255, 121, 198),       // Pink
+            search_box: Color::Rgb(255, 184, 108),     // Orange
+            list_date: Color::Rgb(139, 233, 253),      // Cyan
+            list_highlight_bg: Color::Rgb(68, 71, 90), // Selection
+            list_highlight_fg: Color::Rgb(248, 248, 242), // Foreground
+            help_text: Color::Rgb(98, 114, 164),       // Comment
+            status_message: Color::Rgb(241, 250, 140), // Yellow
+            popup_bg: Color::Rgb(40, 42, 54),          // Background
+            popup_text: Color::Rgb(255, 85, 85),       // Red
+        }
+    }
+
+    pub fn jetbrains_darcula() -> Self {
+        Self {
+            name: "JetBrains Darcula".to_string(),
+            title_try: Color::Rgb(78, 124, 238),        // Blueish
+            title_rs: Color::Rgb(204, 120, 50),         // Orange
+            search_box: Color::Rgb(106, 135, 89),       // Green
+            list_date: Color::Rgb(128, 128, 128),       // Grey
+            list_highlight_bg: Color::Rgb(33, 66, 131), // Selection
+            list_highlight_fg: Color::Rgb(187, 187, 187), // Light Grey
+            help_text: Color::Rgb(128, 128, 128),
+            status_message: Color::Rgb(255, 198, 109), // Gold
+            popup_bg: Color::Rgb(60, 63, 65),          // Bg
+            popup_text: Color::Rgb(204, 120, 50),
+        }
+    }
+
+    pub fn gruvbox_dark() -> Self {
+        Self {
+            name: "Gruvbox Dark".to_string(),
+            title_try: Color::Rgb(251, 73, 52),           // Red
+            title_rs: Color::Rgb(250, 189, 47),           // Yellow
+            search_box: Color::Rgb(184, 187, 38),         // Green
+            list_date: Color::Rgb(146, 131, 116),         // Grey
+            list_highlight_bg: Color::Rgb(80, 73, 69),    // Bg2
+            list_highlight_fg: Color::Rgb(235, 219, 178), // Fg
+            help_text: Color::Rgb(168, 153, 132),
+            status_message: Color::Rgb(215, 153, 33), // Orange
+            popup_bg: Color::Rgb(40, 40, 40),         // Bg0
+            popup_text: Color::Rgb(251, 73, 52),
+        }
+    }
+
+    pub fn nord() -> Self {
+        Self {
+            name: "Nord".to_string(),
+            title_try: Color::Rgb(136, 192, 208),  // Frost Cyan
+            title_rs: Color::Rgb(191, 97, 106),    // Aurora Red
+            search_box: Color::Rgb(163, 190, 140), // Aurora Green
+            list_date: Color::Rgb(216, 222, 233),  // Snow Storm
+            list_highlight_bg: Color::Rgb(67, 76, 94), // Polar Night 3
+            list_highlight_fg: Color::Rgb(236, 239, 244), // Snow Storm 3
+            help_text: Color::Rgb(76, 86, 106),    // Polar Night 2
+            status_message: Color::Rgb(235, 203, 139), // Aurora Yellow
+            popup_bg: Color::Rgb(46, 52, 64),      // Polar Night 0
+            popup_text: Color::Rgb(191, 97, 106),
+        }
+    }
+
+    pub fn tokyo_night() -> Self {
+        Self {
+            name: "Tokyo Night".to_string(),
+            title_try: Color::Rgb(122, 162, 247),         // Blue
+            title_rs: Color::Rgb(247, 118, 142),          // Red
+            search_box: Color::Rgb(158, 206, 106),        // Green
+            list_date: Color::Rgb(169, 177, 214),         // Fg
+            list_highlight_bg: Color::Rgb(65, 72, 104),   // Terminal Black
+            list_highlight_fg: Color::Rgb(192, 202, 245), // Terminal White
+            help_text: Color::Rgb(86, 95, 137),           // Comment
+            status_message: Color::Rgb(224, 175, 104),    // Yellow
+            popup_bg: Color::Rgb(26, 27, 38),             // Bg
+            popup_text: Color::Rgb(247, 118, 142),
         }
     }
 }
@@ -80,6 +168,10 @@ pub struct App {
     pub theme: Theme,                   // Application colors
     pub editor_cmd: Option<String>,     // Editor command (e.g., "code", "nvim")
     pub wants_editor: bool,             // Flag to indicate if we should open the editor
+
+    // Theme switching
+    pub available_themes: Vec<Theme>,
+    pub theme_list_state: ListState,
 }
 
 impl App {
@@ -118,6 +210,18 @@ impl App {
         // Initial sort: most recent first
         entries.sort_by(|a, b| b.modified.cmp(&a.modified));
 
+        let themes = vec![
+            Theme::catppuccin_mocha(),
+            Theme::dracula(),
+            Theme::jetbrains_darcula(),
+            Theme::gruvbox_dark(),
+            Theme::nord(),
+            Theme::tokyo_night(),
+        ];
+
+        let mut theme_state = ListState::default();
+        theme_state.select(Some(0));
+
         Self {
             query: String::new(),
             all_entries: entries.clone(),
@@ -131,6 +235,8 @@ impl App {
             theme,
             editor_cmd,
             wants_editor: false,
+            available_themes: themes,
+            theme_list_state: theme_state,
         }
     }
 
@@ -224,6 +330,54 @@ fn draw_popup(f: &mut Frame, title: &str, message: &str, theme: &Theme) {
         .alignment(Alignment::Center);
 
     f.render_widget(paragraph, popup_area);
+}
+
+fn draw_theme_select(f: &mut Frame, app: &mut App) {
+    let area = f.area();
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+            Constraint::Percentage(30),
+        ])
+        .split(area);
+
+    let popup_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+            Constraint::Percentage(30),
+        ])
+        .split(popup_layout[1])[1];
+
+    f.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .title(" Select Theme ")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(app.theme.popup_bg));
+
+    let items: Vec<ListItem> = app
+        .available_themes
+        .iter()
+        .map(|t| {
+            ListItem::new(t.name.clone()).style(Style::default().fg(app.theme.list_highlight_fg))
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(block)
+        .highlight_style(
+            Style::default()
+                .bg(app.theme.list_highlight_bg)
+                .fg(app.theme.list_highlight_fg)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(list, popup_area, &mut app.theme_list_state);
 }
 
 pub fn run_app(
@@ -390,13 +544,11 @@ pub fn run_app(
             state.select(Some(app.selected_index));
             f.render_stateful_widget(list, content_chunks[0], &mut state);
 
-            // Preview Widget
             if let Some(selected) = app.filtered_entries.get(app.selected_index) {
                 let preview_path = app.base_path.join(&selected.name);
                 let mut preview_lines = Vec::new();
 
                 if let Ok(entries) = fs::read_dir(&preview_path) {
-                    // Limit items to height of block to avoid reading too much
                     for e in entries
                         .take(content_chunks[1].height.saturating_sub(2) as usize)
                         .flatten()
@@ -426,8 +578,6 @@ pub fn run_app(
                 f.render_widget(preview, content_chunks[1]);
             }
 
-            // --- Footer Widget (Help) ---
-            // If there is a status message, show it instead of help, or alongside it.
             let help_text = if let Some(msg) = &app.status_message {
                 Line::from(vec![Span::styled(
                     msg,
@@ -438,15 +588,17 @@ pub fn run_app(
             } else {
                 Line::from(vec![
                     Span::styled("↑↓", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Navigate  "),
+                    Span::raw(" Nav | "),
                     Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Select  "),
+                    Span::raw(" Select | "),
                     Span::styled("Ctrl-D", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Delete  "),
+                    Span::raw(" Del | "),
                     Span::styled("Ctrl-E", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Edit    "),
+                    Span::raw(" Edit | "),
+                    Span::styled("Ctrl-T", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" Theme | "),
                     Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(": Exit"),
+                    Span::raw(" Quit"),
                 ])
             };
 
@@ -456,36 +608,32 @@ pub fn run_app(
 
             f.render_widget(help_message, chunks[3]);
 
-            // --- DRAWING THE POPUP (If in DeleteConfirm mode) ---
             if app.mode == AppMode::DeleteConfirm
                 && let Some(selected) = app.filtered_entries.get(app.selected_index)
             {
                 let msg = format!("Delete '{}'? (y/n)", selected.name);
                 draw_popup(f, " WARNING ", &msg, &app.theme);
             }
+
+            if app.mode == AppMode::ThemeSelect {
+                draw_theme_select(f, &mut app);
+            }
         })?;
 
-        // --- KEY HANDLING ---
         if event::poll(std::time::Duration::from_millis(50))?
             && let Event::Key(key) = event::read()?
             && key.is_press()
         {
-            // Behavior depends on the mode
             match app.mode {
                 AppMode::Normal => match key.code {
                     KeyCode::Char(c) => {
-                        // Ctrl+C to quit
                         if c == 'c' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.should_quit = true;
-                        }
-                        // Ctrl+D to delete
-                        else if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
-                            // Only enter delete mode if something is selected
+                        } else if c == 'd' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             if !app.filtered_entries.is_empty() {
                                 app.mode = AppMode::DeleteConfirm;
                             }
                         } else if c == 'e' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
-                            // Ctrl+E to open editor
                             if app.editor_cmd.is_some() {
                                 if !app.filtered_entries.is_empty() {
                                     app.final_selection =
@@ -501,9 +649,11 @@ pub fn run_app(
                                 app.status_message =
                                     Some("No editor configured in config.toml".to_string());
                             }
+                        } else if c == 't' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            app.mode = AppMode::ThemeSelect;
                         } else {
                             app.query.push(c);
-                            app.status_message = None; // Clear status on type
+                            app.status_message = None;
                             app.update_search();
                         }
                     }
@@ -543,6 +693,49 @@ pub fn run_app(
                     }
                     KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.should_quit = true;
+                    }
+                    _ => {}
+                },
+
+                AppMode::ThemeSelect => match key.code {
+                    KeyCode::Esc | KeyCode::Char('c')
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                    {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Up => {
+                        let i = match app.theme_list_state.selected() {
+                            Some(i) => {
+                                if i > 0 {
+                                    i - 1
+                                } else {
+                                    i
+                                }
+                            }
+                            None => 0,
+                        };
+                        app.theme_list_state.select(Some(i));
+                    }
+                    KeyCode::Down => {
+                        let i = match app.theme_list_state.selected() {
+                            Some(i) => {
+                                if i < app.available_themes.len() - 1 {
+                                    i + 1
+                                } else {
+                                    i
+                                }
+                            }
+                            None => 0,
+                        };
+                        app.theme_list_state.select(Some(i));
+                    }
+                    KeyCode::Enter => {
+                        if let Some(i) = app.theme_list_state.selected() {
+                            if let Some(theme) = app.available_themes.get(i) {
+                                app.theme = theme.clone();
+                            }
+                        }
+                        app.mode = AppMode::Normal;
                     }
                     _ => {}
                 },
