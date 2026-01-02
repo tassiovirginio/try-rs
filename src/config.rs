@@ -27,20 +27,57 @@ pub struct Config {
     pub editor: Option<String>,
 }
 
+pub fn get_file_config_toml_name() -> String {
+    std::env::var("TRY_CONFIG").unwrap_or("config.toml".to_string())
+}
+
+pub fn load_file_config_toml_if_exists() -> Option<Config> {
+    // 1. Check TRY_CONFIG_DIR environment variable
+    if let Some(env_dir) = std::env::var_os("TRY_CONFIG_DIR") {
+        let config_path = PathBuf::from(env_dir).join(get_file_config_toml_name());
+        if config_path.exists() {
+            if let Ok(contents) = fs::read_to_string(&config_path)
+                && let Ok(config) = toml::from_str::<Config>(&contents)
+            {
+                return Some(config);
+            }
+        }
+    }
+
+    // 2. Check XDG config dir (~/.config/try-rs/config.toml)
+    let config_dir_config_toml = dirs::config_dir()
+        .expect("Folder not found")
+        .join("try-rs")
+        .join(get_file_config_toml_name());
+
+    if config_dir_config_toml.exists() {
+        if let Ok(contents) = fs::read_to_string(&config_dir_config_toml)
+            && let Ok(config) = toml::from_str::<Config>(&contents)
+        {
+            return Some(config);
+        }
+    }
+
+    // 3. Check ~/.try-rs/config.toml (legacy/alternative)
+    let home_dir_config_toml = dirs::home_dir()
+        .expect("Folder not found")
+        .join(".config")
+        .join("try-rs")
+        .join(get_file_config_toml_name());
+
+    if home_dir_config_toml.exists() {
+        if let Ok(contents) = fs::read_to_string(&home_dir_config_toml)
+            && let Ok(config) = toml::from_str::<Config>(&contents)
+        {
+            return Some(config);
+        }
+    }
+
+    None
+}
+
 pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
-    // 1. Try to find the default config directory (~/.config)
-    let config_dir = dirs::config_dir().unwrap_or_else(|| {
-        // Fallback if not found
-        dirs::home_dir().expect("Folder not found").join(".config")
-    });
-
-    // 2. Build the path: ~/.config/try-rs/config.toml
-    let app_config_dir = config_dir.join("try-rs");
-    let config_file = app_config_dir
-        .join(std::env::var_os("TRY_CONFIG").unwrap_or_else(|| "config".into()))
-        .with_extension("toml");
-
-    // 3. Define the old default (fallback)
+    // Default Path: Work/tries
     let default_path = dirs::home_dir()
         .expect("Folder not found")
         .join("work")
@@ -55,49 +92,53 @@ pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
         .or_else(|| std::env::var("EDITOR").ok());
     let mut is_first_run = false;
 
-    // 4. If the file exists, try to read it
-    if config_file.exists() {
-        if let Ok(contents) = fs::read_to_string(&config_file)
-            && let Ok(config) = toml::from_str::<Config>(&contents)
+    // Try to load any existing config
+    if let Some(config) = load_file_config_toml_if_exists() {
+        if let Some(path_str) = config.tries_path
+            && !try_path_specified
         {
-            if let Some(path_str) = config.tries_path
-                && !try_path_specified
-            {
-                final_path = expand_path(&path_str);
-            }
-            if let Some(editor) = config.editor {
-                editor_cmd = Some(editor);
-            }
-            if let Some(colors) = config.colors {
-                // Helper to parse color string to Color enum
-                let parse = |opt: Option<String>, def: Color| -> Color {
-                    opt.and_then(|s| Color::from_str(&s).ok()).unwrap_or(def)
-                };
+            final_path = expand_path(&path_str);
+        }
+        if let Some(editor) = config.editor {
+            editor_cmd = Some(editor);
+        }
+        if let Some(colors) = config.colors {
+            // Helper to parse color string to Color enum
+            let parse = |opt: Option<String>, def: Color| -> Color {
+                opt.and_then(|s| Color::from_str(&s).ok()).unwrap_or(def)
+            };
 
-                let def = Theme::default();
-                theme = Theme {
-                    title_try: parse(colors.title_try, def.title_try),
-                    title_rs: parse(colors.title_rs, def.title_rs),
-                    search_box: parse(colors.search_box, def.search_box),
-                    list_date: parse(colors.list_date, def.list_date),
-                    list_highlight_bg: parse(colors.list_highlight_bg, def.list_highlight_bg),
-                    list_highlight_fg: parse(colors.list_highlight_fg, def.list_highlight_fg),
-                    help_text: parse(colors.help_text, def.help_text),
-                    status_message: parse(colors.status_message, def.status_message),
-                    popup_bg: parse(colors.popup_bg, def.popup_bg),
-                    popup_text: parse(colors.popup_text, def.popup_text),
-                };
-            }
+            let def = Theme::default();
+            theme = Theme {
+                title_try: parse(colors.title_try, def.title_try),
+                title_rs: parse(colors.title_rs, def.title_rs),
+                search_box: parse(colors.search_box, def.search_box),
+                list_date: parse(colors.list_date, def.list_date),
+                list_highlight_bg: parse(colors.list_highlight_bg, def.list_highlight_bg),
+                list_highlight_fg: parse(colors.list_highlight_fg, def.list_highlight_fg),
+                help_text: parse(colors.help_text, def.help_text),
+                status_message: parse(colors.status_message, def.status_message),
+                popup_bg: parse(colors.popup_bg, def.popup_bg),
+                popup_text: parse(colors.popup_text, def.popup_text),
+            };
         }
     } else {
-        // Create default config if it doesn't exist
+        // No config found. We should create the default one.
+        // Calculate the default location to write to: ~/.config/try-rs/config.toml
+        let config_dir = dirs::config_dir()
+            .unwrap_or_else(|| dirs::home_dir().expect("Folder not found").join(".config"));
+        let app_config_dir = config_dir.join("try-rs");
+        let config_file = app_config_dir.join("config.toml");
+
         if fs::create_dir_all(&app_config_dir).is_ok() {
             let default_content = format!("tries_path = {final_path:?}");
-            let _ = fs::write(&config_file, default_content);
-            is_first_run = true;
+            // We only write if the file really doesn't exist (double check to be safe)
+            if !config_file.exists() {
+                let _ = fs::write(&config_file, default_content);
+                is_first_run = true;
+            }
         }
     }
 
-    // If nothing works or there is no config, return the default
     (final_path, theme, editor_cmd, is_first_run)
 }
