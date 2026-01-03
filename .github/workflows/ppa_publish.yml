@@ -34,16 +34,15 @@ jobs:
 
       - name: Prepare Debian Source Package
         run: |
-          # Extrai a versão da tag (remove o 'v')
-          VERSION=${GITHUB_REF_NAME#v}
+          # Pega a versão EXATA do changelog (ex: 0.1.35)
+          VERSION=$(dpkg-parsechangelog -S Version | cut -d'-' -f1)
+          echo "Versão detectada no changelog: $VERSION"
           
-          # O Launchpad exige um tarball do código fonte original (.orig.tar.gz)
+          # Cria o tarball com o nome que o Launchpad exige (nome_versão.orig.tar.gz)
           tar -czf ../try-rs_${VERSION}.orig.tar.gz .
           
-          # Constrói o pacote de origem (Source Package)
-          # -us -uc significa não assinar ainda, faremos isso no próximo passo
+          # Constrói o pacote de origem
           dpkg-buildpackage -S -us -uc
-
 
       - name: Sign and Upload to PPA
         run: |
