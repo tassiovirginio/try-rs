@@ -24,7 +24,7 @@ jobs:
       - name: Install Debian Packaging Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y debhelper devscripts dput-ng python3-debian
+          sudo apt-get install -y debhelper devscripts dput-ng python3-debian build-essential cargo rustc libstd-rust-dev
 
       - name: Import GPG Key
         uses: crazy-max/ghaction-import-gpg@v6
