@@ -1,7 +1,7 @@
 Source: try-rs
 Section: utils
 Priority: optional
-Maintainer: Tassio Virginio <seu-email-do-launchpad@exemplo.com>
+Maintainer: Tassio Virginio <tassiovirginio@gmail.com>
 Build-Depends: debhelper-compat (= 13), cargo, rustc, libstd-rust-dev
 Standards-Version: 4.5.0
 Homepage: https://github.com/tassiovirginio/try-rs
