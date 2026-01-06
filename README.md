@@ -1,4 +1,5 @@
 # 🦀 try-rs 🦀 - [try-rs.org](https://try-rs.org)
+
 > **A blazing fast, Rust-based workspace manager for your temporary experiments.**
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -6,36 +7,35 @@
 [![Nix ready](https://img.shields.io/badge/nix-ready-brightgreen?logo=nixos)](https://github.com/tassiovirginio/try-rs)
 [![AUR version](https://img.shields.io/aur/version/try-rs-bin)](https://aur.archlinux.org/packages/try-rs-bin)
 
-
 **try-rs** is a CLI tool designed to manage the chaos of temporary projects. Instead of cluttering your Desktop or `/tmp` with `test1`, `new-test`, and `final-test`, `try-rs` organizes them into date-prefixed directories, offering a robust TUI (Terminal User Interface) to create, navigate, and clean up your experiments.
 
 ![try-rs.gif](try-rs.gif)
 
 ## ✨ Features
 
-| Feature | Description |
-| :--- | :--- |
-| **🏎️ Blazing Fast** | Built in Rust, compiled to native binary. No interpreter lag. |
-| **🖼️ Rich TUI** | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
-| **🔍 Fuzzy Search** | Instantly find old experiments with smart matching. |
-| **📅 Auto-Dating** | Creates directories like `rust-test` automatically. |
-| ** Git Integration** | Auto-clones URLs (`try-rs <url>`) and marks repos with (). |
-| **👀 Content Preview** | Inspect files inside a folder before entering it. |
-| **📝 Editor Integration** | Open experiments directly in your editor (`Ctrl+E`). |
-| **🎨 Theming** | Switch themes at runtime (`Ctrl+T`) or customize via config. |
-| **🗑️ Safe Deletion** | Delete old experiments via UI with confirmation (`Ctrl+D`). |
-| **⚙️ Configurable** | Supports XDG Base Directory (view section [Configuration](#configuration)). |
-| **🐚 Multi-Shell Support** | Supports Fish, Zsh, Bash, Power Shell and Nushell. |
-| **💻 Multi-OS Support** | Supports Linux, macOS and Windows. |
-| **🏷️ Icons Identification** | Supports icons identification projects (` 󰬔     `). |
+| Feature                     | Description                                                                            |
+| :-------------------------- | :------------------------------------------------------------------------------------- |
+| **🏎️ Blazing Fast**         | Built in Rust, compiled to native binary. No interpreter lag.                          |
+| **🖼️ Rich TUI**             | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
+| **🔍 Fuzzy Search**         | Instantly find old experiments with smart matching.                                    |
+| **📅 Auto-Dating**          | Creates directories like `rust-test` automatically.                                    |
+| ** Git Integration**       | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
+| **👀 Content Preview**      | Inspect files inside a folder before entering it.                                      |
+| **📝 Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
+| **🎨 Theming**              | Switch themes at runtime (`Ctrl+T`) or customize via config.                           |
+| **🗑️ Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
+| **⚙️ Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
+| **🐚 Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
+| **💻 Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
+| **🏷️ Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
 
 ## 📦 Installation
 
 ### Prerequisites
 
-* Rust & Cargo installed ([Building from source](#building-from-source) or [Cargo install try-rs](#cargo-install-try-rs)).
-* A shell (Fish, Zsh, Bash, Power Shell or Nushell).
-* A **Nerd Font** installed (required for icons like  and 🦀).
+- Rust & Cargo installed ([Building from source](#building-from-source) or [Cargo install try-rs](#cargo-install-try-rs)).
+- A shell (Fish, Zsh, Bash, Power Shell or Nushell).
+- A **Nerd Font** installed (required for icons like  and 🦀).
 
 ### Building from source
 
@@ -46,22 +46,26 @@ cargo install --path . --bin try-rs
 ```
 
 ### Cargo install try-rs
+
 ```bash
 cargo install try-rs
 ```
 
 ### Install in Archlinux
+
 ```bash
 yay -S try-rs-bin
 ```
 
 ### Nix Install (flakes)
+
 ```bash
 nix profile install github:tassiovirginio/try-rs
 ```
+
 ### Automatic Setup
+
 On the first run, **try-rs** will attempt to detect your shell and ask if you want to automatically configure the shell integration.
- 
 
 ⚙️ Configuration
 
@@ -100,18 +104,20 @@ try-rs --setup power-shell
 ```
 
 🐚 Nushell
+
 ```bash
 try-rs --setup nu-shell
 ```
 
 ### 2. Config File
+
 The configuration file is stored in a platform-specific directory:
 
-| Platform | Value | Example |
-| :--- | :--- | :--- |
-| **Linux** | `$XDG_CONFIG_HOME` or `$HOME/.config` | `/home/tassiovirginio/.config/try-rs` |
-| **macOS** | `$HOME/Library/Application Support` | `/Users/tassiovirginio/Library/Application Support/try-rs` |
-| **Windows** | `{FOLDERID_RoamingAppData}` | `C:\Users\tassiovirginio\AppData\Roaming\try-rs` |
+| Platform    | Value                                 | Example                                                    |
+| :---------- | :------------------------------------ | :--------------------------------------------------------- |
+| **Linux**   | `$XDG_CONFIG_HOME` or `$HOME/.config` | `/home/tassiovirginio/.config/try-rs`                      |
+| **macOS**   | `$HOME/Library/Application Support`   | `/Users/tassiovirginio/Library/Application Support/try-rs` |
+| **Windows** | `{FOLDERID_RoamingAppData}`           | `C:\Users\tassiovirginio\AppData\Roaming\try-rs`           |
 
 By default, experiments are stored in `~/work/tries`. You can customize the path and the UI colors (themes). To change this, create `config.toml` in the directory shown above:
 
@@ -134,16 +140,15 @@ popup_text = "LightRed"
 ```
 
 ### 3. Environment Variables
+
 You can also configure **try-rs** using environment variables:
 
-| Variable | Description |
-| :--- | :--- |
-| `TRY_PATH` | Overrides the path where experiments are stored. |
-| `TRY_CONFIG_DIR` | Overrides the default configuration directory. |
-| `TRY_CONFIG` | Overrides the config filename (defaults to `config.toml`). |
-| `VISUAL` / `EDITOR` | Default editor to use if not specified in `config.toml`. |
-
-
+| Variable            | Description                                                |
+| :------------------ | :--------------------------------------------------------- |
+| `TRY_PATH`          | Overrides the path where experiments are stored.           |
+| `TRY_CONFIG_DIR`    | Overrides the default configuration directory.             |
+| `TRY_CONFIG`        | Overrides the config filename (defaults to `config.toml`). |
+| `VISUAL` / `EDITOR` | Default editor to use if not specified in `config.toml`.   |
 
 🚀 Usage
 
@@ -151,26 +156,35 @@ Simply type try-rs (or your alias) in your terminal.
 
 ### Key Bindings
 
-| Key      | Action                                               |
-|----------|------------------------------------------------------|
-| `Type`   | Filter the list (Fuzzy Search)                       |
-| `↑` / `↓`| Navigate the list                                    |
-| `Enter`  | Select directory (or create new if text doesn't match) |
-| `Ctrl+D` | Delete the selected directory (triggers popup)       |
-| `Ctrl+E` | Open in editor (configured in config.toml)           |
-| `Ctrl+T` | Open theme selector                                  |
-| `Esc/Ctrl+C`    | Cancel / Close Popup / Exit                                 |
+| Key                                                   | Action                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------ |
+| `Type`                                                | Filter the list (Fuzzy Search)                         |
+| `↑` / `↓` / `Ctrl+K` / `Ctrl+J` / `Ctrl+P` / `Ctrl+N` | Navigate the list                                      |
+| `Ctrl+U`                                              | Clear the search box                                   |
+| `Enter`                                               | Select directory (or create new if text doesn't match) |
+| `Ctrl+D`                                              | Delete the selected directory (triggers popup)         |
+| `Ctrl+E`                                              | Open in editor (configured in config.toml)             |
+| `Ctrl+T`                                              | Open theme selector                                    |
+| `Esc/Ctrl+C`                                          | Cancel / Close Popup / Exit                            |
+
+#### Theme Selector Key Bindings
+
+| Key                               | Action               |
+| --------------------------------- | -------------------- |
+| `↑` / `↓` / `j` / `k` / `n` / `p` | Navigate themes      |
+| `Enter`                           | Select theme         |
+| `Esc/Ctrl+C`                      | Close theme selector |
 
 ### 🎨 Themes
 
 You can switch between themes at runtime by pressing `Ctrl+T`. The following themes are available:
 
-*   **Catppuccin Mocha** (Default)
-*   **Dracula**
-*   **JetBrains Darcula**
-*   **Gruvbox Dark**
-*   **Nord**
-*   **Tokyo Night**
+- **Catppuccin Mocha** (Default)
+- **Dracula**
+- **JetBrains Darcula**
+- **Gruvbox Dark**
+- **Nord**
+- **Tokyo Night**
 
 You can also define a custom theme in your `config.toml`.
 
@@ -178,17 +192,16 @@ You can also define a custom theme in your `config.toml`.
 
 You can also bypass the UI:
 
-| Command                                      | Description                                  |
-|----------------------------------------------|----------------------------------------------|
-| `try-rs`                                     | Opens the TUI                                |
-| `try-rs <name>`                              | Create (or jump to) a named experiment       |
-| `try-rs <https://github.com/user/repo>` | Clones a repository into a dated folder      |
-| `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name |
-| `try-rs -s <url>` | Shallow clone (depth 1)                       |
-| `try-rs --setup <shell>` | setup shell integration (fish, zsh, bash, power-shell, nu-shell) |
-| `try-rs --version`                           | Show application version                     |
-| `try-rs --help`                              | Show help message                            |
-
+| Command                                        | Description                                                      |
+| ---------------------------------------------- | ---------------------------------------------------------------- |
+| `try-rs`                                       | Opens the TUI                                                    |
+| `try-rs <name>`                                | Create (or jump to) a named experiment                           |
+| `try-rs <https://github.com/user/repo>`        | Clones a repository into a dated folder                          |
+| `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name                  |
+| `try-rs -s <url>`                              | Shallow clone (depth 1)                                          |
+| `try-rs --setup <shell>`                       | setup shell integration (fish, zsh, bash, power-shell, nu-shell) |
+| `try-rs --version`                             | Show application version                                         |
+| `try-rs --help`                                | Show help message                                                |
 
 ## 💡 Inspiration
 
@@ -196,8 +209,8 @@ This project is a Rust port and re-imagination of the excellent [try](https://gi
 
 While the original is a lightweight Ruby script, **try-rs** aims to bring the same philosophy, "Your experiments deserve a home", but with the performance, type safety, and modern TUI capabilities (using [Ratatui](https://github.com/ratatui/ratatui)) of the Rust ecosystem.
 
-
 ## 🤝 Contributing
+
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
 📄 License

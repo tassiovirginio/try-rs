@@ -651,6 +651,21 @@ pub fn run_app(
                             }
                         } else if c == 't' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.mode = AppMode::ThemeSelect;
+                        } else if matches!(c, 'k' | 'p')
+                            && key.modifiers.contains(event::KeyModifiers::CONTROL)
+                        {
+                            if app.selected_index > 0 {
+                                app.selected_index -= 1;
+                            }
+                        } else if matches!(c, 'j' | 'n')
+                            && key.modifiers.contains(event::KeyModifiers::CONTROL)
+                        {
+                            if app.selected_index < app.filtered_entries.len().saturating_sub(1) {
+                                app.selected_index += 1;
+                            }
+                        } else if c == 'u' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            app.query.clear();
+                            app.update_search();
                         } else {
                             app.query.push(c);
                             app.status_message = None;
@@ -698,12 +713,13 @@ pub fn run_app(
                 },
 
                 AppMode::ThemeSelect => match key.code {
-                    KeyCode::Esc | KeyCode::Char('c')
-                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
-                    {
+                    KeyCode::Esc => {
                         app.mode = AppMode::Normal;
                     }
-                    KeyCode::Up => {
+                    KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Up | KeyCode::Char('k' | 'p') => {
                         let i = match app.theme_list_state.selected() {
                             Some(i) => {
                                 if i > 0 {
@@ -716,7 +732,7 @@ pub fn run_app(
                         };
                         app.theme_list_state.select(Some(i));
                     }
-                    KeyCode::Down => {
+                    KeyCode::Down | KeyCode::Char('j' | 'n') => {
                         let i = match app.theme_list_state.selected() {
                             Some(i) => {
                                 if i < app.available_themes.len() - 1 {

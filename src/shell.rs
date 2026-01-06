@@ -76,7 +76,7 @@ pub fn setup_zsh() -> Result<()> {
             use std::io::Write;
             let mut file = fs::OpenOptions::new().append(true).open(&zshrc_path)?;
             writeln!(file, "\n# try-rs integration")?;
-            writeln!(file, "{}", source_cmd)?;
+            writeln!(file, "'{}'", source_cmd)?;
             eprintln!("Added configuration to ~/.zshrc");
         } else {
             eprintln!("Configuration already present in ~/.zshrc");
@@ -128,7 +128,7 @@ pub fn setup_bash() -> Result<()> {
             use std::io::Write;
             let mut file = fs::OpenOptions::new().append(true).open(&bashrc_path)?;
             writeln!(file, "\n# try-rs integration")?;
-            writeln!(file, "{}", source_cmd)?;
+            writeln!(file, "'{}'", source_cmd)?;
             eprintln!("Added configuration to ~/.bashrc");
         } else {
             eprintln!("Configuration already present in ~/.bashrc");
