@@ -12,11 +12,15 @@ use std::{
     time::SystemTime,
 };
 
+use crate::config::{get_file_config_toml_name, save_config};
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum AppMode {
     Normal,
     DeleteConfirm,
     ThemeSelect,
+    ConfigSavePrompt,
+    ConfigSaveLocationSelect,
 }
 
 // Data model (same as before)
@@ -172,10 +176,19 @@ pub struct App {
     // Theme switching
     pub available_themes: Vec<Theme>,
     pub theme_list_state: ListState,
+
+    // Config persistence
+    pub config_path: Option<PathBuf>,
+    pub config_location_state: ListState,
 }
 
 impl App {
-    pub fn new(path: PathBuf, theme: Theme, editor_cmd: Option<String>) -> Self {
+    pub fn new(
+        path: PathBuf,
+        theme: Theme,
+        editor_cmd: Option<String>,
+        config_path: Option<PathBuf>,
+    ) -> Self {
         let mut entries = Vec::new();
         if let Ok(read_dir) = fs::read_dir(&path) {
             for entry in read_dir.flatten() {
@@ -237,6 +250,8 @@ impl App {
             wants_editor: false,
             available_themes: themes,
             theme_list_state: theme_state,
+            config_path,
+            config_location_state: ListState::default(),
         }
     }
 
@@ -378,6 +393,54 @@ fn draw_theme_select(f: &mut Frame, app: &mut App) {
         .highlight_symbol(">> ");
 
     f.render_stateful_widget(list, popup_area, &mut app.theme_list_state);
+}
+
+fn draw_config_location_select(f: &mut Frame, app: &mut App) {
+    let area = f.area();
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(40),
+            Constraint::Length(8),
+            Constraint::Percentage(40),
+        ])
+        .split(area);
+
+    let popup_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(20),
+            Constraint::Percentage(60),
+            Constraint::Percentage(20),
+        ])
+        .split(popup_layout[1])[1];
+
+    f.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .title(" Select Config Location ")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(app.theme.popup_bg));
+
+    let config_name = get_file_config_toml_name();
+    let items = vec![
+        ListItem::new(format!("System Config (~/.config/try-rs/{})", config_name))
+            .style(Style::default().fg(app.theme.list_highlight_fg)),
+        ListItem::new(format!("Home Directory (~/{})", config_name))
+            .style(Style::default().fg(app.theme.list_highlight_fg)),
+    ];
+
+    let list = List::new(items)
+        .block(block)
+        .highlight_style(
+            Style::default()
+                .bg(app.theme.list_highlight_bg)
+                .fg(app.theme.list_highlight_fg)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(list, popup_area, &mut app.config_location_state);
 }
 
 pub fn run_app(
@@ -618,6 +681,19 @@ pub fn run_app(
             if app.mode == AppMode::ThemeSelect {
                 draw_theme_select(f, &mut app);
             }
+
+            if app.mode == AppMode::ConfigSavePrompt {
+                draw_popup(
+                    f,
+                    " Create Config? ",
+                    "Config file not found.\nCreate one now to save theme? (y/n)",
+                    &app.theme,
+                );
+            }
+
+            if app.mode == AppMode::ConfigSaveLocationSelect {
+                draw_config_location_select(f, &mut app);
+            }
         })?;
 
         if event::poll(std::time::Duration::from_millis(50))?
@@ -749,6 +825,101 @@ pub fn run_app(
                         if let Some(i) = app.theme_list_state.selected() {
                             if let Some(theme) = app.available_themes.get(i) {
                                 app.theme = theme.clone();
+
+                                // Auto-save logic
+                                if let Some(ref path) = app.config_path {
+                                    if let Err(e) = save_config(
+                                        path,
+                                        &app.theme,
+                                        &app.base_path,
+                                        &app.editor_cmd,
+                                    ) {
+                                        app.status_message = Some(format!("Error saving: {}", e));
+                                    } else {
+                                        app.status_message = Some("Theme saved.".to_string());
+                                    }
+                                    app.mode = AppMode::Normal;
+                                } else {
+                                    app.mode = AppMode::ConfigSavePrompt;
+                                }
+                            } else {
+                                app.mode = AppMode::Normal;
+                            }
+                        } else {
+                            app.mode = AppMode::Normal;
+                        }
+                    }
+                    _ => {}
+                },
+                AppMode::ConfigSavePrompt => match key.code {
+                    KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => {
+                        app.mode = AppMode::ConfigSaveLocationSelect;
+                        app.config_location_state.select(Some(0));
+                    }
+                    KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                        app.mode = AppMode::Normal;
+                    }
+                    _ => {}
+                },
+
+                AppMode::ConfigSaveLocationSelect => match key.code {
+                    KeyCode::Esc | KeyCode::Char('c')
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                    {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Up | KeyCode::Char('k' | 'p') => {
+                        let i = match app.config_location_state.selected() {
+                            Some(i) => {
+                                if i > 0 {
+                                    i - 1
+                                } else {
+                                    i
+                                }
+                            }
+                            None => 0,
+                        };
+                        app.config_location_state.select(Some(i));
+                    }
+                    KeyCode::Down | KeyCode::Char('j' | 'n') => {
+                        let i = match app.config_location_state.selected() {
+                            Some(i) => {
+                                if i < 1 {
+                                    i + 1
+                                } else {
+                                    i
+                                }
+                            } // Only 2 options
+                            None => 0,
+                        };
+                        app.config_location_state.select(Some(i));
+                    }
+                    KeyCode::Enter => {
+                        if let Some(i) = app.config_location_state.selected() {
+                            let config_name = get_file_config_toml_name();
+                            let path = if i == 0 {
+                                // ~/.config/try-rs/config.toml
+                                dirs::config_dir()
+                                    .unwrap_or_else(|| {
+                                        dirs::home_dir().expect("Folder not found").join(".config")
+                                    })
+                                    .join("try-rs")
+                                    .join(&config_name)
+                            } else {
+                                // ~/.try-rs/config.toml (Simulating home dir behavior as requested, or strictly home?)
+                                // User said: "paste de configuração ou na pasta home do sistema"
+                                dirs::home_dir()
+                                    .expect("Folder not found")
+                                    .join(&config_name)
+                            };
+
+                            if let Err(e) =
+                                save_config(&path, &app.theme, &app.base_path, &app.editor_cmd)
+                            {
+                                app.status_message = Some(format!("Error saving config: {}", e));
+                            } else {
+                                app.config_path = Some(path);
+                                app.status_message = Some("Theme saved!".to_string());
                             }
                         }
                         app.mode = AppMode::Normal;

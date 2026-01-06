@@ -33,7 +33,7 @@ fn main() -> Result<()> {
             std::process::exit(if err.use_stderr() { 1 } else { 0 });
         }
     };
-    let (tries_dir, theme, editor_cmd, is_first_run) = load_configuration();
+    let (tries_dir, theme, editor_cmd, is_first_run, config_path) = load_configuration();
 
     // Ensure the directory exists (either from config or default)
     if !tries_dir.exists() {
@@ -114,7 +114,12 @@ fn main() -> Result<()> {
         let backend = CrosstermBackend::new(stderr);
         let mut terminal = Terminal::new(backend)?;
 
-        let app = App::new(tries_dir.clone(), theme, editor_cmd.clone());
+        let app = App::new(
+            tries_dir.clone(),
+            theme,
+            editor_cmd.clone(),
+            config_path.clone(),
+        );
         // Run the app and capture the result
         let res = run_app(&mut terminal, app);
 

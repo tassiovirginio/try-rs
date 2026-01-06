@@ -2,11 +2,13 @@ use crate::tui::Theme;
 use crate::utils::expand_path;
 use ratatui::style::Color;
 use serde::Deserialize;
+use serde::Serialize;
 use std::fs;
-use std::path::PathBuf;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct ThemeConfig {
     pub title_try: Option<String>,
     pub title_rs: Option<String>,
@@ -20,7 +22,7 @@ pub struct ThemeConfig {
     pub popup_text: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     pub tries_path: Option<String>,
     pub colors: Option<ThemeConfig>,
@@ -76,7 +78,7 @@ pub fn load_file_config_toml_if_exists() -> Option<Config> {
     None
 }
 
-pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
+pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool, Option<PathBuf>) {
     // Default Path: Work/tries
     let default_path = dirs::home_dir()
         .expect("Folder not found")
@@ -93,6 +95,27 @@ pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
     let mut is_first_run = false;
 
     // Try to load any existing config
+    // Try to load any existing config
+    let loaded_config_path = if let Some(path) = std::env::var_os("TRY_CONFIG_DIR")
+        .map(|p| PathBuf::from(p).join(get_file_config_toml_name()))
+        .filter(|p| p.exists())
+    {
+        Some(path)
+    } else if let Some(path) = dirs::config_dir()
+        .map(|p| p.join("try-rs").join(get_file_config_toml_name()))
+        .filter(|p| p.exists())
+    {
+        Some(path)
+    } else {
+        dirs::home_dir()
+            .map(|p| {
+                p.join(".config")
+                    .join("try-rs")
+                    .join(get_file_config_toml_name())
+            })
+            .filter(|p| p.exists())
+    };
+
     if let Some(config) = load_file_config_toml_if_exists() {
         if let Some(path_str) = config.tries_path
             && !try_path_specified
@@ -124,22 +147,79 @@ pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool) {
             };
         }
     } else {
-        // No config found. We should create the default one.
-        // Calculate the default location to write to: ~/.config/try-rs/config.toml
-        let config_dir = dirs::config_dir()
-            .unwrap_or_else(|| dirs::home_dir().expect("Folder not found").join(".config"));
-        let app_config_dir = config_dir.join("try-rs");
-        let config_file = app_config_dir.join("config.toml");
+        // No config found. We used to create it here, but now we wait for the user to save.
+        // This is a "first run" scenario for shell setup purposes.
+        is_first_run = true;
+    }
 
-        if fs::create_dir_all(&app_config_dir).is_ok() {
-            let default_content = format!("tries_path = {final_path:?}");
-            // We only write if the file really doesn't exist (double check to be safe)
-            if !config_file.exists() {
-                let _ = fs::write(&config_file, default_content);
-                is_first_run = true;
-            }
+    (
+        final_path,
+        theme,
+        editor_cmd,
+        is_first_run,
+        loaded_config_path,
+    )
+}
+
+fn color_to_string(c: Color) -> String {
+    match c {
+        Color::Reset => "Reset".to_string(),
+        Color::Black => "Black".to_string(),
+        Color::Red => "Red".to_string(),
+        Color::Green => "Green".to_string(),
+        Color::Yellow => "Yellow".to_string(),
+        Color::Blue => "Blue".to_string(),
+        Color::Magenta => "Magenta".to_string(),
+        Color::Cyan => "Cyan".to_string(),
+        Color::Gray => "Gray".to_string(),
+        Color::DarkGray => "DarkGray".to_string(),
+        Color::LightRed => "LightRed".to_string(),
+        Color::LightGreen => "LightGreen".to_string(),
+        Color::LightYellow => "LightYellow".to_string(),
+        Color::LightBlue => "LightBlue".to_string(),
+        Color::LightMagenta => "LightMagenta".to_string(),
+        Color::LightCyan => "LightCyan".to_string(),
+        Color::White => "White".to_string(),
+        Color::Rgb(r, g, b) => format!("#{r:02x}{g:02x}{b:02x}"),
+        Color::Indexed(i) => format!("{i}"),
+    }
+}
+
+pub fn save_config(
+    path: &Path,
+    theme: &Theme,
+    tries_path: &Path,
+    editor: &Option<String>,
+) -> std::io::Result<()> {
+    let theme_config = ThemeConfig {
+        title_try: Some(color_to_string(theme.title_try)),
+        title_rs: Some(color_to_string(theme.title_rs)),
+        search_box: Some(color_to_string(theme.search_box)),
+        list_date: Some(color_to_string(theme.list_date)),
+        list_highlight_bg: Some(color_to_string(theme.list_highlight_bg)),
+        list_highlight_fg: Some(color_to_string(theme.list_highlight_fg)),
+        help_text: Some(color_to_string(theme.help_text)),
+        status_message: Some(color_to_string(theme.status_message)),
+        popup_bg: Some(color_to_string(theme.popup_bg)),
+        popup_text: Some(color_to_string(theme.popup_text)),
+    };
+
+    let config = Config {
+        tries_path: Some(tries_path.to_string_lossy().to_string()), // Persist current path
+        colors: Some(theme_config),
+        editor: editor.clone(),
+    };
+
+    let toml_string =
+        toml::to_string(&config).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent)?;
         }
     }
 
-    (final_path, theme, editor_cmd, is_first_run)
+    let mut file = fs::File::create(path)?;
+    file.write_all(toml_string.as_bytes())?;
+    Ok(())
 }
