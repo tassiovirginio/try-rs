@@ -1,9 +1,10 @@
 <p align="center">
   <img src="https://raw.githubusercontent.com/tassiovirginio/try-rs.site/refs/heads/main/logo.png" alt="Centered image" height="150">
-  <h1>🦀 try-rs 🦀</h1>
 </p>
 
-site: [try-rs.org](https://try-rs.org)
+<p align="center">
+<a href="https://try-rs.org">try-rs.org</a>
+</p>p>
 
 > **A blazing fast, Rust-based workspace manager for your temporary experiments.**
 
