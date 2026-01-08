@@ -11,25 +11,25 @@
 
 ![try-rs.gif](try-rs.gif)
 
-## ✨ Features
+## Features
 
 | Feature                     | Description                                                                            |
 | :-------------------------- | :------------------------------------------------------------------------------------- |
-| **🏎️ Blazing Fast**         | Built in Rust, compiled to native binary. No interpreter lag.                          |
-| **🖼️ Rich TUI**             | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
-| **🔍 Fuzzy Search**         | Instantly find old experiments with smart matching.                                    |
-| **📅 Auto-Dating**          | Creates directories like `rust-test` automatically.                                    |
-| ** Git Integration**       | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
-| **👀 Content Preview**      | Inspect files inside a folder before entering it.                                      |
-| **📝 Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
-| **🎨 Theming**              | Switch themes at runtime (`Ctrl+T`) or customize via config.                           |
-| **🗑️ Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
-| **⚙️ Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
-| **🐚 Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
-| **💻 Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
-| **🏷️ Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
+| ** Blazing Fast**         | Built in Rust, compiled to native binary. No interpreter lag.                          |
+| ** Rich TUI**             | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
+| ** Fuzzy Search**         | Instantly find old experiments with smart matching.                                    |
+| ** Auto-Dating**          | Creates directories like `rust-test` automatically.                                    |
+| ** Git Integration**       | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
+| ** Content Preview**      | Inspect files inside a folder before entering it.                                      |
+| ** Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
+| ** Theming**              | Switch themes at runtime (`Ctrl+T`) or customize via config.                           |
+| ** Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
+| ** Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
+| ** Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
+| ** Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
+| ** Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
 
-## 📦 Installation
+## Installation
 
 ### Prerequisites
 
@@ -67,13 +67,13 @@ nix profile install github:tassiovirginio/try-rs
 
 On the first run, **try-rs** will attempt to detect your shell and ask if you want to automatically configure the shell integration.
 
-⚙️ Configuration
+## Configuration
 
 1. Setup the Shell Integration
 
 Since try-rs needs to change your shell's current directory, it requires a small wrapper function.
 
-🐟 Fish Shell (Recommended)
+- Fish Shell (Recommended)
 
 ```bash
 try-rs --setup fish
@@ -85,25 +85,25 @@ try-rs --setup fish
 abbr --add try try-rs
 ```
 
-🐚 Zsh
+- Zsh
 
 ```bash
 try-rs --setup zsh
 ```
 
-🐚 Bash
+- Bash
 
 ```bash
 try-rs --setup bash
 ```
 
-🐚 Power-shell
+- Power-shell
 
 ```bash
 try-rs --setup power-shell
 ```
 
-🐚 Nushell
+- Nushell
 
 ```bash
 try-rs --setup nu-shell
@@ -150,7 +150,7 @@ You can also configure **try-rs** using environment variables:
 | `TRY_CONFIG`        | Overrides the config filename (defaults to `config.toml`). |
 | `VISUAL` / `EDITOR` | Default editor to use if not specified in `config.toml`.   |
 
-🚀 Usage
+## Usage
 
 Simply type try-rs (or your alias) in your terminal.
 
@@ -175,7 +175,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Enter`                           | Select theme         |
 | `Esc/Ctrl+C`                      | Close theme selector |
 
-### 🎨 Themes
+## Themes
 
 You can switch between themes at runtime by pressing `Ctrl+T`. The following themes are available:
 
@@ -188,7 +188,7 @@ You can switch between themes at runtime by pressing `Ctrl+T`. The following the
 
 You can also define a custom theme in your `config.toml`.
 
-### CLI Commands
+## CLI Commands
 
 You can also bypass the UI:
 
@@ -203,13 +203,13 @@ You can also bypass the UI:
 | `try-rs --version`                             | Show application version                                         |
 | `try-rs --help`                                | Show help message                                                |
 
-## 💡 Inspiration
+## Inspiration
 
 This project is a Rust port and re-imagination of the excellent [try](https://github.com/tobi/try) tool by **Tobi Lütke**.
 
 While the original is a lightweight Ruby script, **try-rs** aims to bring the same philosophy, "Your experiments deserve a home", but with the performance, type safety, and modern TUI capabilities (using [Ratatui](https://github.com/ratatui/ratatui)) of the Rust ecosystem.
 
-## 🤝 Contributing
+## Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
