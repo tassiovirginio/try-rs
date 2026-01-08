@@ -1,4 +1,8 @@
-# 🦀 try-rs - [try-rs.org](https://try-rs.org) 🦀
+![LOGO](https://raw.githubusercontent.com/tassiovirginio/try-rs.site/refs/heads/main/logo.png)
+
+# 🦀 try-rs 🦀
+
+site: [try-rs.org](https://try-rs.org)
 
 > **A blazing fast, Rust-based workspace manager for your temporary experiments.**
 
