@@ -4,14 +4,23 @@
 
 <p align="center">
 <a href="https://try-rs.org">try-rs.org</a>
-</p>p>
+<br>
+A blazing fast, Rust-based workspace manager for your temporary experiments.
+<br>
+</p>
 
-> **A blazing fast, Rust-based workspace manager for your temporary experiments.**
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/built_with-Rust-d45500.svg" alt="Rust">
+  <a href="https://github.com/tassiovirginio/try-rs">
+    <img src="https://img.shields.io/badge/nix-ready-brightgreen?logo=nixos" alt="Nix ready">
+  </a>
+  <a href="https://aur.archlinux.org/packages/try-rs-bin">
+    <img src="https://img.shields.io/aur/version/try-rs-bin" alt="AUR version">
+  </a>
+</p>
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Rust](https://img.shields.io/badge/built_with-Rust-d45500.svg)
-[![Nix ready](https://img.shields.io/badge/nix-ready-brightgreen?logo=nixos)](https://github.com/tassiovirginio/try-rs)
-[![AUR version](https://img.shields.io/aur/version/try-rs-bin)](https://aur.archlinux.org/packages/try-rs-bin)
+
 
 **try-rs** is a CLI tool designed to manage the chaos of temporary projects. Instead of cluttering your Desktop or `/tmp` with `test1`, `new-test`, and `final-test`, `try-rs` organizes them into date-prefixed directories, offering a robust TUI (Terminal User Interface) to create, navigate, and clean up your experiments.
 
