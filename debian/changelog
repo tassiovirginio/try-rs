@@ -1,3 +1,9 @@
+try-rs (0.1.37-1) noble; urgency=medium
+
+  * Adding the About popup and other visual improvements.
+
+-- Tassio Virginio <tassiovirginio@gmail.com>  Mon, 09 Jan 2026 12:55:00 -0300
+
 try-rs (0.1.36-1) noble; urgency=medium
 
   * Sistema de temas com 6 opções predefinidas.
