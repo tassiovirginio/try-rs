@@ -179,6 +179,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Ctrl+D`                                              | Delete the selected directory (triggers popup)         |
 | `Ctrl+E`                                              | Open in editor (configured in config.toml)             |
 | `Ctrl+T`                                              | Open theme selector                                    |
+| `Ctrl+A`                                              | Open about popup                                       |
 | `Esc/Ctrl+C`                                          | Cancel / Close Popup / Exit                            |
 
 #### Theme Selector Key Bindings

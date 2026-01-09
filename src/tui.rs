@@ -21,6 +21,7 @@ pub enum AppMode {
     ThemeSelect,
     ConfigSavePrompt,
     ConfigSaveLocationSelect,
+    About,
 }
 
 #[derive(Clone)]
@@ -432,6 +433,91 @@ fn draw_config_location_select(f: &mut Frame, app: &mut App) {
     f.render_stateful_widget(list, popup_area, &mut app.config_location_state);
 }
 
+fn draw_about_popup(f: &mut Frame, theme: &Theme) {
+    let area = f.area();
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(25),
+            Constraint::Length(12),
+            Constraint::Percentage(25),
+        ])
+        .split(area);
+
+    let popup_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Percentage(40),
+            Constraint::Percentage(30),
+        ])
+        .split(popup_layout[1])[1];
+
+    f.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .title(" About ")
+        .borders(Borders::ALL)
+        .style(Style::default().bg(theme.popup_bg));
+
+    let text = vec![
+        Line::from(vec![
+            Span::styled(
+                "🦀 try",
+                Style::default()
+                    .fg(theme.title_try)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled("-", Style::default().fg(Color::DarkGray)),
+            Span::styled(
+                "rs",
+                Style::default()
+                    .fg(theme.title_rs)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!(" v{}", env!("CARGO_PKG_VERSION")),
+                Style::default().fg(Color::DarkGray),
+            ),
+        ]),
+        Line::from(""),
+        Line::from(Span::styled(
+            "Tassio Virginio",
+            Style::default().fg(theme.list_highlight_fg),
+        )),
+        Line::from(""),
+        Line::from(Span::styled(
+            "try-rs.org",
+            Style::default().fg(theme.search_box),
+        )),
+        Line::from(Span::styled(
+            "github.com/tassiovirginio/try-rs",
+            Style::default().fg(theme.search_box),
+        )),
+        Line::from(""),
+        Line::from(vec![
+            Span::styled("📜 License: ", Style::default().fg(theme.help_text)),
+            Span::styled(
+                "MIT",
+                Style::default()
+                    .fg(theme.status_message)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ]),
+        Line::from(""),
+        Line::from(Span::styled(
+            "Press Esc to close",
+            Style::default().fg(theme.help_text),
+        )),
+    ];
+
+    let paragraph = Paragraph::new(text)
+        .block(block)
+        .alignment(Alignment::Center);
+
+    f.render_widget(paragraph, popup_area);
+}
+
 pub fn run_app(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     mut app: App,
@@ -441,7 +527,6 @@ pub fn run_app(
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
-                    Constraint::Length(1),
                     Constraint::Length(3),
                     Constraint::Min(1),
                     Constraint::Length(1),
@@ -451,40 +536,12 @@ pub fn run_app(
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
-                .split(chunks[2]);
-
-            let title = Paragraph::new(Line::from(vec![
-                Span::styled(
-                    "🦀 try",
-                    Style::default()
-                        .fg(app.theme.title_try)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::styled("-", Style::default().fg(Color::DarkGray)),
-                Span::styled(
-                    "rs",
-                    Style::default()
-                        .fg(app.theme.title_rs)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::styled(
-                    format!(" v{} ", env!("CARGO_PKG_VERSION")),
-                    Style::default().fg(Color::DarkGray),
-                ),
-                Span::styled(
-                    "🦀",
-                    Style::default()
-                        .fg(app.theme.title_rs)
-                        .add_modifier(Modifier::BOLD),
-                ),
-            ]))
-            .alignment(Alignment::Center);
-            f.render_widget(title, chunks[0]);
+                .split(chunks[1]);
 
             let search_text = Paragraph::new(app.query.clone())
                 .style(Style::default().fg(app.theme.search_box))
                 .block(Block::default().borders(Borders::ALL).title(" Search/New "));
-            f.render_widget(search_text, chunks[1]);
+            f.render_widget(search_text, chunks[0]);
 
             let items: Vec<ListItem> = app
                 .filtered_entries
@@ -647,6 +704,8 @@ pub fn run_app(
                     Span::raw(" Edit | "),
                     Span::styled("Ctrl-T", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Theme | "),
+                    Span::styled("Ctrl-A", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" About | "),
                     Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Quit"),
                 ])
@@ -656,7 +715,7 @@ pub fn run_app(
                 .style(Style::default().fg(app.theme.help_text))
                 .alignment(Alignment::Center);
 
-            f.render_widget(help_message, chunks[3]);
+            f.render_widget(help_message, chunks[2]);
 
             if app.mode == AppMode::DeleteConfirm
                 && let Some(selected) = app.filtered_entries.get(app.selected_index)
@@ -680,6 +739,10 @@ pub fn run_app(
 
             if app.mode == AppMode::ConfigSaveLocationSelect {
                 draw_config_location_select(f, &mut app);
+            }
+
+            if app.mode == AppMode::About {
+                draw_about_popup(f, &app.theme);
             }
         })?;
 
@@ -714,6 +777,8 @@ pub fn run_app(
                             }
                         } else if c == 't' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.mode = AppMode::ThemeSelect;
+                        } else if c == 'a' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            app.mode = AppMode::About;
                         } else if matches!(c, 'k' | 'p')
                             && key.modifiers.contains(event::KeyModifiers::CONTROL)
                         {
@@ -905,6 +970,15 @@ pub fn run_app(
                                 app.status_message = Some("Theme saved!".to_string());
                             }
                         }
+                        app.mode = AppMode::Normal;
+                    }
+                    _ => {}
+                },
+                AppMode::About => match key.code {
+                    KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') | KeyCode::Char(' ') => {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.mode = AppMode::Normal;
                     }
                     _ => {}
