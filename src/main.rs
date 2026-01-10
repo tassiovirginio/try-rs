@@ -15,6 +15,7 @@ use std::{
 mod cli;
 mod config;
 mod shell;
+mod themes;
 mod tui;
 mod utils;
 
