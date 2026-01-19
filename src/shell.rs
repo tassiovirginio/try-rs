@@ -1,3 +1,4 @@
+use crate::config::{get_base_config_dir, get_config_dir};
 use anyhow::Result;
 use std::fs;
 use std::io::Write;
@@ -13,21 +14,17 @@ pub enum ShellType {
 }
 
 pub fn get_shell_integration_path(shell: &ShellType) -> PathBuf {
-    let config_dir = dirs::config_dir().unwrap_or_else(|| {
-        dirs::home_dir()
-            .expect("Could not find home directory")
-            .join(".config")
-    });
+    let config_dir = match shell {
+        ShellType::Fish => get_base_config_dir(),
+        _ => get_config_dir(),
+    };
 
     match shell {
-        ShellType::Fish => config_dir
-            .join("fish")
-            .join("functions")
-            .join("try-rs.fish"),
-        ShellType::Zsh => config_dir.join("try-rs").join("try-rs.zsh"),
-        ShellType::Bash => config_dir.join("try-rs").join("try-rs.bash"),
-        ShellType::PowerShell => config_dir.join("try-rs").join("try-rs.ps1"),
-        ShellType::NuShell => config_dir.join("try-rs").join("try-rs.nu"),
+        ShellType::Fish => config_dir.join("fish").join("functions").join("try-rs.fish"),
+        ShellType::Zsh => config_dir.join("try-rs.zsh"),
+        ShellType::Bash => config_dir.join("try-rs.bash"),
+        ShellType::PowerShell => config_dir.join("try-rs.ps1"),
+        ShellType::NuShell => config_dir.join("try-rs.nu"),
     }
 }
 

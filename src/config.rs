@@ -33,6 +33,20 @@ pub fn get_file_config_toml_name() -> String {
     std::env::var("TRY_CONFIG").unwrap_or("config.toml".to_string())
 }
 
+pub fn get_config_dir() -> PathBuf {
+    std::env::var_os("TRY_CONFIG_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| get_base_config_dir().join("try-rs"))
+}
+
+pub fn get_base_config_dir() -> PathBuf {
+    dirs::config_dir().unwrap_or_else(|| {
+        dirs::home_dir()
+            .expect("Could not find home directory")
+            .join(".config")
+    })
+}
+
 pub fn load_file_config_toml_if_exists() -> Option<Config> {
     if let Some(env_dir) = std::env::var_os("TRY_CONFIG_DIR") {
         let config_path = PathBuf::from(env_dir).join(get_file_config_toml_name());
