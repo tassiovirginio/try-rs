@@ -1,3 +1,15 @@
+try-rs (0.1.40-1) noble; urgency=medium
+
+  * Update libs.
+
+ -- Tassio Virginio <tassiovirginio@gmail.com>  Mon, 20 Jan 2026 01:21:50 -0300
+
+try-rs (0.1.39-1) noble; urgency=medium
+
+  * Update libs.
+
+ -- Tassio Virginio <tassiovirginio@gmail.com>  Mon, 20 Jan 2026 01:10:50 -0300
+
 try-rs (0.1.38-1) noble; urgency=medium
 
   * fix(macOS): properly quote source path and fix initial shell config detection (#17)
