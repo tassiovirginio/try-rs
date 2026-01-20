@@ -53,21 +53,21 @@ fn main() -> Result<()> {
 
     if let Some(worktree_name) = cli.worktree {
         if !is_inside_git_repo() {
-            eprintln!("Erro: Não está em um repositório git.");
-            eprintln!("O comando -w/--worktree só funciona dentro de um repositório git.");
+            eprintln!("Error: Not inside a git repository.");
+            eprintln!("The -w/--worktree option only works inside a git repository.");
             std::process::exit(1);
         }
 
         let new_path = tries_dir.join(&worktree_name);
 
         if new_path.exists() {
-            eprintln!("Worktree '{}' já existe.", worktree_name);
+            eprintln!("Worktree '{}' already exists.", worktree_name);
             println!("cd '{}'", new_path.to_string_lossy());
             return Ok(());
         }
 
         eprintln!(
-            "Criando worktree '{}' em {}...",
+            "Creating worktree '{}' at {}...",
             worktree_name,
             new_path.display()
         );
@@ -83,7 +83,7 @@ fn main() -> Result<()> {
                 println!("cd '{}'", new_path.to_string_lossy());
             }
             _ => {
-                eprintln!("Erro: Falha ao criar worktree.");
+                eprintln!("Error: Failed to create worktree.");
                 std::process::exit(1);
             }
         }

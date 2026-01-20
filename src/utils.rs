@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
-/// Verifica se o diretório atual está dentro de um repositório git
+/// Checks if current directory is inside a git repository
 pub fn is_inside_git_repo() -> bool {
     Command::new("git")
         .args(["rev-parse", "--is-inside-work-tree"])
