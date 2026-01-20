@@ -1,6 +1,6 @@
 [package]
 name = "try-rs"
-version = "0.1.39"
+version = "0.1.40"
 authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
 homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
@@ -15,12 +15,12 @@ keywords = ["tui", "workspace", "experiments", "cli", "ratatui"]
 ratatui = "0.30.0"
 crossterm = "0.29.0"
 dirs = "6.0.0"
-fuzzy-matcher = "0.3"
-chrono = "0.4"
-anyhow = "1.0"
-serde = { version = "1.0", features = ["derive"], default-features = false}
-toml = "0.8"
-clap = { version = "4.5.53", features = ["derive"] }
+fuzzy-matcher = "0.3.7"
+chrono = "0.4.43"
+anyhow = "1.0.100"
+serde = { version = "1.0.228", features = ["derive"], default-features = false }
+toml = "0.9.11+spec-1.1.0"
+clap = { version = "4.5.54", features = ["derive"] }
 
 [package.metadata.deb]
 maintainer = "Tassio Virginio <tassio.virginio@gmail.com>"
@@ -35,8 +35,16 @@ depends = "$auto"
 section = "utils"
 priority = "optional"
 assets = [
-    ["target/release/try-rs", "usr/bin/", "755"],
-    ["README.md", "usr/share/doc/try-rs/README.md", "644"],
+  [
+    "target/release/try-rs",
+    "usr/bin/",
+    "755",
+  ],
+  [
+    "README.md",
+    "usr/share/doc/try-rs/README.md",
+    "644",
+  ],
 ]
 
 [profile.release]
