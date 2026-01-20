@@ -32,6 +32,7 @@ pub struct TryEntry {
     pub created: SystemTime,
     pub score: i64,
     pub is_git: bool,
+    pub is_worktree: bool,
     pub is_mise: bool,
     pub is_cargo: bool,
     pub is_maven: bool,
@@ -75,7 +76,9 @@ impl App {
                     && metadata.is_dir()
                 {
                     let name = entry.file_name().to_string_lossy().to_string();
-                    let is_git = entry.path().join(".git").exists();
+                    let git_path = entry.path().join(".git");
+                    let is_git = git_path.exists();
+                    let is_worktree = git_path.is_file();
                     let is_mise = entry.path().join("mise.toml").exists();
                     let is_cargo = entry.path().join("Cargo.toml").exists();
                     let is_maven = entry.path().join("pom.xml").exists();
@@ -89,6 +92,7 @@ impl App {
                         created: metadata.created().unwrap_or(SystemTime::UNIX_EPOCH),
                         score: 0,
                         is_git,
+                        is_worktree,
                         is_mise,
                         is_cargo,
                         is_maven,
@@ -434,6 +438,8 @@ pub fn run_app(
                     let date_width = date_text.chars().count();
                     let git_icon = if entry.is_git { " " } else { "" };
                     let git_width = if entry.is_git { 2 } else { 0 };
+                    let worktree_icon = if entry.is_worktree { "󰙅" } else { "" };
+                    let worktree_width = if entry.is_worktree { 2 } else { 0 };
                     let mise_icon = if entry.is_mise { "󰬔 " } else { "" };
                     let mise_width = if entry.is_mise { 2 } else { 0 };
                     let cargo_icon = if entry.is_cargo { " " } else { "" };
@@ -454,6 +460,7 @@ pub fn run_app(
 
                     let reserved = date_width
                         + git_width
+                        + worktree_width
                         + mise_width
                         + cargo_width
                         + maven_width
@@ -480,6 +487,7 @@ pub fn run_app(
                                     + name_len
                                     + date_width
                                     + git_width
+                                    + worktree_width
                                     + mise_width
                                     + cargo_width
                                     + maven_width
@@ -501,6 +509,10 @@ pub fn run_app(
                         Span::styled(go_icon, Style::default().fg(Color::Rgb(0, 173, 216))),
                         Span::styled(python_icon, Style::default().fg(Color::Yellow)),
                         Span::styled(mise_icon, Style::default().fg(Color::Rgb(250, 179, 135))),
+                        Span::styled(
+                            worktree_icon,
+                            Style::default().fg(Color::Rgb(100, 180, 100)),
+                        ),
                         Span::styled(git_icon, Style::default().fg(Color::Rgb(240, 80, 50))),
                         Span::styled(date_text, Style::default().fg(app.theme.list_date)),
                     ]);

@@ -1,4 +1,14 @@
 use std::path::PathBuf;
+use std::process::Command;
+
+/// Verifica se o diretório atual está dentro de um repositório git
+pub fn is_inside_git_repo() -> bool {
+    Command::new("git")
+        .args(["rev-parse", "--is-inside-work-tree"])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
 
 pub fn expand_path(path_str: &str) -> PathBuf {
     if (path_str.starts_with("~/") || (cfg!(windows) && path_str.starts_with("~\\")))

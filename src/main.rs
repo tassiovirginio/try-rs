@@ -23,7 +23,7 @@ use cli::{Cli, Shell};
 use config::load_configuration;
 use shell::{setup_bash, setup_fish, setup_nushell, setup_powershell, setup_zsh};
 use tui::{App, run_app};
-use utils::{extract_repo_name, is_git_url};
+use utils::{extract_repo_name, is_git_url, is_inside_git_repo};
 
 fn main() -> Result<()> {
     let cli = match Cli::try_parse() {
@@ -48,6 +48,46 @@ fn main() -> Result<()> {
             Shell::PowerShell => setup_powershell()?,
             Shell::NuShell => setup_nushell()?,
         }
+        return Ok(());
+    }
+
+    if let Some(worktree_name) = cli.worktree {
+        if !is_inside_git_repo() {
+            eprintln!("Erro: Não está em um repositório git.");
+            eprintln!("O comando -w/--worktree só funciona dentro de um repositório git.");
+            std::process::exit(1);
+        }
+
+        let new_path = tries_dir.join(&worktree_name);
+
+        if new_path.exists() {
+            eprintln!("Worktree '{}' já existe.", worktree_name);
+            println!("cd '{}'", new_path.to_string_lossy());
+            return Ok(());
+        }
+
+        eprintln!(
+            "Criando worktree '{}' em {}...",
+            worktree_name,
+            new_path.display()
+        );
+
+        let status = std::process::Command::new("git")
+            .args(["worktree", "add", new_path.to_str().unwrap()])
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .status();
+
+        match status {
+            Ok(s) if s.success() => {
+                println!("cd '{}'", new_path.to_string_lossy());
+            }
+            _ => {
+                eprintln!("Erro: Falha ao criar worktree.");
+                std::process::exit(1);
+            }
+        }
+
         return Ok(());
     }
 

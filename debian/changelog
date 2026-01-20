@@ -1,3 +1,9 @@
+try-rs (0.1.42-1) noble; urgency=medium
+
+  * Add git worktree support.
+
+ -- Tassio Virginio <tassiovirginio@gmail.com>  Tue, 20 Jan 2026 19:27:43 -0300
+
 try-rs (0.1.41-1) noble; urgency=medium
 
   * fix: respect TRY_CONFIG_DIR for shell integration paths
