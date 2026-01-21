@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/tassiovirginio/try-rs.site/refs/heads/main/logo.png" alt="Centered image" height="150">
+  <img src="https://raw.githubusercontent.com/tassiovirginio/try-rs.site/refs/heads/main/logo2.png" alt="Centered image" height="150">
 </p>
 
 <p align="center">
