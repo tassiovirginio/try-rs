@@ -1,3 +1,9 @@
+try-rs (0.1.43-1) noble; urgency=medium
+
+  * Fix: redirect git worktree add command's stdout to stderr.
+
+ -- Tassio Virginio <tassiovirginio@gmail.com>  Wed, 21 Jan 2026 10:00:20 -0300
+
 try-rs (0.1.42-1) noble; urgency=medium
 
   * Add git worktree support.
