@@ -74,7 +74,7 @@ fn main() -> Result<()> {
 
         let status = std::process::Command::new("git")
             .args(["worktree", "add", new_path.to_str().unwrap()])
-            .stdout(Stdio::inherit())
+            .stdout(std::io::stderr())
             .stderr(Stdio::inherit())
             .status();
 
