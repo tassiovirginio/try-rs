@@ -20,21 +20,19 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
   </a>
 </p>
 
-
-
 **try-rs** is a CLI tool designed to manage the chaos of temporary projects. Instead of cluttering your Desktop or `/tmp` with `test1`, `new-test`, and `final-test`, `try-rs` organizes them into date-prefixed directories, offering a robust TUI (Terminal User Interface) to create, navigate, and clean up your experiments.
 
 ![try-rs.gif](try-rs.gif)
 
 ## Features
 
-| Feature                     | Description                                                                            |
-| :-------------------------- | :------------------------------------------------------------------------------------- |
+| Feature                  | Description                                                                            |
+| :----------------------- | :------------------------------------------------------------------------------------- |
 | **Blazing Fast**         | Built in Rust, compiled to native binary. No interpreter lag.                          |
 | **Rich TUI**             | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
 | **Fuzzy Search**         | Instantly find old experiments with smart matching.                                    |
 | **Auto-Dating**          | Creates directories like `rust-test` automatically.                                    |
-| **Git Integration**       | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
+| **Git Integration**      | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
 | **Content Preview**      | Inspect files inside a folder before entering it.                                      |
 | **Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
 | **Theming**              | Switch themes at runtime (`Ctrl+T`) or customize via config.                           |
@@ -42,7 +40,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
 | **Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
-| **Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
+| **Icons Identification** | Supports icons identification projects (` 󰬔      `).                              |
 
 ## Installation
 
@@ -214,6 +212,7 @@ You can also bypass the UI:
 | `try-rs <https://github.com/user/repo>`        | Clones a repository into a dated folder                          |
 | `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name                  |
 | `try-rs -s <url>`                              | Shallow clone (depth 1)                                          |
+| `try-rs -w <name>`                             | Create a git worktree from current repository                    |
 | `try-rs --setup <shell>`                       | setup shell integration (fish, zsh, bash, power-shell, nu-shell) |
 | `try-rs --version`                             | Show application version                                         |
 | `try-rs --help`                                | Show help message                                                |
