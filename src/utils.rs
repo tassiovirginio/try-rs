@@ -1,13 +1,54 @@
-use std::path::PathBuf;
+use std::ffi::OsString;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Checks if current directory is inside a git repository
-pub fn is_inside_git_repo() -> bool {
+pub fn is_inside_git_repo<P: AsRef<Path>>(path: P) -> bool {
     Command::new("git")
         .args(["rev-parse", "--is-inside-work-tree"])
+        .current_dir(path.as_ref())
         .output()
         .map(|output| output.status.success())
         .unwrap_or(false)
+}
+
+pub fn is_git_worktree_locked(path: &Path) -> bool {
+    let dot_git = path.join(".git");
+    if dot_git.is_file() {
+        let parent = parse_dot_git(&dot_git);
+        match parent {
+            Ok(parent_path) => {
+                return parent_path.join("locked").exists();
+            }
+            Err(_) => {
+                return false;
+            }
+        }
+    }
+    false
+}
+
+fn parse_dot_git(dot_git: &Path) -> std::io::Result<PathBuf> {
+    Ok(first_line(&std::fs::read(dot_git)?).into())
+}
+
+pub fn first_line(bytes: &[u8]) -> OsString {
+    <std::ffi::OsString as std::os::unix::ffi::OsStringExt>::from_vec(
+        bytes
+            .iter()
+            .copied()
+            .skip_while(|&b| b != b' ')
+            .skip(1)
+            .take_while(|&b| b != b'\n')
+            .collect::<Vec<_>>(),
+    )
+}
+
+pub fn remove_git_worktree(path_to_remove: &Path) -> std::io::Result<std::process::Output> {
+    Command::new("git")
+        .args(["worktree", "remove", "."])
+        .current_dir(path_to_remove)
+        .output()
 }
 
 pub fn expand_path(path_str: &str) -> PathBuf {

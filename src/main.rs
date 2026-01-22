@@ -23,7 +23,6 @@ use cli::{Cli, Shell};
 use config::load_configuration;
 use shell::{setup_bash, setup_fish, setup_nushell, setup_powershell, setup_zsh};
 use tui::{App, run_app};
-use utils::{extract_repo_name, is_git_url, is_inside_git_repo};
 
 fn main() -> Result<()> {
     let cli = match Cli::try_parse() {
@@ -52,7 +51,7 @@ fn main() -> Result<()> {
     }
 
     if let Some(worktree_name) = cli.worktree {
-        if !is_inside_git_repo() {
+        if !utils::is_inside_git_repo(".") {
             eprintln!("Error: Not inside a git repository.");
             eprintln!("The -w/--worktree option only works inside a git repository.");
             std::process::exit(1);
@@ -168,8 +167,8 @@ fn main() -> Result<()> {
                 println!("cd '{}'", target_path.to_string_lossy());
             }
         } else {
-            if is_git_url(&selection) {
-                let repo_name = extract_repo_name(&selection);
+            if utils::is_git_url(&selection) {
+                let repo_name = utils::extract_repo_name(&selection);
 
                 let folder_name = cli.destination.clone().unwrap_or(repo_name);
                 let new_path = tries_dir.join(&folder_name);
