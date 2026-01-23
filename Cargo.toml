@@ -1,6 +1,6 @@
 [package]
 name = "try-rs"
-version = "0.1.44"
+version = "0.1.45"
 authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
 homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
@@ -21,6 +21,7 @@ anyhow = "1.0.100"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
 toml = "0.9.11+spec-1.1.0"
 clap = { version = "4.5.54", features = ["derive"] }
+libc = "0.2"
 
 [package.metadata.deb]
 maintainer = "Tassio Virginio <tassio.virginio@gmail.com>"

@@ -65,6 +65,8 @@ pub struct App {
 
     pub config_path: Option<PathBuf>,
     pub config_location_state: ListState,
+
+    pub cached_free_space_mb: Option<u64>,
 }
 
 impl App {
@@ -128,7 +130,7 @@ impl App {
             final_selection: None,
             mode: AppMode::Normal,
             status_message: None,
-            base_path: path,
+            base_path: path.clone(),
             theme,
             editor_cmd,
             wants_editor: false,
@@ -136,6 +138,7 @@ impl App {
             theme_list_state: theme_state,
             config_path,
             config_location_state: ListState::default(),
+            cached_free_space_mb: utils::get_free_disk_space_mb(&path),
         }
     }
 
@@ -447,10 +450,29 @@ pub fn run_app(
                 .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
                 .split(chunks[1]);
 
+            let search_chunks = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Min(20), Constraint::Length(35)])
+                .split(chunks[0]);
+
             let search_text = Paragraph::new(app.query.clone())
                 .style(Style::default().fg(app.theme.search_box))
                 .block(Block::default().borders(Borders::ALL).title(" Search/New "));
-            f.render_widget(search_text, chunks[0]);
+            f.render_widget(search_text, search_chunks[0]);
+
+            let free_space = app
+                .cached_free_space_mb
+                .map(|s| format!("{} MB", s))
+                .unwrap_or_else(|| "N/A".to_string());
+
+            let memory_info = Paragraph::new(Line::from(vec![
+                Span::styled("󰋊 ", Style::default().fg(app.theme.title_rs)),
+                Span::styled("Free: ", Style::default().fg(app.theme.help_text)),
+                Span::styled(free_space, Style::default().fg(app.theme.status_message)),
+            ]))
+            .block(Block::default().borders(Borders::ALL).title(" Disk "))
+            .alignment(Alignment::Center);
+            f.render_widget(memory_info, search_chunks[1]);
 
             let items: Vec<ListItem> = app
                 .filtered_entries

@@ -77,3 +77,27 @@ pub fn extract_repo_name(url: &str) -> String {
     }
     "cloned-repo".to_string()
 }
+
+#[cfg(unix)]
+pub fn get_free_disk_space_mb(path: &Path) -> Option<u64> {
+    use std::ffi::CString;
+    use std::mem::MaybeUninit;
+    use std::os::unix::ffi::OsStrExt;
+
+    let c_path = CString::new(path.as_os_str().as_bytes()).ok()?;
+    let mut stat: MaybeUninit<libc::statvfs> = MaybeUninit::uninit();
+
+    unsafe {
+        if libc::statvfs(c_path.as_ptr(), stat.as_mut_ptr()) == 0 {
+            let stat = stat.assume_init();
+            let free_bytes = (stat.f_bavail as u64) * (stat.f_frsize as u64);
+            return Some(free_bytes / (1024 * 1024));
+        }
+    }
+    None
+}
+
+#[cfg(not(unix))]
+pub fn get_free_disk_space_mb(_path: &Path) -> Option<u64> {
+    None
+}

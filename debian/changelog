@@ -1,3 +1,9 @@
+try-rs (0.1.45-1) noble; urgency=medium
+
+- fix: add free space info to status bar
+
+-- Tassio Virginio <tassiovirginio@gmail.com> Thu, 23 Jan 2026 12:51:25 -0300
+
 try-rs (0.1.44-1) noble; urgency=medium
 
 - feat: add gitmodules icon indicator for submodule repositories
