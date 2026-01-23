@@ -677,7 +677,9 @@ pub fn run_app(
                         } else if c == 'u' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.query.clear();
                             app.update_search();
-                        } else {
+                        } else if key.modifiers.is_empty()
+                            || key.modifiers == event::KeyModifiers::SHIFT
+                        {
                             app.query.push(c);
                             app.status_message = None;
                             app.update_search();
