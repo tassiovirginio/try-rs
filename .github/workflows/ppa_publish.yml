@@ -33,6 +33,9 @@ jobs:
           passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Prepare Debian Source Package
+        env:
+          DEBFULLNAME: "Tassio Virginio"
+          DEBEMAIL: "tassiovirginio@gmail.com"
         run: |
           # Pega a versão EXATA do changelog (ex: 0.1.35)
           VERSION=$(dpkg-parsechangelog -S Version | cut -d'-' -f1)
