@@ -1,14 +1,22 @@
+try-rs (0.1.47-1) noble; urgency=medium
+
+- feat(tui): add icon legends panel and improve layout
+- Add "Legends" box below preview with icon descriptions
+- Reduce disk info box width for better space utilization
+
+-- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 15:52:36 -0300
+
 try-rs (0.1.46-1) noble; urgency=medium
 
 - fix: reduce high CPU usage by using blocking event read
 
--- Tassio Virginio <tassiovirginio@gmail.com> Thu, 23 Jan 2026 13:04:40 -0300
+-- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 13:04:40 -0300
 
 try-rs (0.1.45-1) noble; urgency=medium
 
 - fix: add free space info to status bar
 
--- Tassio Virginio <tassiovirginio@gmail.com> Thu, 23 Jan 2026 12:51:25 -0300
+-- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 12:51:25 -0300
 
 try-rs (0.1.44-1) noble; urgency=medium
 
@@ -18,7 +26,7 @@ try-rs (0.1.44-1) noble; urgency=medium
 - Display icon next to folders containing .gitmodules
 - Fix icon spacing for worktree, worktree lock, and gitmodules icons
 
--- Tassio Virginio <tassiovirginio@gmail.com> Thu, 23 Jan 2026 12:14:54 -0300
+-- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 12:14:54 -0300
 
 try-rs (0.1.43-1) noble; urgency=medium
 

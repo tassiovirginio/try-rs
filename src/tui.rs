@@ -452,7 +452,7 @@ pub fn run_app(
 
             let search_chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Min(20), Constraint::Length(35)])
+                .constraints([Constraint::Min(20), Constraint::Length(25)])
                 .split(chunks[0]);
 
             let search_text = Paragraph::new(app.query.clone())
@@ -603,13 +603,19 @@ pub fn run_app(
             state.select(Some(app.selected_index));
             f.render_stateful_widget(list, content_chunks[0], &mut state);
 
+            // Dividir a área direita entre Preview e Legenda de ícones
+            let right_chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Min(1), Constraint::Length(4)])
+                .split(content_chunks[1]);
+
             if let Some(selected) = app.filtered_entries.get(app.selected_index) {
                 let preview_path = app.base_path.join(&selected.name);
                 let mut preview_lines = Vec::new();
 
                 if let Ok(entries) = fs::read_dir(&preview_path) {
                     for e in entries
-                        .take(content_chunks[1].height.saturating_sub(2) as usize)
+                        .take(right_chunks[0].height.saturating_sub(2) as usize)
                         .flatten()
                     {
                         let file_name = e.file_name().to_string_lossy().to_string();
@@ -631,11 +637,41 @@ pub fn run_app(
 
                 let preview = Paragraph::new(preview_lines)
                     .block(Block::default().borders(Borders::ALL).title(" Preview "));
-                f.render_widget(preview, content_chunks[1]);
+                f.render_widget(preview, right_chunks[0]);
             } else {
                 let preview = Block::default().borders(Borders::ALL).title(" Preview ");
-                f.render_widget(preview, content_chunks[1]);
+                f.render_widget(preview, right_chunks[0]);
             }
+
+            // Legenda de ícones
+            let legend_lines = vec![Line::from(vec![
+                Span::styled(" ", Style::default().fg(Color::Rgb(230, 100, 50))),
+                Span::styled("Rust ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Rgb(255, 150, 50))),
+                Span::styled("Maven ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Rgb(2, 123, 222))),
+                Span::styled("Flutter ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Rgb(0, 173, 216))),
+                Span::styled("Go ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Yellow)),
+                Span::styled("Python ", Style::default().fg(app.theme.help_text)),
+                Span::styled("󰬔 ", Style::default().fg(Color::Rgb(250, 179, 135))),
+                Span::styled("Mise ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default()),
+                Span::styled("Locked ", Style::default().fg(app.theme.help_text)),
+                Span::styled("󰙅 ", Style::default().fg(Color::Rgb(100, 180, 100))),
+                Span::styled("Git-Worktree ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Rgb(180, 130, 200))),
+                Span::styled("Git-Submod ", Style::default().fg(app.theme.help_text)),
+                Span::styled(" ", Style::default().fg(Color::Rgb(240, 80, 50))),
+                Span::styled("Git ", Style::default().fg(app.theme.help_text)),
+            ])];
+
+            let legend = Paragraph::new(legend_lines)
+                .block(Block::default().borders(Borders::ALL).title(" Legends "))
+                .alignment(Alignment::Left)
+                .wrap(Wrap { trim: true });
+            f.render_widget(legend, right_chunks[1]);
 
             let help_text = if let Some(msg) = &app.status_message {
                 Line::from(vec![Span::styled(
