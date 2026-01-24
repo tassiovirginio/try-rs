@@ -712,7 +712,15 @@ pub fn run_app(
             ])];
 
             let legend = Paragraph::new(legend_lines)
-                .block(Block::default().borders(Borders::ALL).title(" Legends "))
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title(Span::styled(
+                            " Legends ",
+                            Style::default().fg(app.theme.legends_title),
+                        ))
+                        .border_style(Style::default().fg(app.theme.legends_border)),
+                )
                 .alignment(Alignment::Left)
                 .wrap(Wrap { trim: true });
             f.render_widget(legend, right_chunks[1]);
