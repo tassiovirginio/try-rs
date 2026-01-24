@@ -4,12 +4,6 @@ try-rs (0.1.50-2) noble; urgency=medium
 
  -- Tassio Virginio <tassiovirginio@gmail.com> Sat, 24 Jan 2026 20:00:00 -0300
 
-try-rs (0.1.50-1) noble; urgency=medium
-
-  * fix: windows version
-
- -- Tassio Virginio <tassiovirginio@gmail.com> Sat, 24 Jan 2026 19:00:00 -0300
-
 try-rs (0.1.49-1) noble; urgency=medium
 
   * add news themes
