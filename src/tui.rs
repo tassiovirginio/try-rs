@@ -627,7 +627,7 @@ pub fn run_app(
             state.select(Some(app.selected_index));
             f.render_stateful_widget(list, content_chunks[0], &mut state);
 
-            // Dividir a área direita entre Preview e Legenda de ícones
+            // Split right area between Preview and Icon Legend
             let right_chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([Constraint::Min(1), Constraint::Length(4)])
@@ -684,7 +684,7 @@ pub fn run_app(
                 f.render_widget(preview, right_chunks[0]);
             }
 
-            // Legenda de ícones
+            // Icon legend
             let legend_lines = vec![Line::from(vec![
                 Span::styled(" ", Style::default().fg(app.theme.icon_rust)),
                 Span::styled("Rust ", Style::default().fg(app.theme.helpers_colors)),

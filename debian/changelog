@@ -1,16 +1,25 @@
+try-rs (0.1.48-1) noble; urgency=medium
+
+  * fix: use theme colors for Legends box and auto-clear status messages
+  * fix: auto-clear status message on next key press
+  * add new themes
+  * visual improvements
+
+ -- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 18:42:08 -0300
+
 try-rs (0.1.47-1) noble; urgency=medium
 
   * feat(tui): add icon legends panel and improve layout
   * Add "Legends" box below preview with icon descriptions
   * Reduce disk info box width for better space utilization
 
- -- Tassio Virginio <tassiovirginio@gmail.com>  Fri, 23 Jan 2026 15:52:36 -0300
+ -- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 15:52:36 -0300
 
 try-rs (0.1.46-1) noble; urgency=medium
 
   * fix: reduce high CPU usage by using blocking event read
 
- -- Tassio Virginio <tassiovirginio@gmail.com>  Fri, 23 Jan 2026 13:04:40 -0300
+ -- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 13:04:40 -0300
 
 try-rs (0.1.45-1) noble; urgency=medium
 
