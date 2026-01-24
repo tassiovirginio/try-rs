@@ -40,6 +40,8 @@ pub struct ThemeConfig {
     pub icon_worktree_lock: Option<String>,
     pub icon_gitmodules: Option<String>,
     pub icon_git: Option<String>,
+    pub icon_folder: Option<String>,
+    pub icon_file: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -190,6 +192,8 @@ pub fn load_configuration() -> (PathBuf, Theme, Option<String>, bool, Option<Pat
                 icon_worktree_lock: parse(colors.icon_worktree_lock, def.icon_worktree_lock),
                 icon_gitmodules: parse(colors.icon_gitmodules, def.icon_gitmodules),
                 icon_git: parse(colors.icon_git, def.icon_git),
+                icon_folder: parse(colors.icon_folder, def.icon_folder),
+                icon_file: parse(colors.icon_file, def.icon_file),
             };
         }
     } else {
@@ -265,6 +269,8 @@ pub fn save_config(
         icon_worktree_lock: Some(color_to_string(theme.icon_worktree_lock)),
         icon_gitmodules: Some(color_to_string(theme.icon_gitmodules)),
         icon_git: Some(color_to_string(theme.icon_git)),
+        icon_folder: Some(color_to_string(theme.icon_folder)),
+        icon_file: Some(color_to_string(theme.icon_file)),
     };
 
     let config = Config {

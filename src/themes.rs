@@ -42,6 +42,8 @@ pub struct Theme {
     pub icon_worktree_lock: Color,
     pub icon_gitmodules: Color,
     pub icon_git: Color,
+    pub icon_folder: Color,
+    pub icon_file: Color,
 }
 
 impl Default for Theme {
@@ -85,6 +87,8 @@ impl Theme {
             icon_worktree_lock: Color::White,      // Lock white
             icon_gitmodules: Color::Rgb(180, 130, 200), // Submodules purple
             icon_git: Color::Rgb(240, 80, 50),     // Git red-orange
+            icon_folder: Color::Rgb(249, 226, 175), // Folder yellow
+            icon_file: Color::Rgb(166, 173, 200),  // File grey
         }
     }
 
@@ -121,6 +125,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(166, 173, 200), // Subtext0
             icon_gitmodules: Color::Rgb(203, 166, 247), // Mauve
             icon_git: Color::Rgb(243, 139, 168),      // Red
+            icon_folder: Color::Rgb(249, 226, 175),   // Yellow
+            icon_file: Color::Rgb(166, 173, 200),     // Subtext0
         }
     }
 
@@ -157,6 +163,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(248, 248, 242), // Foreground
             icon_gitmodules: Color::Rgb(189, 147, 249), // Purple
             icon_git: Color::Rgb(255, 121, 198),     // Pink
+            icon_folder: Color::Rgb(241, 250, 140),  // Yellow
+            icon_file: Color::Rgb(139, 233, 253),    // Cyan
         }
     }
 
@@ -193,6 +201,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(187, 187, 187), // Light Grey
             icon_gitmodules: Color::Rgb(152, 118, 170), // Purple
             icon_git: Color::Rgb(204, 120, 50),      // Orange
+            icon_folder: Color::Rgb(255, 198, 109),  // Gold
+            icon_file: Color::Rgb(128, 128, 128),    // Grey
         }
     }
 
@@ -229,6 +239,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(168, 153, 132), // Grey
             icon_gitmodules: Color::Rgb(211, 134, 155), // Purple
             icon_git: Color::Rgb(251, 73, 52),       // Red
+            icon_folder: Color::Rgb(250, 189, 47),   // Yellow
+            icon_file: Color::Rgb(146, 131, 116),    // Grey
         }
     }
 
@@ -265,6 +277,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(216, 222, 233), // Snow Storm
             icon_gitmodules: Color::Rgb(180, 142, 173), // Aurora Purple
             icon_git: Color::Rgb(191, 97, 106),   // Aurora Red
+            icon_folder: Color::Rgb(235, 203, 139), // Aurora Yellow
+            icon_file: Color::Rgb(216, 222, 233), // Snow Storm
         }
     }
 
@@ -301,6 +315,8 @@ impl Theme {
             icon_worktree_lock: Color::Rgb(169, 177, 214), // Fg
             icon_gitmodules: Color::Rgb(187, 154, 247), // Purple
             icon_git: Color::Rgb(247, 118, 142),      // Red
+            icon_folder: Color::Rgb(224, 175, 104),   // Yellow
+            icon_file: Color::Rgb(169, 177, 214),     // Fg
         }
     }
 

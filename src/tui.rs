@@ -408,7 +408,7 @@ fn draw_about_popup(f: &mut Frame, theme: &Theme) {
         )),
         Line::from(""),
         Line::from(vec![
-            Span::styled("📜 License: ", Style::default().fg(theme.helpers_colors)),
+            Span::styled("󰈙 License: ", Style::default().fg(theme.helpers_colors)),
             Span::styled(
                 "MIT",
                 Style::default()
@@ -579,7 +579,7 @@ pub fn run_app(
                     };
 
                     let content = Line::from(vec![
-                        Span::raw("📁"),
+                        Span::styled(" 󰝰 ", Style::default().fg(app.theme.icon_folder)),
                         Span::styled(created_text, Style::default().fg(app.theme.list_date)),
                         Span::raw(format!(" {}", display_name)),
                         Span::raw(" ".repeat(padding)),
@@ -644,9 +644,13 @@ pub fn run_app(
                     {
                         let file_name = e.file_name().to_string_lossy().to_string();
                         let is_dir = e.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                        let icon = if is_dir { "📁 " } else { "📄 " };
+                        let (icon, color) = if is_dir {
+                            ("󰝰 ", app.theme.icon_folder)
+                        } else {
+                            ("󰈙 ", app.theme.icon_file)
+                        };
                         preview_lines.push(Line::from(vec![
-                            Span::styled(icon, Style::default().fg(app.theme.title_try)),
+                            Span::styled(icon, Style::default().fg(color)),
                             Span::raw(file_name),
                         ]));
                     }
