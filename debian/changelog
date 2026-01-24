@@ -1,3 +1,9 @@
+try-rs (0.1.51-1) noble; urgency=medium
+
+  * fix: ppa updates - test
+
+ -- Tassio Virginio <tassiovirginio@gmail.com> Sat, 24 Jan 2026 20:00:00 -0300
+
 try-rs (0.1.50-2) noble; urgency=medium
 
   * fix: windows version
