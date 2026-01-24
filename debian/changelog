@@ -4,6 +4,7 @@ try-rs (0.1.49-1) noble; urgency=medium
   * updated how save the themes
   * improvement in the selection of themes
 
+ -- Tassio Virginio <tassiovirginio@gmail.com> Fri, 23 Jan 2026 22:42:08 -0300
 
 try-rs (0.1.48-1) noble; urgency=medium
 
