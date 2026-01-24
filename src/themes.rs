@@ -320,6 +320,196 @@ impl Theme {
         }
     }
 
+    pub fn one_dark_pro() -> Self {
+        Self {
+            name: "One Dark Pro".to_string(),
+            title_try: Color::Rgb(97, 175, 239),          // Blue
+            title_rs: Color::Rgb(224, 108, 117),          // Red
+            search_title: Color::Rgb(209, 154, 102),      // Orange
+            search_border: Color::Rgb(92, 99, 112),       // Comment
+            folder_title: Color::Rgb(152, 195, 121),      // Green
+            folder_border: Color::Rgb(92, 99, 112),       // Comment
+            disk_title: Color::Rgb(229, 192, 123),        // Yellow
+            disk_border: Color::Rgb(92, 99, 112),         // Comment
+            preview_title: Color::Rgb(86, 182, 194),      // Cyan
+            preview_border: Color::Rgb(92, 99, 112),      // Comment
+            legends_title: Color::Rgb(198, 120, 221),     // Purple
+            legends_border: Color::Rgb(92, 99, 112),      // Comment
+            list_date: Color::Rgb(171, 178, 191),         // Fg
+            list_highlight_bg: Color::Rgb(62, 68, 81),    // Selection
+            list_highlight_fg: Color::Rgb(220, 223, 228), // Bright Fg
+            helpers_colors: Color::Rgb(92, 99, 112),      // Comment
+            status_message: Color::Rgb(229, 192, 123),    // Yellow
+            popup_bg: Color::Rgb(40, 44, 52),             // Bg
+            popup_text: Color::Rgb(224, 108, 117),        // Red
+            // One Dark Pro icon colors
+            icon_rust: Color::Rgb(209, 154, 102),     // Orange
+            icon_maven: Color::Rgb(224, 108, 117),    // Red
+            icon_flutter: Color::Rgb(86, 182, 194),   // Cyan
+            icon_go: Color::Rgb(86, 182, 194),        // Cyan
+            icon_python: Color::Rgb(229, 192, 123),   // Yellow
+            icon_mise: Color::Rgb(209, 154, 102),     // Orange
+            icon_worktree: Color::Rgb(152, 195, 121), // Green
+            icon_worktree_lock: Color::Rgb(171, 178, 191), // Fg
+            icon_gitmodules: Color::Rgb(198, 120, 221), // Purple
+            icon_git: Color::Rgb(224, 108, 117),      // Red
+            icon_folder: Color::Rgb(229, 192, 123),   // Yellow
+            icon_file: Color::Rgb(171, 178, 191),     // Fg
+        }
+    }
+
+    pub fn everforest() -> Self {
+        Self {
+            name: "Everforest".to_string(),
+            title_try: Color::Rgb(127, 187, 179),         // Aqua
+            title_rs: Color::Rgb(230, 126, 128),          // Red
+            search_title: Color::Rgb(230, 152, 117),      // Orange
+            search_border: Color::Rgb(127, 132, 120),     // Grey
+            folder_title: Color::Rgb(167, 192, 128),      // Green
+            folder_border: Color::Rgb(127, 132, 120),     // Grey
+            disk_title: Color::Rgb(219, 188, 127),        // Yellow
+            disk_border: Color::Rgb(127, 132, 120),       // Grey
+            preview_title: Color::Rgb(127, 187, 179),     // Aqua
+            preview_border: Color::Rgb(127, 132, 120),    // Grey
+            legends_title: Color::Rgb(214, 153, 182),     // Purple
+            legends_border: Color::Rgb(127, 132, 120),    // Grey
+            list_date: Color::Rgb(211, 198, 170),         // Fg
+            list_highlight_bg: Color::Rgb(80, 88, 77),    // Bg Visual
+            list_highlight_fg: Color::Rgb(211, 198, 170), // Fg
+            helpers_colors: Color::Rgb(127, 132, 120),    // Grey
+            status_message: Color::Rgb(219, 188, 127),    // Yellow
+            popup_bg: Color::Rgb(45, 51, 48),             // Bg
+            popup_text: Color::Rgb(230, 126, 128),        // Red
+            // Everforest icon colors
+            icon_rust: Color::Rgb(230, 152, 117),     // Orange
+            icon_maven: Color::Rgb(230, 126, 128),    // Red
+            icon_flutter: Color::Rgb(127, 187, 179),  // Aqua
+            icon_go: Color::Rgb(127, 187, 179),       // Aqua
+            icon_python: Color::Rgb(219, 188, 127),   // Yellow
+            icon_mise: Color::Rgb(230, 152, 117),     // Orange
+            icon_worktree: Color::Rgb(167, 192, 128), // Green
+            icon_worktree_lock: Color::Rgb(211, 198, 170), // Fg
+            icon_gitmodules: Color::Rgb(214, 153, 182), // Purple
+            icon_git: Color::Rgb(230, 126, 128),      // Red
+            icon_folder: Color::Rgb(219, 188, 127),   // Yellow
+            icon_file: Color::Rgb(211, 198, 170),     // Fg
+        }
+    }
+
+    pub fn synthwave_84() -> Self {
+        Self {
+            name: "SynthWave '84".to_string(),
+            title_try: Color::Rgb(54, 244, 244),          // Cyan
+            title_rs: Color::Rgb(255, 126, 185),          // Pink
+            search_title: Color::Rgb(255, 203, 107),      // Yellow
+            search_border: Color::Rgb(129, 91, 164),      // Purple dim
+            folder_title: Color::Rgb(114, 241, 177),      // Green
+            folder_border: Color::Rgb(129, 91, 164),      // Purple dim
+            disk_title: Color::Rgb(255, 203, 107),        // Yellow
+            disk_border: Color::Rgb(129, 91, 164),        // Purple dim
+            preview_title: Color::Rgb(54, 244, 244),      // Cyan
+            preview_border: Color::Rgb(129, 91, 164),     // Purple dim
+            legends_title: Color::Rgb(254, 78, 174),      // Hot Pink
+            legends_border: Color::Rgb(129, 91, 164),     // Purple dim
+            list_date: Color::Rgb(187, 186, 201),         // Fg
+            list_highlight_bg: Color::Rgb(57, 43, 75),    // Selection
+            list_highlight_fg: Color::Rgb(255, 255, 255), // White
+            helpers_colors: Color::Rgb(129, 91, 164),     // Purple dim
+            status_message: Color::Rgb(255, 203, 107),    // Yellow
+            popup_bg: Color::Rgb(38, 29, 53),             // Bg
+            popup_text: Color::Rgb(254, 78, 174),         // Hot Pink
+            // SynthWave icon colors
+            icon_rust: Color::Rgb(255, 140, 66),      // Orange
+            icon_maven: Color::Rgb(255, 126, 185),    // Pink
+            icon_flutter: Color::Rgb(54, 244, 244),   // Cyan
+            icon_go: Color::Rgb(54, 244, 244),        // Cyan
+            icon_python: Color::Rgb(255, 203, 107),   // Yellow
+            icon_mise: Color::Rgb(255, 140, 66),      // Orange
+            icon_worktree: Color::Rgb(114, 241, 177), // Green
+            icon_worktree_lock: Color::Rgb(187, 186, 201), // Fg
+            icon_gitmodules: Color::Rgb(254, 78, 174), // Hot Pink
+            icon_git: Color::Rgb(255, 126, 185),      // Pink
+            icon_folder: Color::Rgb(255, 203, 107),   // Yellow
+            icon_file: Color::Rgb(187, 186, 201),     // Fg
+        }
+    }
+
+    pub fn oled_true_black() -> Self {
+        Self {
+            name: "OLED True Black".to_string(),
+            title_try: Color::Rgb(0, 200, 255),     // Bright Cyan
+            title_rs: Color::Rgb(255, 80, 100),     // Bright Red
+            search_title: Color::Rgb(255, 180, 0),  // Orange
+            search_border: Color::Rgb(60, 60, 60),  // Dark Grey
+            folder_title: Color::Rgb(0, 230, 130),  // Bright Green
+            folder_border: Color::Rgb(60, 60, 60),  // Dark Grey
+            disk_title: Color::Rgb(255, 220, 0),    // Yellow
+            disk_border: Color::Rgb(60, 60, 60),    // Dark Grey
+            preview_title: Color::Rgb(0, 200, 255), // Bright Cyan
+            preview_border: Color::Rgb(60, 60, 60), // Dark Grey
+            legends_title: Color::Rgb(200, 100, 255), // Purple
+            legends_border: Color::Rgb(60, 60, 60), // Dark Grey
+            list_date: Color::Rgb(180, 180, 180),   // Light Grey
+            list_highlight_bg: Color::Rgb(30, 30, 30), // Near Black
+            list_highlight_fg: Color::Rgb(255, 255, 255), // White
+            helpers_colors: Color::Rgb(100, 100, 100), // Grey
+            status_message: Color::Rgb(255, 220, 0), // Yellow
+            popup_bg: Color::Rgb(0, 0, 0),          // True Black
+            popup_text: Color::Rgb(255, 80, 100),   // Bright Red
+            // OLED icon colors - vibrant for contrast
+            icon_rust: Color::Rgb(255, 120, 50),  // Bright Orange
+            icon_maven: Color::Rgb(255, 80, 100), // Bright Red
+            icon_flutter: Color::Rgb(0, 200, 255), // Bright Cyan
+            icon_go: Color::Rgb(0, 200, 255),     // Bright Cyan
+            icon_python: Color::Rgb(255, 220, 0), // Yellow
+            icon_mise: Color::Rgb(255, 180, 0),   // Orange
+            icon_worktree: Color::Rgb(0, 230, 130), // Bright Green
+            icon_worktree_lock: Color::Rgb(180, 180, 180), // Light Grey
+            icon_gitmodules: Color::Rgb(200, 100, 255), // Purple
+            icon_git: Color::Rgb(255, 80, 100),   // Bright Red
+            icon_folder: Color::Rgb(255, 220, 0), // Yellow
+            icon_file: Color::Rgb(180, 180, 180), // Light Grey
+        }
+    }
+
+    pub fn silver_gray() -> Self {
+        Self {
+            name: "Silver Gray".to_string(),
+            title_try: Color::Rgb(100, 149, 237), // Cornflower Blue
+            title_rs: Color::Rgb(205, 92, 92),    // Indian Red
+            search_title: Color::Rgb(218, 165, 32), // Goldenrod
+            search_border: Color::Rgb(128, 128, 128), // Gray
+            folder_title: Color::Rgb(144, 238, 144), // Light Green
+            folder_border: Color::Rgb(128, 128, 128), // Gray
+            disk_title: Color::Rgb(240, 230, 140), // Khaki
+            disk_border: Color::Rgb(128, 128, 128), // Gray
+            preview_title: Color::Rgb(176, 196, 222), // Light Steel Blue
+            preview_border: Color::Rgb(128, 128, 128), // Gray
+            legends_title: Color::Rgb(186, 85, 211), // Medium Orchid
+            legends_border: Color::Rgb(128, 128, 128), // Gray
+            list_date: Color::Rgb(192, 192, 192), // Silver
+            list_highlight_bg: Color::Rgb(70, 70, 70), // Dark Gray
+            list_highlight_fg: Color::Rgb(245, 245, 245), // White Smoke
+            helpers_colors: Color::Rgb(128, 128, 128), // Gray
+            status_message: Color::Rgb(240, 230, 140), // Khaki
+            popup_bg: Color::Rgb(47, 47, 47),     // Dark Bg
+            popup_text: Color::Rgb(205, 92, 92),  // Indian Red
+            // Silver Gray icon colors
+            icon_rust: Color::Rgb(210, 105, 30),      // Chocolate
+            icon_maven: Color::Rgb(205, 92, 92),      // Indian Red
+            icon_flutter: Color::Rgb(100, 149, 237),  // Cornflower Blue
+            icon_go: Color::Rgb(176, 196, 222),       // Light Steel Blue
+            icon_python: Color::Rgb(240, 230, 140),   // Khaki
+            icon_mise: Color::Rgb(218, 165, 32),      // Goldenrod
+            icon_worktree: Color::Rgb(144, 238, 144), // Light Green
+            icon_worktree_lock: Color::Rgb(192, 192, 192), // Silver
+            icon_gitmodules: Color::Rgb(186, 85, 211), // Medium Orchid
+            icon_git: Color::Rgb(205, 92, 92),        // Indian Red
+            icon_folder: Color::Rgb(240, 230, 140),   // Khaki
+            icon_file: Color::Rgb(192, 192, 192),     // Silver
+        }
+    }
+
     pub fn all() -> Vec<Theme> {
         vec![
             Theme::default_theme(),
@@ -329,6 +519,11 @@ impl Theme {
             Theme::gruvbox_dark(),
             Theme::nord(),
             Theme::tokyo_night(),
+            Theme::one_dark_pro(),
+            Theme::everforest(),
+            Theme::synthwave_84(),
+            Theme::oled_true_black(),
+            Theme::silver_gray(),
         ]
     }
 }
