@@ -34,22 +34,23 @@ Escape
 Sleep 3s
 Ctrl+T
 Sleep 4s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
+Down 
+Sleep 3s
 Escape
 Sleep 3s
 Type "NewProject"
 Sleep 3s
 Enter
-Sleep 1s
-Type "try-rs"
-Sleep 2s
-Enter
-Sleep 5s
-Escape
-Sleep 5s
-Type "try-rs --help"
-Sleep 5s
-Enter
-Sleep 5s
-Type "exit"
-
 
