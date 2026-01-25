@@ -28,6 +28,14 @@ pub fn is_git_worktree_locked(path: &Path) -> bool {
     false
 }
 
+/// Checks if a path is a git worktree (not the main working tree)
+/// A worktree has a .git file (not directory) that points to the main repo
+pub fn is_git_worktree(path: &Path) -> bool {
+    let dot_git = path.join(".git");
+    // If .git is a file (not a directory), it's a worktree
+    dot_git.is_file()
+}
+
 fn parse_dot_git(dot_git: &Path) -> std::io::Result<PathBuf> {
     Ok(first_line(&std::fs::read(dot_git)?).into())
 }

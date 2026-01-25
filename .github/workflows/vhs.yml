@@ -101,6 +101,11 @@ jobs:
           try-rs -s https://github.com/arieslab/jnose.git
           try-rs -s https://github.com/rust-lang/book.git
           try-rs -s https://github.com/tassiovirginio/try-rs.git
+          try-rs -s https://github.com/Zeus-Deus/gazelle-tui.git
+          try-rs -s https://github.com/tassiovirginio/envy-tui.git
+          try-rs -s https://github.com/rust-lang/rustlings.git
+          try-rs -s https://github.com/tassiovirginio/firststepinagile.git
+          try-rs -s https://github.com/arieslab/jnose-core.git
           
           # IMPORTANTE: Volta para o diretório original
           cd $WORK_DIR

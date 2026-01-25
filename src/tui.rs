@@ -175,7 +175,8 @@ impl App {
         {
             let path_to_remove = self.base_path.join(&entry_name);
 
-            if utils::is_inside_git_repo(&path_to_remove) {
+            // Only use git worktree remove if it's actually a worktree (not main working tree)
+            if utils::is_git_worktree(&path_to_remove) {
                 match utils::remove_git_worktree(&path_to_remove) {
                     Ok(output) => {
                         if output.status.success() {
@@ -198,6 +199,7 @@ impl App {
                     }
                 };
             } else {
+                // Regular directory or main git repo - just delete it
                 match fs::remove_dir_all(&path_to_remove) {
                     Ok(_) => {
                         self.all_entries.retain(|e| e.name != entry_name);
