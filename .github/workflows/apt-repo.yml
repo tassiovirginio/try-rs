@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 0.1.51)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -50,8 +55,19 @@ jobs:
           mkdir -p apt-repo/dists/stable/main/binary-amd64
           mkdir -p apt-repo/pool/main
           
-          # Copy deb file from build
-          cp ../target/debian/*.deb apt-repo/pool/main/
+          # Get version from tag or input
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION=${VERSION#v}
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          
+          if [ -f "../target/debian/try-rs_${VERSION}-1_amd64.deb" ]; then
+            cp ../target/debian/try-rs_${VERSION}-1_amd64.deb apt-repo/pool/main/
+          else
+            wget https://github.com/${{ github.repository }}/releases/download/v${VERSION}/try-rs_${VERSION}-1_amd64.deb -O apt-repo/pool/main/try-rs_${VERSION}-1_amd64.deb
+          fi
           
           # Generate Packages file
           cd apt-repo
