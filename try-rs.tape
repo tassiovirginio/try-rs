@@ -1,4 +1,4 @@
-Output try-rs.gif
+Output sample.gif
 
 Set Width 1400
 Set Height 800
@@ -6,6 +6,11 @@ Set Height 800
 Require try-rs
 
 Set Shell fish
+
+Hide
+Type "source ~/.config/fish/functions/try-rs.fish"
+Enter
+Show
 
 Type "try-rs"
 Enter
@@ -15,10 +20,6 @@ Sleep 3s
 Down
 Sleep 3s
 Down
-Sleep 3s
-Down 
-Sleep 3s
-Down 
 Sleep 3s
 Up
 Sleep 3s
@@ -50,7 +51,7 @@ Down
 Sleep 3s
 Escape
 Sleep 3s
-Type "NewProject"
+Type "example4"
 Sleep 3s
 Enter
-
+Sleep 3s

@@ -56,6 +56,15 @@ jobs:
           echo "Rodando dentro do Fish!"
           which try-rs
           
+          # Setup shell integration para o comando 'try' funcionar
+          try-rs --setup fish
+          source ~/.config/fish/functions/try-rs.fish
+          try-rs example1
+          try-rs example2
+          try-rs example3
+          try-rs example4
+          try-rs https://github.com/tassiovirginio/try-rs.git
+          
           # Executa o VHS
           vhs try-rs.tape
 
@@ -64,7 +73,7 @@ jobs:
           git config user.name "Tássio Virginio"
           git config user.email "tassio.virginio@ufba.br"
           
-          git add try-rs.gif
+          git add sample.gif
           
           # Verifica se o GIF mudou antes de tentar commitar
           if git diff --staged --quiet; then
