@@ -31,6 +31,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg libnss3 libxss1 libasound2t64 fish ttyd
 
+      - name: Install try-rs from APT
+        run: |
+          # Adiciona o repositório
+          echo "deb [trusted=yes] https://tassiovirginio.github.io/try-rs stable main" | sudo tee /etc/apt/sources.list.d/try-rs.list
+          
+          # Atualiza e instala
+          sudo apt update
+          sudo apt install -y try-rs
+          
+          # Verifica instalação
+          which try-rs
+          try-rs --version
+
       - name: Install Nerd Fonts
         run: |
           # Instala no diretório do sistema para garantir que o VHS encontre
@@ -65,12 +78,6 @@ jobs:
       - name: Install VHS
         run: go install github.com/charmbracelet/vhs@latest
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build try-rs
-        run: cargo build --release
-
       - name: Run VHS
         # Define explicitamente que este passo deve ser interpretado pelo Fish
         shell: fish {0}
@@ -78,9 +85,6 @@ jobs:
           # Salva o diretório de trabalho original
           set -l WORK_DIR $PWD
           echo "Diretório de trabalho original: $WORK_DIR"
-          
-          # Sintaxe do Fish para adicionar ao PATH e exportar (-x)
-          set -x PATH "$WORK_DIR/target/release" $PATH
           
           # Debug para confirmar
           echo "Rodando dentro do Fish!"
