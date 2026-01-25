@@ -1,0 +1,84 @@
+name: Build and Publish APT Repository
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build and Package Deb
+        run: cargo deb --target x86_64-unknown-linux-gnu
+
+      - name: Prepare APT Repository
+        run: |
+          mkdir -p apt-repo/dists/stable/main/binary-amd64
+          mkdir -p apt-repo/pool/main
+          
+          # Copy deb file to pool
+          cp target/*/debian/*.deb apt-repo/pool/main/ || cp target/debian/*.deb apt-repo/pool/main/
+          
+          # Extract package info
+          DEB_FILE=$(find apt-repo/pool/main -name "*.deb" | head -1)
+          PACKAGE_NAME=$(dpkg-deb -I "$DEB_FILE" | grep "^ Package:" | cut -d' ' -f3)
+          PACKAGE_VERSION=$(dpkg-deb -I "$DEB_FILE" | grep "^ Version:" | cut -d' ' -f3)
+          PACKAGE_ARCH=$(dpkg-deb -I "$DEB_FILE" | grep "^ Architecture:" | cut -d' ' -f3)
+          
+          # Generate Packages file
+          cd apt-repo
+          dpkg-scanpackages --arch amd64 pool/ > dists/stable/main/binary-amd64/Packages
+          cd ..
+          
+          # Generate Release files
+          cd apt-repo
+          echo "Archive: stable" > dists/stable/main/binary-amd64/Release
+          echo "Component: main" >> dists/stable/main/binary-amd64/Release
+          echo "Origin: try-rs" >> dists/stable/main/binary-amd64/Release
+          echo "Label: try-rs APT Repository" >> dists/stable/main/binary-amd64/Release
+          echo "Architecture: amd64" >> dists/stable/main/binary-amd64/Release
+          
+          echo "Origin: try-rs" > dists/stable/Release
+          echo "Label: try-rs APT Repository" >> dists/stable/Release
+          echo "Suite: stable" >> dists/stable/Release
+          echo "Codename: stable" >> dists/stable/Release
+          echo "Date: $(date -R +'%a, %d %b %Y %H:%M:%S %z')" >> dists/stable/Release
+          echo "Architectures: amd64" >> dists/stable/Release
+          echo "Components: main" >> dists/stable/Release
+          echo "Description: try-rs APT Repository" >> dists/stable/Release
+          echo "MD5Sum:" >> dists/stable/Release
+          echo " $(md5sum dists/stable/main/binary-amd64/Packages | cut -d' ' -f1) $(wc -c < dists/stable/main/binary-amd64/Packages) main/binary-amd64/Packages" >> dists/stable/Release
+          
+          # Sign Release file (optional, requires GPG key)
+          # gpg --default-key $GPG_KEY_ID --armor --detach-sign dists/stable/Release
+          cd ..
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: apt-repo
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
