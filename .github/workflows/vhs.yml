@@ -33,19 +33,29 @@ jobs:
 
       - name: Install Nerd Fonts
         run: |
-          mkdir -p ~/.local/share/fonts
-          cd ~/.local/share/fonts
+          # Instala no diretório do sistema para garantir que o VHS encontre
+          sudo mkdir -p /usr/local/share/fonts/nerd-fonts
+          cd /usr/local/share/fonts/nerd-fonts
           
           # Baixa e instala JetBrainsMono Nerd Font
-          curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip
-          unzip -o JetBrainsMono.zip
-          rm JetBrainsMono.zip
+          sudo curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip
+          sudo unzip -o JetBrainsMono.zip
+          sudo rm JetBrainsMono.zip
+          
+          # Também instala no diretório do usuário
+          mkdir -p ~/.local/share/fonts
+          cp *.ttf ~/.local/share/fonts/ 2>/dev/null || true
           
           # Atualiza cache de fontes
+          sudo fc-cache -fv
           fc-cache -fv
           
           echo "✅ Nerd Fonts instaladas:"
-          fc-list | grep -i "JetBrains" | head -5
+          fc-list | grep -i "JetBrains"
+          
+          # Mostra o nome exato da fonte para debug
+          echo "Nome exato das fontes:"
+          fc-list : family | grep -i jet | sort -u
 
       - name: Setup Go
         uses: actions/setup-go@v5

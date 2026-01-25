@@ -2,7 +2,7 @@ Output try-rs.gif
 
 Set Width 1400
 Set Height 800
-Set FontFamily "JetBrainsMono Nerd Font"
+Set FontFamily "JetBrainsMono Nerd Font Mono"
 Set FontSize 14
 
 Require try-rs
