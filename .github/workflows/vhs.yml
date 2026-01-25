@@ -1,15 +1,15 @@
 name: Generate GIF (VHS)
 
 on:
-  # É melhor rodar quando há mudanças na main (código ou tape)
+  # Better to run when there are changes to main (code or tape)
   push:
     branches:
       - main
     paths:
-      - '**.rs'        # Só roda se mudar código Rust
-      - 'try-rs.tape'  # Ou se mudar o script do VHS
+      - '**.rs'        # Only runs if Rust code changes
+      - 'try-rs.tape'  # Or if VHS script changes
   
-  # Gatilho manual continua útil
+  # Manual trigger is still useful
   workflow_dispatch:
 
 jobs:
@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Importante: busca o histórico completo para evitar problemas de merge/push
+          # Important: fetch full history to avoid merge/push issues
           fetch-depth: 0 
       
       # chromium-browser
@@ -35,41 +35,41 @@ jobs:
 
       - name: Install try-rs from APT
         run: |
-          # Adiciona o repositório
+          # Add the repository
           echo "deb [trusted=yes] https://tassiovirginio.github.io/try-rs stable main" | sudo tee /etc/apt/sources.list.d/try-rs.list
           
-          # Atualiza e instala
+          # Update and install
           sudo apt update
           sudo apt install -y try-rs
           
-          # Verifica instalação
+          # Verify installation
           which try-rs
           try-rs --version
 
       - name: Install Nerd Fonts
         run: |
-          # Instala no diretório do sistema para garantir que o VHS encontre
+          # Install in system directory to ensure VHS can find it
           sudo mkdir -p /usr/local/share/fonts/nerd-fonts
           cd /usr/local/share/fonts/nerd-fonts
           
-          # Baixa e instala JetBrainsMono Nerd Font
+          # Download and install JetBrainsMono Nerd Font
           sudo curl -fLO https://github.com/ryanoasis/nerd-fonts/releases/download/v3.3.0/JetBrainsMono.zip
           sudo unzip -o JetBrainsMono.zip
           sudo rm JetBrainsMono.zip
           
-          # Também instala no diretório do usuário
+          # Also install in user directory
           mkdir -p ~/.local/share/fonts
           cp *.ttf ~/.local/share/fonts/ 2>/dev/null || true
           
-          # Atualiza cache de fontes
+          # Update font cache
           sudo fc-cache -fv
           fc-cache -fv
           
-          echo "✅ Nerd Fonts instaladas:"
+          echo "✅ Nerd Fonts installed:"
           fc-list | grep -i "JetBrains"
           
-          # Mostra o nome exato da fonte para debug
-          echo "Nome exato das fontes:"
+          # Show exact font name for debug
+          echo "Exact font names:"
           fc-list : family | grep -i jet | sort -u
 
       - name: Setup Go
@@ -81,12 +81,12 @@ jobs:
         run: go install github.com/charmbracelet/vhs@latest
 
       - name: Run VHS
-        # Define explicitamente que este passo deve ser interpretado pelo Fish
+        # Explicitly define that this step should be interpreted by Fish
         shell: fish {0}
         run: |
-          # Salva o diretório de trabalho original
+          # Save the original working directory
           set -l WORK_DIR $PWD
-          echo "Diretório de trabalho original: $WORK_DIR"
+          echo "Original working directory: $WORK_DIR"
           
           # Debug para confirmar
           echo "Rodando dentro do Fish!"
@@ -107,68 +107,68 @@ jobs:
           try-rs -s https://github.com/tassiovirginio/firststepinagile.git
           try-rs -s https://github.com/arieslab/jnose-core.git
           
-          # IMPORTANTE: Volta para o diretório original
+          # IMPORTANT: Return to original directory
           cd $WORK_DIR
-          echo "Voltando para: $PWD"
+          echo "Returning to: $PWD"
           
-          # Debug: mostra GIF antes do VHS
-          echo "GIF antes do VHS:"
-          ls -lh try-rs.gif 2>/dev/null || echo "GIF não existe ainda"
+          # Debug: show GIF before VHS
+          echo "GIF before VHS:"
+          ls -lh try-rs.gif 2>/dev/null || echo "GIF does not exist yet"
           
-          # Executa o VHS com caminho absoluto para o output
-          echo "Iniciando VHS..."
+          # Run VHS with absolute path for output
+          echo "Starting VHS..."
           vhs $WORK_DIR/try-rs.tape -o $WORK_DIR/try-rs.gif
           
-          # Debug: mostra GIF depois do VHS
-          echo "GIF depois do VHS:"
+          # Debug: show GIF after VHS
+          echo "GIF after VHS:"
           ls -lh $WORK_DIR/try-rs.gif
           
-          # Verifica se o GIF foi criado
+          # Check if GIF was created
           if test -f $WORK_DIR/try-rs.gif
-            echo "✅ VHS executou com sucesso - GIF criado"
+            echo "✅ VHS executed successfully - GIF created"
           else
-            echo "❌ VHS falhou - GIF não foi criado"
+            echo "❌ VHS failed - GIF not created"
             exit 1
           end
 
       - name: Verify GIF was generated
         run: |
-          echo "Diretório atual: $(pwd)"
-          echo "Listando arquivos GIF:"
-          ls -la *.gif || echo "Nenhum arquivo .gif encontrado"
+          echo "Current directory: $(pwd)"
+          echo "Listing GIF files:"
+          ls -la *.gif || echo "No .gif files found"
           
           if [ ! -f try-rs.gif ]; then
-            echo "❌ ERRO: try-rs.gif não foi gerado!"
+            echo "❌ ERROR: try-rs.gif was not generated!"
             exit 1
           fi
           
-          echo "✅ GIF gerado com sucesso:"
+          echo "✅ GIF generated successfully:"
           ls -lh try-rs.gif
           
-          # Mostra hash do arquivo para debug
+          # Show file hash for debug
           md5sum try-rs.gif || sha256sum try-rs.gif
 
       - name: Download current APT repo
         run: |
           mkdir -p pages-content
           
-          # Baixa o conteúdo atual do GitHub Pages (APT repo)
+          # Download current GitHub Pages content (APT repo)
           wget -r -np -nH --cut-dirs=1 -P pages-content \
             https://tassiovirginio.github.io/try-rs/ 2>/dev/null || true
           
-          # Limpa arquivos desnecessários do wget
+          # Clean up unnecessary wget files
           find pages-content -name "*.html" -delete 2>/dev/null || true
           find pages-content -name "index.html*" -delete 2>/dev/null || true
           
-          echo "Conteúdo atual do Pages:"
-          ls -la pages-content/ || echo "Diretório vazio"
+          echo "Current Pages content:"
+          ls -la pages-content/ || echo "Empty directory"
 
       - name: Prepare Pages content with GIF
         run: |
-          # Copia o GIF para o diretório do Pages
+          # Copy GIF to Pages directory
           cp try-rs.gif pages-content/
           
-          echo "✅ Conteúdo preparado para deploy:"
+          echo "✅ Content prepared for deploy:"
           ls -la pages-content/
 
       - name: Upload Pages artifact

@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base-devel
     
-    # CORREÇÃO AQUI: Lógica segura para evitar erro em execução manual
+    # FIX: Safe logic to avoid error in manual execution
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') }}
 
     steps:
@@ -60,7 +60,7 @@ jobs:
           # Remove o 'v'
           VERSION=${TAG_NAME#v}
           
-          echo "Processando Tag: $TAG_NAME | Versão: $VERSION"
+          echo "Processing Tag: $TAG_NAME | Version: $VERSION"
 
           cd aur
 
