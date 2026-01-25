@@ -55,6 +55,7 @@ jobs:
           # Debug para confirmar
           echo "Rodando dentro do Fish!"
           which try-rs
+          try-rs --version
           
           # Setup shell integration para o comando 'try' funcionar
           try-rs --setup fish
@@ -66,14 +67,38 @@ jobs:
           try-rs https://github.com/tassiovirginio/try-rs.git
           
           # Executa o VHS
+          echo "Iniciando VHS..."
           vhs try-rs.tape
+          
+          # Verifica se o GIF foi criado
+          if test -f try-rs.gif
+            echo "✅ VHS executou com sucesso - GIF criado"
+            ls -lh try-rs.gif
+          else
+            echo "❌ VHS falhou - GIF não foi criado"
+            exit 1
+          end
+
+      - name: Verify GIF was generated
+        run: |
+          if [ ! -f try-rs.gif ]; then
+            echo "❌ ERRO: try-rs.gif não foi gerado!"
+            exit 1
+          fi
+          echo "✅ GIF gerado com sucesso: $(ls -lh try-rs.gif)"
 
       - name: Commit and Push GIF
         run: |
           git config user.name "Tássio Virginio"
-          git config user.email "tassio.virginio@ufba.br"
+          git config user.email "tassiovirginio@gmail.com"
           
           git add try-rs.gif
+          
+          # Verifica se há mudanças para commitar
+          if git diff --cached --quiet; then
+            echo "ℹ️ Nenhuma mudança no GIF - nada para commitar"
+            exit 0
+          fi
           
           git commit -m "docs: update demo gif [skip ci]"
           git push
