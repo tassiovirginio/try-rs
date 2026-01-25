@@ -49,6 +49,9 @@ jobs:
         # Define explicitamente que este passo deve ser interpretado pelo Fish
         shell: fish {0}
         run: |
+          # Debug: mostra diretório atual
+          echo "Diretório de trabalho: $PWD"
+          
           # Sintaxe do Fish para adicionar ao PATH e exportar (-x)
           set -x PATH "$PWD/target/release" $PATH
           
@@ -66,14 +69,21 @@ jobs:
           try-rs example4
           try-rs https://github.com/tassiovirginio/try-rs.git
           
+          # Debug: mostra GIF antes do VHS
+          echo "GIF antes do VHS:"
+          ls -lh try-rs.gif 2>/dev/null || echo "GIF não existe ainda"
+          
           # Executa o VHS
           echo "Iniciando VHS..."
           vhs try-rs.tape
           
+          # Debug: mostra GIF depois do VHS
+          echo "GIF depois do VHS:"
+          ls -lh try-rs.gif
+          
           # Verifica se o GIF foi criado
           if test -f try-rs.gif
             echo "✅ VHS executou com sucesso - GIF criado"
-            ls -lh try-rs.gif
           else
             echo "❌ VHS falhou - GIF não foi criado"
             exit 1
@@ -81,22 +91,40 @@ jobs:
 
       - name: Verify GIF was generated
         run: |
+          echo "Diretório atual: $(pwd)"
+          echo "Listando arquivos GIF:"
+          ls -la *.gif || echo "Nenhum arquivo .gif encontrado"
+          
           if [ ! -f try-rs.gif ]; then
             echo "❌ ERRO: try-rs.gif não foi gerado!"
             exit 1
           fi
-          echo "✅ GIF gerado com sucesso: $(ls -lh try-rs.gif)"
+          
+          echo "✅ GIF gerado com sucesso:"
+          ls -lh try-rs.gif
+          
+          # Mostra hash do arquivo para debug
+          md5sum try-rs.gif || sha256sum try-rs.gif
+          
+          # Mostra status do git
+          git status try-rs.gif
 
       - name: Commit and Push GIF
         run: |
           git config user.name "Tássio Virginio"
           git config user.email "tassiovirginio@gmail.com"
           
-          git add try-rs.gif
+          # Força adicionar o arquivo (ignora .gitignore se houver)
+          git add -f try-rs.gif
+          
+          # Debug: mostra o status
+          git status
           
           # Verifica se há mudanças para commitar
           if git diff --cached --quiet; then
             echo "ℹ️ Nenhuma mudança no GIF - nada para commitar"
+            echo "Debug: comparando arquivos..."
+            git diff --cached --stat || true
             exit 0
           fi
           
