@@ -1581,7 +1581,7 @@ checksum = "ab16f14aed21ee8bfd8ec22513f7287cd4a91aa92e44edfe2c17ddd004e92607"
 
 [[package]]
 name = "try-rs"
-version = "0.1.54"
+version = "0.1.55"
 dependencies = [
  "anyhow",
  "chrono",
