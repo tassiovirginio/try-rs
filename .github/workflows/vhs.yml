@@ -1,10 +1,12 @@
 name: Generate GIF (VHS)
 
 on:
-  # Run when a new tag is created
+  # Run when try-rs.tape is modified
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "try-rs.tape"
   
   # Manual trigger
   workflow_dispatch:
