@@ -40,7 +40,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
 | **Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
-| **Icons Identification** | Supports icons identification projects (` 󰬔      `).                              |
+| **Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
 
 ## Installation
 
@@ -52,7 +52,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 ### Building from source
 
 ```bash
-git clone [https://github.com/tassiovirginio/try-rs.git](https://github.com/tassiovirginio/try-rs)
+git clone https://github.com/tassiovirginio/try-rs.git
 cd try-rs
 cargo install --path . --bin try-rs
 ```
@@ -61,6 +61,12 @@ cargo install --path . --bin try-rs
 
 ```bash
 cargo install try-rs
+```
+
+### Eget
+
+```bash
+eget tassiovirginio/try-rs
 ```
 
 ### Install in Archlinux
@@ -90,11 +96,11 @@ wget https://github.com/tassiovirginio/try-rs/releases/download/vX.Y.Z/try-rs_X.
 sudo apt install ./try-rs_X.Y.Z-1_amd64.deb
 ```
 
-- Alternatively, browse all assets at: https://github.com/tassiovirginio/try-rs/releases
+- Alternatively, browse all assets at: <https://github.com/tassiovirginio/try-rs/releases>
 
 ### Windows (Releases)
 
-- Download the Windows build from the Releases downloads: https://github.com/tassiovirginio/try-rs/releases/download/
+- Download the Windows build from the Releases downloads: <https://github.com/tassiovirginio/try-rs/releases/download/>
 - Unzip or place the binary somewhere on your `PATH` (e.g., add the folder to the System Environment `Path`) so you can run `try-rs` from any terminal (PowerShell, Command Prompt).
 
 ### Nix Install (flakes)
@@ -166,14 +172,28 @@ By default, experiments are stored in `~/work/tries`. You can customize the path
 tries_path = "~/Development/playground"
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
+transparent_background = true # optional, default is true (uses terminal background)
 
 # Theme configuration (choose one of the available themes)
 theme = "Catppuccin Mocha"
 ```
 
+**Background Transparency:**
+
+By default, try-rs uses a transparent background (inherits from your terminal). Each theme includes its own background color that will be used when `transparent_background = false`. You can control this with:
+
+```toml
+# Use theme's background color (solid background)
+transparent_background = false
+
+# Use terminal's background (transparent/inherit) - default
+transparent_background = true
+```
+
 **Available Themes:**
 
 You can use any of these theme names in your configuration:
+
 - `"Default"`
 - `"Catppuccin Mocha"`
 - `"Catppuccin Macchiato"`
@@ -201,6 +221,9 @@ tries_path = "~/Development/playground"
 editor = "code"
 
 [colors]
+# Background color (optional - omit for transparent)
+background = "#1E1E2E"
+
 # UI Colors
 title_try = "Magenta"
 title_rs = "White"
@@ -240,6 +263,7 @@ icon_file = "Gray"
 **Available Color Names:**
 
 You can use the following color names in your custom color configuration:
+
 - Basic colors: `Black`, `Red`, `Green`, `Yellow`, `Blue`, `Magenta`, `Cyan`, `Gray`, `DarkGray`, `LightRed`, `LightGreen`, `LightYellow`, `LightBlue`, `LightMagenta`, `LightCyan`, `White`
 - RGB colors: You can also use RGB values like `"#FF5733"` or as a table: `{ r = 255, g = 87, b = 51 }`
 

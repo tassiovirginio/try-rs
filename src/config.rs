@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 #[derive(Deserialize, Serialize)]
 pub struct ThemeConfig {
+    pub background: Option<String>,
     pub title_try: Option<String>,
     pub title_rs: Option<String>,
     pub search_title: Option<String>,
@@ -51,6 +52,7 @@ pub struct Config {
     pub colors: Option<ThemeConfig>,
     pub editor: Option<String>,
     pub apply_date_prefix: Option<bool>,
+    pub transparent_background: Option<bool>,
 }
 
 pub fn get_file_config_toml_name() -> String {
@@ -120,6 +122,7 @@ pub fn load_configuration() -> (
     bool,
     Option<PathBuf>,
     Option<bool>,
+    Option<bool>,
 ) {
     let default_path = dirs::home_dir()
         .expect("Folder not found")
@@ -135,6 +138,7 @@ pub fn load_configuration() -> (
         .or_else(|| std::env::var("EDITOR").ok());
     let mut is_first_run = false;
     let mut apply_date_prefix = None;
+    let mut transparent_background = None;
 
     let loaded_config_path = if let Some(path) = std::env::var_os("TRY_CONFIG_DIR")
         .map(|p| PathBuf::from(p).join(get_file_config_toml_name()))
@@ -175,10 +179,14 @@ pub fn load_configuration() -> (
             let parse = |opt: Option<String>, def: Color| -> Color {
                 opt.and_then(|s| Color::from_str(&s).ok()).unwrap_or(def)
             };
+            let parse_opt = |opt: Option<String>| -> Option<Color> {
+                opt.and_then(|s| Color::from_str(&s).ok())
+            };
 
             let def = Theme::default();
             theme = Theme {
                 name: "Custom".to_string(),
+                background: parse_opt(colors.background),
                 title_try: parse(colors.title_try, def.title_try),
                 title_rs: parse(colors.title_rs, def.title_rs),
                 search_title: parse(colors.search_title, def.search_title),
@@ -213,6 +221,7 @@ pub fn load_configuration() -> (
             };
         }
         apply_date_prefix = config.apply_date_prefix;
+        transparent_background = config.transparent_background;
     } else {
         is_first_run = true;
     }
@@ -224,6 +233,7 @@ pub fn load_configuration() -> (
         is_first_run,
         loaded_config_path,
         apply_date_prefix,
+        transparent_background,
     )
 }
 
@@ -233,6 +243,7 @@ pub fn save_config(
     tries_path: &Path,
     editor: &Option<String>,
     apply_date_prefix: Option<bool>,
+    transparent_background: Option<bool>,
 ) -> std::io::Result<()> {
     let config = Config {
         tries_path: Some(tries_path.to_string_lossy().to_string()),
@@ -240,6 +251,7 @@ pub fn save_config(
         colors: None,
         editor: editor.clone(),
         apply_date_prefix,
+        transparent_background,
     };
 
     let toml_string =

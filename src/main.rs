@@ -35,7 +35,7 @@ fn main() -> Result<()> {
             std::process::exit(if err.use_stderr() { 1 } else { 0 });
         }
     };
-    let (tries_dir, theme, editor_cmd, _is_first_run, config_path, apply_date_prefix) =
+    let (tries_dir, theme, editor_cmd, _is_first_run, config_path, apply_date_prefix, transparent_background) =
         load_configuration();
 
     if !tries_dir.exists() {
@@ -209,6 +209,7 @@ fn main() -> Result<()> {
             editor_cmd.clone(),
             config_path.clone(),
             apply_date_prefix,
+            transparent_background.unwrap_or(true),
             query,
         );
         let res = run_app(&mut terminal, app);

@@ -3,6 +3,8 @@ use ratatui::style::Color;
 #[derive(Clone)]
 pub struct Theme {
     pub name: String,
+    // Background color (None means transparent/terminal default)
+    pub background: Option<Color>,
     // Title colors
     pub title_try: Color,
     pub title_rs: Color,
@@ -57,6 +59,7 @@ impl Theme {
     pub fn default_theme() -> Self {
         Self {
             name: "Default".to_string(),
+            background: None, // Transparent by default
             title_try: Color::Rgb(137, 180, 250),         // Blue
             title_rs: Color::Rgb(243, 139, 168),          // Red
             search_title: Color::Rgb(250, 179, 135),      // Peach
@@ -95,6 +98,7 @@ impl Theme {
     pub fn catppuccin_mocha() -> Self {
         Self {
             name: "Catppuccin Mocha".to_string(),
+            background: Some(Color::Rgb(30, 30, 46)), // Base
             title_try: Color::Rgb(137, 180, 250),         // Blue
             title_rs: Color::Rgb(243, 139, 168),          // Red
             search_title: Color::Rgb(250, 179, 135),      // Peach
@@ -133,6 +137,7 @@ impl Theme {
     pub fn dracula() -> Self {
         Self {
             name: "Dracula".to_string(),
+            background: Some(Color::Rgb(40, 42, 54)), // Background
             title_try: Color::Rgb(189, 147, 249),      // Purple
             title_rs: Color::Rgb(255, 121, 198),       // Pink
             search_title: Color::Rgb(255, 184, 108),   // Orange
@@ -171,6 +176,7 @@ impl Theme {
     pub fn jetbrains_darcula() -> Self {
         Self {
             name: "JetBrains Darcula".to_string(),
+            background: Some(Color::Rgb(43, 43, 43)), // Bg
             title_try: Color::Rgb(78, 124, 238),        // Blueish
             title_rs: Color::Rgb(204, 120, 50),         // Orange
             search_title: Color::Rgb(106, 135, 89),     // Green
@@ -209,6 +215,7 @@ impl Theme {
     pub fn gruvbox_dark() -> Self {
         Self {
             name: "Gruvbox Dark".to_string(),
+            background: Some(Color::Rgb(40, 40, 40)), // Bg0
             title_try: Color::Rgb(251, 73, 52),           // Red
             title_rs: Color::Rgb(250, 189, 47),           // Yellow
             search_title: Color::Rgb(184, 187, 38),       // Green
@@ -247,6 +254,7 @@ impl Theme {
     pub fn nord() -> Self {
         Self {
             name: "Nord".to_string(),
+            background: Some(Color::Rgb(46, 52, 64)), // Polar Night 0
             title_try: Color::Rgb(136, 192, 208), // Frost Cyan
             title_rs: Color::Rgb(191, 97, 106),   // Aurora Red
             search_title: Color::Rgb(163, 190, 140), // Aurora Green
@@ -285,6 +293,7 @@ impl Theme {
     pub fn tokyo_night() -> Self {
         Self {
             name: "Tokyo Night".to_string(),
+            background: Some(Color::Rgb(26, 27, 38)), // Bg
             title_try: Color::Rgb(122, 162, 247),         // Blue
             title_rs: Color::Rgb(247, 118, 142),          // Red
             search_title: Color::Rgb(158, 206, 106),      // Green
@@ -323,6 +332,7 @@ impl Theme {
     pub fn one_dark_pro() -> Self {
         Self {
             name: "One Dark Pro".to_string(),
+            background: Some(Color::Rgb(40, 44, 52)), // Bg
             title_try: Color::Rgb(97, 175, 239),          // Blue
             title_rs: Color::Rgb(224, 108, 117),          // Red
             search_title: Color::Rgb(209, 154, 102),      // Orange
@@ -361,6 +371,7 @@ impl Theme {
     pub fn everforest() -> Self {
         Self {
             name: "Everforest".to_string(),
+            background: Some(Color::Rgb(45, 51, 48)), // Bg
             title_try: Color::Rgb(127, 187, 179),         // Aqua
             title_rs: Color::Rgb(230, 126, 128),          // Red
             search_title: Color::Rgb(230, 152, 117),      // Orange
@@ -399,6 +410,7 @@ impl Theme {
     pub fn synthwave_84() -> Self {
         Self {
             name: "SynthWave '84".to_string(),
+            background: Some(Color::Rgb(38, 29, 53)), // Bg
             title_try: Color::Rgb(54, 244, 244),          // Cyan
             title_rs: Color::Rgb(255, 126, 185),          // Pink
             search_title: Color::Rgb(255, 203, 107),      // Yellow
@@ -437,6 +449,7 @@ impl Theme {
     pub fn oled_true_black() -> Self {
         Self {
             name: "OLED True Black".to_string(),
+            background: Some(Color::Rgb(0, 0, 0)), // True Black
             title_try: Color::Rgb(0, 200, 255),     // Bright Cyan
             title_rs: Color::Rgb(255, 80, 100),     // Bright Red
             search_title: Color::Rgb(255, 180, 0),  // Orange
@@ -475,6 +488,7 @@ impl Theme {
     pub fn silver_gray() -> Self {
         Self {
             name: "Silver Gray".to_string(),
+            background: Some(Color::Rgb(47, 47, 47)), // Dark Bg
             title_try: Color::Rgb(100, 149, 237), // Cornflower Blue
             title_rs: Color::Rgb(205, 92, 92),    // Indian Red
             search_title: Color::Rgb(218, 165, 32), // Goldenrod
@@ -513,6 +527,7 @@ impl Theme {
     pub fn black_and_white() -> Self {
         Self {
             name: "Black & White".to_string(),
+            background: Some(Color::Black),
             title_try: Color::White,
             title_rs: Color::White,
             search_title: Color::White,
@@ -551,6 +566,7 @@ impl Theme {
     pub fn matrix() -> Self {
         Self {
             name: "Matrix".to_string(),
+            background: Some(Color::Rgb(0, 10, 0)), // Almost black with green tint
             title_try: Color::Rgb(0, 255, 65),            // Matrix green
             title_rs: Color::Rgb(0, 200, 50),             // Darker green
             search_title: Color::Rgb(0, 255, 65),         // Matrix green
@@ -589,6 +605,7 @@ impl Theme {
     pub fn tron() -> Self {
         Self {
             name: "Tron".to_string(),
+            background: Some(Color::Rgb(0, 10, 15)), // Almost black with blue tint
             title_try: Color::Rgb(0, 255, 255),           // Cyan neon
             title_rs: Color::Rgb(255, 150, 0),            // Orange accent
             search_title: Color::Rgb(0, 255, 255),        // Cyan neon
@@ -627,6 +644,7 @@ impl Theme {
     pub fn catppuccin_macchiato() -> Self {
         Self {
             name: "Catppuccin Macchiato".to_string(),
+            background: Some(Color::Rgb(36, 39, 58)), // Base
             title_try: Color::Rgb(138, 173, 244),         // Blue
             title_rs: Color::Rgb(238, 153, 160),          // Maroon
             search_title: Color::Rgb(245, 169, 127),      // Peach
