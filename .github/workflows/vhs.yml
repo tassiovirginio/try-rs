@@ -78,7 +78,7 @@ jobs:
         run: |
           # Create try-rs config to disable transparent background
           mkdir -p ~/.config/try-rs
-          echo 'transparent_background = true' >> ~/.config/try-rs/config.toml
+          echo 'transparent_background = false' >> ~/.config/try-rs/config.toml
 
           # Save the original working directory
           set -l WORK_DIR $PWD
