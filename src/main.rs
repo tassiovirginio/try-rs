@@ -174,14 +174,34 @@ fn main() -> Result<()> {
     let selection_result: Option<String>;
     let mut open_editor = false;
 
-    if let Some(name) = cli.name_or_url {
-        selection_result = Some(name);
+    let (existing_ambiguous, query) = match &cli.name_or_url {
+        Some(name) => {
+            let folder_name = if utils::is_git_url(&name) {
+                let repo_name = utils::extract_repo_name(&name);
+                &cli.destination.clone().unwrap_or(repo_name)
+            } else {
+                name
+            };
+
+            (
+                utils::folder_for_name_ambiguous(&folder_name, &tries_dir),
+                Some(folder_name.to_string()),
+            )
+        }
+        None => (false, None),
+    };
+
+    if let Some(name) = &cli.name_or_url
+        && !existing_ambiguous
+    {
+        selection_result = Some(name.clone());
     } else {
         enable_raw_mode()?;
         let mut stderr = io::stderr();
         execute!(stderr, EnterAlternateScreen)?;
         let backend = CrosstermBackend::new(stderr);
         let mut terminal = Terminal::new(backend)?;
+        let query = if existing_ambiguous { query } else { None };
 
         let app = App::new(
             tries_dir.clone(),
@@ -190,6 +210,7 @@ fn main() -> Result<()> {
             config_path.clone(),
             apply_date_prefix,
             transparent_background.unwrap_or(true),
+            query,
         );
         let res = run_app(&mut terminal, app);
 

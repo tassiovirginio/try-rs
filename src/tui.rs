@@ -81,6 +81,7 @@ impl App {
         config_path: Option<PathBuf>,
         apply_date_prefix: Option<bool>,
         transparent_background: bool,
+        query: Option<String>,
     ) -> Self {
         let mut entries = Vec::new();
         if let Ok(read_dir) = fs::read_dir(&path) {
@@ -138,8 +139,8 @@ impl App {
         let mut theme_state = ListState::default();
         theme_state.select(Some(0));
 
-        Self {
-            query: String::new(),
+        let mut app = Self {
+            query: query.unwrap_or_else(|| String::new()),
             all_entries: entries.clone(),
             filtered_entries: entries,
             selected_index: 0,
@@ -159,7 +160,9 @@ impl App {
             config_path,
             config_location_state: ListState::default(),
             cached_free_space_mb: utils::get_free_disk_space_mb(&path),
-        }
+        };
+        app.update_search();
+        app
     }
 
     pub fn update_search(&mut self) {

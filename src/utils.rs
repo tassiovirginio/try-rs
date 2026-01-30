@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::SystemTime;
@@ -140,4 +141,25 @@ pub fn extract_prefix_date(name: &str) -> Option<(SystemTime, String)> {
 pub fn generate_prefix_date() -> String {
     let now = Local::now();
     now.format("%Y-%m-%d").to_string()
+}
+
+pub fn folder_for_name_ambiguous(name: &str, path: &PathBuf) -> bool {
+    let mut matches = 0;
+    if let Ok(read_dir) = fs::read_dir(&path) {
+        for entry in read_dir.flatten() {
+            if let Ok(metadata) = entry.metadata()
+                && metadata.is_dir()
+            {
+                let filename = entry.file_name().to_string_lossy().to_string();
+                if filename == name {
+                    matches += 1;
+                } else if let Some((_, stripped_name)) = extract_prefix_date(&filename)
+                    && name == stripped_name
+                {
+                    matches += 1;
+                }
+            }
+        }
+    }
+    matches > 1
 }
