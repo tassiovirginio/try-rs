@@ -143,7 +143,7 @@ pub fn generate_prefix_date() -> String {
     now.format("%Y-%m-%d").to_string()
 }
 
-pub fn folder_for_name_ambiguous(name: &str, path: &PathBuf) -> Vec<String> {
+pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<String> {
     let mut result = vec![];
     if let Ok(read_dir) = fs::read_dir(&path) {
         for entry in read_dir.flatten() {

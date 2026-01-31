@@ -191,7 +191,7 @@ fn main() -> Result<()> {
             };
 
             (
-                utils::folder_for_name_ambiguous(&folder_name, &tries_dir),
+                utils::matching_folders(&folder_name, &tries_dir),
                 Some(folder_name.to_string()),
             )
         }
@@ -217,11 +217,6 @@ fn main() -> Result<()> {
         execute!(stderr, EnterAlternateScreen)?;
         let backend = CrosstermBackend::new(stderr);
         let mut terminal = Terminal::new(backend)?;
-        let query = if matching_folders.len() > 1 {
-            query
-        } else {
-            None
-        };
 
         let app = App::new(
             tries_dir.clone(),
