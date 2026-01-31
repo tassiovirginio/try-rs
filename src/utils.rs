@@ -162,8 +162,8 @@ pub fn get_folder_size_mb(path: &Path) -> u64 {
     dir_size(path) / (1024 * 1024)
 }
 
-pub fn folder_for_name_ambiguous(name: &str, path: &PathBuf) -> bool {
-    let mut matches = 0;
+pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<String> {
+    let mut result = vec![];
     if let Ok(read_dir) = fs::read_dir(&path) {
         for entry in read_dir.flatten() {
             if let Ok(metadata) = entry.metadata()
@@ -171,14 +171,24 @@ pub fn folder_for_name_ambiguous(name: &str, path: &PathBuf) -> bool {
             {
                 let filename = entry.file_name().to_string_lossy().to_string();
                 if filename == name {
-                    matches += 1;
+                    result.push(filename);
                 } else if let Some((_, stripped_name)) = extract_prefix_date(&filename)
                     && name == stripped_name
                 {
-                    matches += 1;
+                    result.push(filename);
                 }
             }
         }
     }
-    matches > 1
+    result
+}
+
+// i've put this here since until now there is not really a library part
+pub enum SelectionResult {
+    /// A explicit folder that is guaranteed to exist already
+    Folder(String),
+    /// No existing match, a new folder should be created
+    New(String),
+    /// Nothing was selected in the UI, quit
+    None,
 }
