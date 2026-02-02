@@ -21,7 +21,9 @@ mod utils;
 
 use cli::{Cli, Shell};
 use config::load_configuration;
-use shell::{setup_bash, setup_fish, setup_nushell, setup_powershell, setup_zsh};
+use shell::{
+    get_shell_content, setup_bash, setup_fish, setup_nushell, setup_powershell, setup_zsh,
+};
 use tui::{App, run_app};
 
 use crate::utils::{SelectionResult, generate_prefix_date};
@@ -57,6 +59,18 @@ fn main() -> Result<()> {
             Shell::PowerShell => setup_powershell()?,
             Shell::NuShell => setup_nushell()?,
         }
+        return Ok(());
+    }
+
+    if let Some(shell) = cli.setup_stdout {
+        let shell_type = match shell {
+            Shell::Fish => shell::ShellType::Fish,
+            Shell::Zsh => shell::ShellType::Zsh,
+            Shell::Bash => shell::ShellType::Bash,
+            Shell::PowerShell => shell::ShellType::PowerShell,
+            Shell::NuShell => shell::ShellType::NuShell,
+        };
+        print!("{}", get_shell_content(&shell_type));
         return Ok(());
     }
 

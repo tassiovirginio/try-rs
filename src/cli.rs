@@ -17,6 +17,10 @@ pub struct Cli {
     #[arg(long)]
     pub setup: Option<Shell>,
 
+    /// Print shell integration code to stdout (for use with tools like Nix home-manager)
+    #[arg(long)]
+    pub setup_stdout: Option<Shell>,
+
     /// Use shallow clone (--depth 1) when cloning repositories
     #[arg(short, long)]
     pub shallow_clone: bool,

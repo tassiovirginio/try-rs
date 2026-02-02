@@ -13,6 +13,78 @@ pub enum ShellType {
     NuShell,
 }
 
+/// Returns the shell integration script content for the given shell type.
+/// This is used by --setup-stdout to print the content to stdout.
+pub fn get_shell_content(shell: &ShellType) -> &'static str {
+    match shell {
+        ShellType::Fish => {
+            r#"function try-rs
+    # Captures the output of the binary (stdout) which is the "cd" command
+    # The TUI is rendered on stderr, so it doesn't interfere.
+    set command (command try-rs $argv | string collect)
+
+    if test -n "$command"
+        eval $command
+    end
+end
+"#
+        }
+        ShellType::Zsh => {
+            r#"try-rs() {
+    # Captures the output of the binary (stdout) which is the "cd" command
+    # The TUI is rendered on stderr, so it doesn't interfere.
+    local output
+    output=$(command try-rs "$@")
+
+    if [ -n "$output" ]; then
+        eval "$output"
+    fi
+}
+"#
+        }
+        ShellType::Bash => {
+            r#"try-rs() {
+    # Captures the output of the binary (stdout) which is the "cd" command
+    # The TUI is rendered on stderr, so it doesn't interfere.
+    local output
+    output=$(command try-rs "$@")
+
+    if [ -n "$output" ]; then
+        eval "$output"
+    fi
+}
+"#
+        }
+        ShellType::PowerShell => {
+            r#"# try-rs integration for PowerShell
+function try-rs {
+    # Captures the output of the binary (stdout) which is the "cd" or editor command
+    # The TUI is rendered on stderr, so it doesn't interfere.
+    $command = (try-rs.exe @args)
+
+    if ($command) {
+        Invoke-Expression $command
+    }
+}
+"#
+        }
+        ShellType::NuShell => {
+            r#"def --wrapped try-rs [...args] {
+    # Capture output. Stderr (TUI) goes directly to terminal.
+    let output = (try-rs.exe ...$args)
+
+    if ($output | is-not-empty) {
+
+        # Grabs the path out of stdout returned by the binary and removes the single quotes
+        let $path = ($output | split row ' ').1 | str replace --all "'" ''
+        cd $path
+    }
+}
+"#
+        }
+    }
+}
+
 pub fn get_shell_integration_path(shell: &ShellType) -> PathBuf {
     let config_dir = match shell {
         ShellType::Fish => get_base_config_dir(),
@@ -49,18 +121,8 @@ pub fn setup_fish() -> Result<()> {
     }
 
     let file_path = fish_functions_dir.join("try-rs.fish");
-    let content = r#"function try-rs
-    # Captures the output of the binary (stdout) which is the "cd" command
-    # The TUI is rendered on stderr, so it doesn't interfere.
-    set command (command try-rs $argv | string collect)
 
-    if test -n "$command"
-        eval $command
-    end
-end
-"#;
-
-    fs::write(&file_path, content)?;
+    fs::write(&file_path, get_shell_content(&ShellType::Fish))?;
     eprintln!("Fish function created at: {}", file_path.display());
     eprintln!(
         "You may need to restart your shell or run 'source {}' to apply changes.",
@@ -84,19 +146,8 @@ pub fn setup_zsh() -> Result<()> {
     }
 
     let file_path = app_config_dir.join("try-rs.zsh");
-    let content = r#"try-rs() {
-    # Captures the output of the binary (stdout) which is the "cd" command
-    # The TUI is rendered on stderr, so it doesn't interfere.
-    local output
-    output=$(command try-rs "$@")
 
-    if [ -n "$output" ]; then
-        eval "$output"
-    fi
-}
-"#;
-
-    fs::write(&file_path, content)?;
+    fs::write(&file_path, get_shell_content(&ShellType::Zsh))?;
     eprintln!("ZSH function file created at: {}", file_path.display());
 
     let home_dir = dirs::home_dir().expect("Could not find home directory");
@@ -136,19 +187,8 @@ pub fn setup_bash() -> Result<()> {
     }
 
     let file_path = app_config_dir.join("try-rs.bash");
-    let content = r#"try-rs() {
-    # Captures the output of the binary (stdout) which is the "cd" command
-    # The TUI is rendered on stderr, so it doesn't interfere.
-    local output
-    output=$(command try-rs "$@")
 
-    if [ -n "$output" ]; then
-        eval "$output"
-    fi
-}
-"#;
-
-    fs::write(&file_path, content)?;
+    fs::write(&file_path, get_shell_content(&ShellType::Bash))?;
     eprintln!("Bash function file created at: {}", file_path.display());
 
     let home_dir = dirs::home_dir().expect("Could not find home directory");
@@ -186,19 +226,8 @@ pub fn setup_powershell() -> Result<()> {
     }
 
     let file_path = app_config_dir.join("try-rs.ps1");
-    let content = r#"
-# try-rs integration for PowerShell
-function try-rs {
-    # Captures the output of the binary (stdout) which is the "cd" or editor command
-    # The TUI is rendered on stderr, so it doesn't interfere.
-    $command = (try-rs.exe @args)
 
-    if ($command) {
-        Invoke-Expression $command
-    }
-}
-"#;
-    fs::write(&file_path, content.trim())?;
+    fs::write(&file_path, get_shell_content(&ShellType::PowerShell))?;
     eprintln!(
         "PowerShell function file created at: {}",
         file_path.display()
@@ -279,20 +308,8 @@ pub fn setup_nushell() -> Result<()> {
     }
 
     let file_path = app_config_dir.join("try-rs.nu");
-    let content = r#"def --wrapped try-rs [...args] {
-    # Capture output. Stderr (TUI) goes directly to terminal.
-    let output = (try-rs.exe ...$args)
 
-    if ($output | is-not-empty) {
-
-        # Grabs the path out of stdout returned by the binary and removes the single quotes
-        let $path = ($output | split row ' ').1 | str replace --all "\'" ''
-        cd $path
-    }
-}
-"#;
-
-    fs::write(&file_path, content)?;
+    fs::write(&file_path, get_shell_content(&ShellType::NuShell))?;
     eprintln!("Nushell function created at: {}", file_path.display());
 
     let nu_config_path = config_dir.join("config.nu");
