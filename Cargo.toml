@@ -25,6 +25,9 @@ toml = "0.9.11+spec-1.1.0"
 clap = { version = "4.5.54", features = ["derive"] }
 libc = "0.2"
 
+[dev-dependencies]
+tempdir = "0.3"
+
 [package.metadata.deb]
 maintainer = "Tassio Virginio <tassio.virginio@gmail.com>"
 copyright = "2024, Tassio Virginio"
@@ -56,3 +59,8 @@ opt-level = "z"     # Optimize for size.
 lto = true          # Enable LTO
 codegen-units = 1   # Use a single codegen for size optimization
 panic = "abort"     # Remove traceback information
+
+[[test]]
+name = "integration_test"
+path = "test/integration_test.rs"
+test = true

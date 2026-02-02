@@ -24,7 +24,7 @@ use config::load_configuration;
 use shell::{setup_bash, setup_fish, setup_nushell, setup_powershell, setup_zsh};
 use tui::{App, run_app};
 
-use crate::utils::generate_prefix_date;
+use crate::utils::{SelectionResult, generate_prefix_date};
 
 fn main() -> Result<()> {
     let cli = match Cli::try_parse() {
@@ -178,10 +178,10 @@ fn main() -> Result<()> {
         }
     }
 
-    let selection_result: Option<String>;
+    let selection_result: SelectionResult;
     let mut open_editor = false;
 
-    let (existing_ambiguous, query) = match &cli.name_or_url {
+    let (matching_folders, query) = match &cli.name_or_url {
         Some(name) => {
             let folder_name = if utils::is_git_url(&name) {
                 let repo_name = utils::extract_repo_name(&name);
@@ -191,24 +191,32 @@ fn main() -> Result<()> {
             };
 
             (
-                utils::folder_for_name_ambiguous(&folder_name, &tries_dir),
+                utils::matching_folders(&folder_name, &tries_dir),
                 Some(folder_name.to_string()),
             )
         }
-        None => (false, None),
+        None => (vec![], None),
     };
 
     if let Some(name) = &cli.name_or_url
-        && !existing_ambiguous
+        && matching_folders.len() <= 1
     {
-        selection_result = Some(name.clone());
+        if matching_folders.is_empty() {
+            selection_result = SelectionResult::New(name.clone());
+        } else {
+            selection_result = SelectionResult::Folder(
+                matching_folders
+                    .into_iter()
+                    .next()
+                    .expect("must have exactly 1 items here"),
+            );
+        }
     } else {
         enable_raw_mode()?;
         let mut stderr = io::stderr();
         execute!(stderr, EnterAlternateScreen)?;
         let backend = CrosstermBackend::new(stderr);
         let mut terminal = Terminal::new(backend)?;
-        let query = if existing_ambiguous { query } else { None };
 
         let app = App::new(
             tries_dir.clone(),
@@ -228,70 +236,67 @@ fn main() -> Result<()> {
         (selection_result, open_editor) = res?;
     }
 
-    if let Some(selection) = selection_result {
+    if let SelectionResult::Folder(selection) = selection_result {
         let target_path = tries_dir.join(&selection);
+        if open_editor && let Some(cmd) = editor_cmd {
+            println!("{} '{}'", cmd, target_path.to_string_lossy());
+        } else {
+            println!("cd '{}'", target_path.to_string_lossy());
+        }
+    } else if let SelectionResult::New(selection) = selection_result {
+        if utils::is_git_url(&selection) {
+            let repo_name = utils::extract_repo_name(&selection);
 
-        if target_path.exists() {
-            if open_editor && let Some(cmd) = editor_cmd {
-                println!("{} '{}'", cmd, target_path.to_string_lossy());
-            } else {
-                println!("cd '{}'", target_path.to_string_lossy());
+            let mut folder_name = cli.destination.clone().unwrap_or(repo_name);
+            if Some(true) == apply_date_prefix {
+                folder_name = format!("{} {}", generate_prefix_date(), folder_name);
+            }
+
+            let new_path = tries_dir.join(&folder_name);
+
+            eprintln!("Cloning {} into {}...", selection, folder_name);
+
+            let mut cmd = std::process::Command::new("git");
+            cmd.arg("clone");
+
+            if cli.shallow_clone {
+                cmd.arg("--depth").arg("1");
+            }
+
+            let status = cmd
+                .arg(&selection)
+                .arg(&new_path)
+                .arg("--recurse-submodules")
+                .arg("--no-single-branch")
+                .stdout(Stdio::null())
+                .stderr(Stdio::inherit())
+                .status();
+
+            match status {
+                Ok(s) if s.success() => {
+                    if open_editor && let Some(cmd) = editor_cmd {
+                        println!("{} '{}'", cmd, new_path.to_string_lossy());
+                    } else {
+                        println!("cd '{}'", new_path.to_string_lossy());
+                    }
+                }
+                _ => {
+                    eprintln!("Error: Failed to clone the repository.");
+                }
             }
         } else {
-            if utils::is_git_url(&selection) {
-                let repo_name = utils::extract_repo_name(&selection);
+            let mut new_name = selection;
+            let date_prefix = generate_prefix_date();
+            if Some(true) == apply_date_prefix && !new_name.starts_with(&date_prefix) {
+                new_name = format!("{date_prefix} {new_name}");
+            }
 
-                let mut folder_name = cli.destination.clone().unwrap_or(repo_name);
-                if Some(true) == apply_date_prefix {
-                    folder_name = format!("{} {}", generate_prefix_date(), folder_name);
-                }
-
-                let new_path = tries_dir.join(&folder_name);
-
-                eprintln!("Cloning {} into {}...", selection, folder_name);
-
-                let mut cmd = std::process::Command::new("git");
-                cmd.arg("clone");
-
-                if cli.shallow_clone {
-                    cmd.arg("--depth").arg("1");
-                }
-
-                let status = cmd
-                    .arg(&selection)
-                    .arg(&new_path)
-                    .arg("--recurse-submodules")
-                    .arg("--no-single-branch")
-                    .stdout(Stdio::null())
-                    .stderr(Stdio::inherit())
-                    .status();
-
-                match status {
-                    Ok(s) if s.success() => {
-                        if open_editor && let Some(cmd) = editor_cmd {
-                            println!("{} '{}'", cmd, new_path.to_string_lossy());
-                        } else {
-                            println!("cd '{}'", new_path.to_string_lossy());
-                        }
-                    }
-                    _ => {
-                        eprintln!("Error: Failed to clone the repository.");
-                    }
-                }
+            let new_path = tries_dir.join(&new_name);
+            fs::create_dir_all(&new_path)?;
+            if open_editor && let Some(cmd) = editor_cmd {
+                println!("{} '{}'", cmd, new_path.to_string_lossy());
             } else {
-                let mut new_name = selection;
-                let date_prefix = generate_prefix_date();
-                if Some(true) == apply_date_prefix && !new_name.starts_with(&date_prefix) {
-                    new_name = format!("{date_prefix} {new_name}");
-                }
-
-                let new_path = tries_dir.join(&new_name);
-                fs::create_dir_all(&new_path)?;
-                if open_editor && let Some(cmd) = editor_cmd {
-                    println!("{} '{}'", cmd, new_path.to_string_lossy());
-                } else {
-                    println!("cd '{}'", new_path.to_string_lossy());
-                }
+                println!("cd '{}'", new_path.to_string_lossy());
             }
         }
     }

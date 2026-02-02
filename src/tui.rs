@@ -20,7 +20,7 @@ use std::{
 pub use crate::themes::Theme;
 use crate::{
     config::{get_file_config_toml_name, save_config},
-    utils,
+    utils::{self, SelectionResult},
 };
 
 #[derive(Clone, Copy, PartialEq)]
@@ -58,7 +58,7 @@ pub struct App {
     pub filtered_entries: Vec<TryEntry>,
     pub selected_index: usize,
     pub should_quit: bool,
-    pub final_selection: Option<String>,
+    pub final_selection: SelectionResult,
     pub mode: AppMode,
     pub status_message: Option<String>,
     pub base_path: PathBuf,
@@ -152,7 +152,7 @@ impl App {
             filtered_entries: entries,
             selected_index: 0,
             should_quit: false,
-            final_selection: None,
+            final_selection: SelectionResult::None,
             mode: AppMode::Normal,
             status_message: None,
             base_path: path.clone(),
@@ -497,7 +497,7 @@ fn draw_about_popup(f: &mut Frame, theme: &Theme) {
 pub fn run_app(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     mut app: App,
-) -> Result<(Option<String>, bool)> {
+) -> Result<(SelectionResult, bool)> {
     while !app.should_quit {
         terminal.draw(|f| {
             // Render background if not transparent
@@ -897,12 +897,14 @@ pub fn run_app(
                         } else if c == 'e' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             if app.editor_cmd.is_some() {
                                 if !app.filtered_entries.is_empty() {
-                                    app.final_selection =
-                                        Some(app.filtered_entries[app.selected_index].name.clone());
+                                    app.final_selection = SelectionResult::Folder(
+                                        app.filtered_entries[app.selected_index].name.clone(),
+                                    );
                                     app.wants_editor = true;
                                     app.should_quit = true;
                                 } else if !app.query.is_empty() {
-                                    app.final_selection = Some(app.query.clone());
+                                    app.final_selection =
+                                        SelectionResult::Folder(app.query.clone());
                                     app.wants_editor = true;
                                     app.should_quit = true;
                                 }
@@ -962,10 +964,11 @@ pub fn run_app(
                     }
                     KeyCode::Enter => {
                         if !app.filtered_entries.is_empty() {
-                            app.final_selection =
-                                Some(app.filtered_entries[app.selected_index].name.clone());
+                            app.final_selection = SelectionResult::Folder(
+                                app.filtered_entries[app.selected_index].name.clone(),
+                            );
                         } else if !app.query.is_empty() {
-                            app.final_selection = Some(app.query.clone());
+                            app.final_selection = SelectionResult::New(app.query.clone());
                         }
                         app.should_quit = true;
                     }
