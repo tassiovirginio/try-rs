@@ -25,7 +25,8 @@
       {
         packages.try-rs = pkgs.rustPlatform.buildRustPackage {
           pname = "try-rs";
-          version = "0.1.58"; # update when releasing new version
+
+          version = "0.1.59";  # update when releasing new version
 
           src = self; # uses the repo itself as source
 
