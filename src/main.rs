@@ -31,11 +31,7 @@ use crate::utils::{SelectionResult, generate_prefix_date};
 fn main() -> Result<()> {
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
-        Err(err) => {
-            let mut stderr = std::io::stderr();
-            write!(stderr, "{}", err).unwrap();
-            std::process::exit(if err.use_stderr() { 1 } else { 0 });
-        }
+        Err(err) => err.exit(),
     };
     let (
         tries_dir,
