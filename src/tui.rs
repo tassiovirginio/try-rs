@@ -837,6 +837,10 @@ pub fn run_app(
             }
         })?;
 
+        // Poll with 1-second timeout so the screen refreshes periodically
+        if !event::poll(std::time::Duration::from_secs(1))? {
+            continue;
+        }
         if let Event::Key(key) = event::read()? {
             if !key.is_press() {
                 continue;
