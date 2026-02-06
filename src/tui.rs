@@ -263,7 +263,7 @@ fn draw_popup(f: &mut Frame, title: &str, message: &str, theme: &Theme) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Percentage(40),
-            Constraint::Length(3),
+            Constraint::Length(8),
             Constraint::Percentage(40),
         ])
         .split(area);
@@ -271,9 +271,9 @@ fn draw_popup(f: &mut Frame, title: &str, message: &str, theme: &Theme) {
     let popup_area = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
-            Constraint::Percentage(20),
-            Constraint::Percentage(60),
-            Constraint::Percentage(20),
+            Constraint::Percentage(35),
+            Constraint::Percentage(30),
+            Constraint::Percentage(35),
         ])
         .split(popup_layout[1])[1];
 
@@ -284,7 +284,13 @@ fn draw_popup(f: &mut Frame, title: &str, message: &str, theme: &Theme) {
         .borders(Borders::ALL)
         .style(Style::default().bg(theme.popup_bg));
 
-    let paragraph = Paragraph::new(message)
+    // Vertically center the text inside the popup
+    let inner_height = popup_area.height.saturating_sub(2) as usize; // subtract borders
+    let text_lines = message.lines().count();
+    let top_padding = inner_height.saturating_sub(text_lines) / 2;
+    let padded_message = format!("{}{}", "\n".repeat(top_padding), message);
+
+    let paragraph = Paragraph::new(padded_message)
         .block(block)
         .style(
             Style::default()
@@ -811,7 +817,7 @@ pub fn run_app(
             if app.mode == AppMode::DeleteConfirm
                 && let Some(selected) = app.filtered_entries.get(app.selected_index)
             {
-                let msg = format!("Delete '{}'? (y/n)", selected.name);
+                let msg = format!("Delete '{}'?\n(y/n)", selected.name);
                 draw_popup(f, " WARNING ", &msg, &app.theme);
             }
 
