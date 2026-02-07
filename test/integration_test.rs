@@ -260,7 +260,17 @@ fn create_git_origin(h: &Harness) -> Result<PathBuf, String> {
 
     command(&dir, "git", &["init"])?;
     command(&dir, "git", &["add", "."])?;
-    command(&dir, "git", &["commit", "-m", "init"])?;
+    command(
+        &dir,
+        "git",
+        &[
+            "commit",
+            "-m",
+            "init",
+            "--author",
+            "Test <test@test.internal>",
+        ],
+    )?;
 
     Ok(dir)
 }
