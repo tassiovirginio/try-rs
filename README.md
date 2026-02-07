@@ -10,6 +10,9 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 </p>
 
 <p align="center">
+  <a href="https://github.com/tassiovirginio/try-rs/actions/workflows/rust.yml">
+    <img src="https://github.com/tassiovirginio/try-rs/actions/workflows/rust.yml/badge.svg" alt="Build Status">
+  </a>
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/built_with-Rust-d45500.svg" alt="Rust">
   <a href="https://github.com/tassiovirginio/try-rs">
