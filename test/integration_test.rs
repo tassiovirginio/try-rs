@@ -290,7 +290,7 @@ fn command(dir: &PathBuf, cmd: &str, args: &[&str]) -> Result<Output, String> {
                     let signal_info = format!(", signal {:?}", ok.status.signal());
                     #[cfg(not(unix))]
                     let signal_info = String::new();
-                    
+
                     format!(
                         "command not successful (exit code {:?}{}):\nstdout::{}\nstderr:\n{}",
                         exit_code,
