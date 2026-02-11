@@ -2,7 +2,7 @@ cargo-features = ["edition2024"]
 
 [package]
 name = "try-rs"
-version = "1.0.1"
+version = "1.1.1"
 authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
 homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
