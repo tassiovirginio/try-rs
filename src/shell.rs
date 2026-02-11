@@ -7,10 +7,12 @@ use std::path::PathBuf;
 
 /// Returns the shell integration script content for the given shell type.
 /// This is used by --setup-stdout to print the content to stdout.
-pub fn get_shell_content(shell: &Shell) -> &'static str {
+pub fn get_shell_content(shell: &Shell) -> String {
+    let completions = get_completions_script(shell);
     match shell {
         Shell::Fish => {
-            r#"function try-rs
+            format!(
+                r#"function try-rs
     # Pass flags/options directly to stdout without capturing
     for arg in $argv
         if string match -q -- '-*' $arg
@@ -27,10 +29,13 @@ pub fn get_shell_content(shell: &Shell) -> &'static str {
         eval $command
     end
 end
-"#
+
+{completions}"#
+            )
         }
         Shell::Zsh => {
-            r#"try-rs() {
+            format!(
+                r#"try-rs() {{
     # Pass flags/options directly to stdout without capturing
     for arg in "$@"; do
         case "$arg" in
@@ -46,11 +51,14 @@ end
     if [ -n "$output" ]; then
         eval "$output"
     fi
-}
-"#
+}}
+
+{completions}"#
+            )
         }
         Shell::Bash => {
-            r#"try-rs() {
+            format!(
+                r#"try-rs() {{
     # Pass flags/options directly to stdout without capturing
     for arg in "$@"; do
         case "$arg" in
@@ -66,52 +74,359 @@ end
     if [ -n "$output" ]; then
         eval "$output"
     fi
-}
-"#
+}}
+
+{completions}"#
+            )
         }
         Shell::PowerShell => {
-            r#"# try-rs integration for PowerShell
-function try-rs {
+            format!(
+                r#"# try-rs integration for PowerShell
+function try-rs {{
     # Pass flags/options directly to stdout without capturing
-    foreach ($a in $args) {
-        if ($a -like '-*') {
+    foreach ($a in $args) {{
+        if ($a -like '-*') {{
             & try-rs.exe @args
             return
-        }
-    }
+        }}
+    }}
 
     # Captures the output of the binary (stdout) which is the "cd" or editor command
     # The TUI is rendered on stderr, so it doesn't interfere.
     $command = (try-rs.exe @args)
 
-    if ($command) {
+    if ($command) {{
         Invoke-Expression $command
-    }
-}
-"#
+    }}
+}}
+
+{completions}"#
+            )
         }
         Shell::NuShell => {
-            r#"def --wrapped try-rs [...args] {
+            format!(
+                r#"def --wrapped try-rs [...args] {{
     # Pass flags/options directly to stdout without capturing
-    for arg in $args {
-        if ($arg | str starts-with '-') {
+    for arg in $args {{
+        if ($arg | str starts-with '-') {{
             ^try-rs.exe ...$args
             return
-        }
-    }
+        }}
+    }}
 
     # Capture output. Stderr (TUI) goes directly to terminal.
     let output = (try-rs.exe ...$args)
 
-    if ($output | is-not-empty) {
+    if ($output | is-not-empty) {{
 
         # Grabs the path out of stdout returned by the binary and removes the single quotes
         let $path = ($output | split row ' ').1 | str replace --all "'" ''
         cd $path
+    }}
+}}
+
+{completions}"#
+            )
+        }
     }
 }
-"#
+
+/// Returns the tab completion script for the given shell.
+/// This provides dynamic completion of directory names from the tries_path.
+pub fn get_completions_script(shell: &Shell) -> String {
+    match shell {
+        Shell::Fish => {
+            r#"# try-rs tab completion for directory names
+function __try_rs_get_tries_path
+    # Check TRY_PATH environment variable first
+    if set -q TRY_PATH
+        echo $TRY_PATH
+        return
+    end
+    
+    # Try to read from config file
+    set -l config_paths "$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml"
+    for config_path in $config_paths
+        if test -f $config_path
+            set -l tries_path (command grep -E '^\s*tries_path\s*=' $config_path 2>/dev/null | command sed 's/.*=\s*"\?\([^"]*\)"\?.*/\1/' | command sed "s|~|$HOME|" | string trim)
+            if test -n "$tries_path"
+                echo $tries_path
+                return
+            end
+        end
+    end
+    
+    # Default path
+    echo "$HOME/work/tries"
+end
+
+function __try_rs_complete_directories
+    set -l tries_path (__try_rs_get_tries_path)
+    
+    if test -d $tries_path
+        # List directories in tries_path, filtering by current token
+        command ls -1 $tries_path 2>/dev/null | while read -l dir
+            if test -d "$tries_path/$dir"
+                echo $dir
+            end
+        end
+    end
+end
+
+complete -f -c try-rs -n '__fish_use_subcommand' -a '(__try_rs_complete_directories)' -d 'Try directory'
+"#.to_string()
         }
+        Shell::Zsh => {
+            r#"# try-rs tab completion for directory names
+_try_rs_get_tries_path() {
+    # Check TRY_PATH environment variable first
+    if [[ -n "${TRY_PATH}" ]]; then
+        echo "${TRY_PATH}"
+        return
+    fi
+    
+    # Try to read from config file
+    local config_paths=("$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml")
+    for config_path in "${config_paths[@]}"; do
+        if [[ -f "$config_path" ]]; then
+            local tries_path=$(grep -E '^\s*tries_path\s*=' "$config_path" 2>/dev/null | sed 's/.*=\s*"\?\([^"]*\)"\?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
+            if [[ -n "$tries_path" ]]; then
+                echo "$tries_path"
+                return
+            fi
+        fi
+    done
+    
+    # Default path
+    echo "$HOME/work/tries"
+}
+
+_try_rs_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local tries_path=$(_try_rs_get_tries_path)
+    local -a dirs=()
+    
+    if [[ -d "$tries_path" ]]; then
+        # Get list of directories
+        while IFS= read -r dir; do
+            dirs+=("$dir")
+        done < <(ls -1 "$tries_path" 2>/dev/null | while read -r dir; do
+            if [[ -d "$tries_path/$dir" ]]; then
+                echo "$dir"
+            fi
+        done)
+    fi
+    
+    COMPREPLY=($(compgen -W "${dirs[*]}" -- "$cur"))
+}
+
+complete -o default -F _try_rs_complete try-rs
+"#.to_string()
+        }
+        Shell::Bash => {
+            r#"# try-rs tab completion for directory names
+_try_rs_get_tries_path() {
+    # Check TRY_PATH environment variable first
+    if [[ -n "${TRY_PATH}" ]]; then
+        echo "${TRY_PATH}"
+        return
+    fi
+    
+    # Try to read from config file
+    local config_paths=("$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml")
+    for config_path in "${config_paths[@]}"; do
+        if [[ -f "$config_path" ]]; then
+            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed 's/.*=[[:space:]]*"\?\([^"]*\)"\?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
+            if [[ -n "$tries_path" ]]; then
+                echo "$tries_path"
+                return
+            fi
+        fi
+    done
+    
+    # Default path
+    echo "$HOME/work/tries"
+}
+
+_try_rs_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local tries_path=$(_try_rs_get_tries_path)
+    local dirs=""
+    
+    if [[ -d "$tries_path" ]]; then
+        # Get list of directories
+        while IFS= read -r dir; do
+            if [[ -d "$tries_path/$dir" ]]; then
+                dirs="$dirs $dir"
+            fi
+        done < <(ls -1 "$tries_path" 2>/dev/null)
+    fi
+    
+    COMPREPLY=($(compgen -W "$dirs" -- "$cur"))
+}
+
+complete -o default -F _try_rs_complete try-rs
+"#.to_string()
+        }
+        Shell::PowerShell => {
+            r#"# try-rs tab completion for directory names
+Register-ArgumentCompleter -CommandName try-rs -ScriptBlock {
+    param($wordToComplete, $commandAst, $cursorPosition)
+    
+    # Get tries path from environment variable or default
+    $triesPath = $env:TRY_PATH
+    if (-not $triesPath) {
+        # Try to read from config file
+        $configPaths = @(
+            "$env:USERPROFILE/.config/try-rs/config.toml",
+            "$env:USERPROFILE/.try-rs/config.toml"
+        )
+        foreach ($configPath in $configPaths) {
+            if (Test-Path $configPath) {
+                $content = Get-Content $configPath -Raw
+                if ($content -match 'tries_path\s*=\s*["'']?([^"'']+)["'']?') {
+                    $triesPath = $matches[1].Replace('~', $env:USERPROFILE).Trim()
+                    break
+                }
+            }
+        }
+    }
+    
+    # Default path
+    if (-not $triesPath) {
+        $triesPath = "$env:USERPROFILE/work/tries"
+    }
+    
+    # Get directories
+    if (Test-Path $triesPath) {
+        Get-ChildItem -Path $triesPath -Directory | 
+            Where-Object { $_.Name -like "$wordToComplete*" } |
+            ForEach-Object { 
+                [System.Management.Automation.CompletionResult]::new(
+                    $_.Name, 
+                    $_.Name, 
+                    'ParameterValue', 
+                    $_.Name
+                )
+            }
+    }
+}
+"#.to_string()
+        }
+        Shell::NuShell => {
+            r#"# try-rs tab completion for directory names
+# Add this to your Nushell config or env file
+
+export def __try_rs_get_tries_path [] {
+    # Check TRY_PATH environment variable first
+    if ($env.TRY_PATH? | is-not-empty) {
+        return $env.TRY_PATH
+    }
+    
+    # Try to read from config file
+    let config_paths = [
+        ($env.HOME | path join ".config" "try-rs" "config.toml"),
+        ($env.HOME | path join ".try-rs" "config.toml")
+    ]
+    
+    for config_path in $config_paths {
+        if ($config_path | path exists) {
+            let content = (open $config_path | str trim)
+            if ($content =~ 'tries_path\\s*=\\s*"?([^"]+)"?') {
+                let path = ($content | parse -r 'tries_path\\s*=\\s*"?([^"]+)"?' | get capture0.0? | default "")
+                if ($path | is-not-empty) {
+                    return ($path | str replace "~" $env.HOME)
+                }
+            }
+        }
+    }
+    
+    # Default path
+    ($env.HOME | path join "work" "tries")
+}
+
+export def __try_rs_complete [context: string] {
+    let tries_path = (__try_rs_get_tries_path)
+    
+    if ($tries_path | path exists) {
+        ls $tries_path | where type == "dir" | get name | path basename
+    } else {
+        []
+    }
+}
+
+# Add completion to the try-rs command
+export extern try-rs [
+    name_or_url?: string@__try_rs_complete
+    destination?: string
+    --setup: string
+    --setup-stdout: string
+    --completions: string
+    --shallow-clone(-s)
+    --worktree(-w): string
+]
+"#.to_string()
+        }
+    }
+}
+
+/// Returns only the completion script (for --completions flag)
+pub fn get_completion_script_only(shell: &Shell) -> String {
+    let completions = get_completions_script(shell);
+    match shell {
+        Shell::NuShell => {
+            // For NuShell, we need to provide a different format when used standalone
+            r#"# try-rs tab completion for directory names
+# Add this to your Nushell config
+
+def __try_rs_get_tries_path [] {
+    if ($env.TRY_PATH? | is-not-empty) {
+        return $env.TRY_PATH
+    }
+    
+    let config_paths = [
+        ($env.HOME | path join ".config" "try-rs" "config.toml"),
+        ($env.HOME | path join ".try-rs" "config.toml")
+    ]
+    
+    for config_path in $config_paths {
+        if ($config_path | path exists) {
+            let content = (open $config_path | str trim)
+            if ($content =~ 'tries_path\\s*=\\s*"?([^"]+)"?') {
+                let path = ($content | parse -r 'tries_path\\s*=\\s*"?([^"]+)"?' | get capture0.0? | default "")
+                if ($path | is-not-empty) {
+                    return ($path | str replace "~" $env.HOME)
+                }
+            }
+        }
+    }
+    
+    ($env.HOME | path join "work" "tries")
+}
+
+def __try_rs_complete [context: string] {
+    let tries_path = (__try_rs_get_tries_path)
+    
+    if ($tries_path | path exists) {
+        ls $tries_path | where type == "dir" | get name | path basename
+    } else {
+        []
+    }
+}
+
+# Register completion
+export extern try-rs [
+    name_or_url?: string@__try_rs_complete
+    destination?: string
+    --setup: string
+    --setup-stdout: string
+    --completions: string
+    --shallow-clone(-s)
+    --worktree(-w): string
+]
+"#.to_string()
+        }
+        _ => completions,
     }
 }
 
@@ -249,5 +564,12 @@ pub fn setup_shell(shell: &Shell) -> Result<()> {
         }
     }
 
+    Ok(())
+}
+
+/// Generates a standalone completion script for the given shell.
+pub fn generate_completions(shell: &Shell) -> Result<()> {
+    let script = get_completion_script_only(shell);
+    print!("{}", script);
     Ok(())
 }

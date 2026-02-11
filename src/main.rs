@@ -21,7 +21,7 @@ mod utils;
 
 use cli::{Cli, Shell};
 use config::{AppConfig, load_configuration};
-use shell::{get_shell_content, setup_shell};
+use shell::{generate_completions, get_shell_content, setup_shell};
 use tui::{App, run_app};
 
 use crate::utils::{SelectionResult, generate_prefix_date};
@@ -231,6 +231,11 @@ fn main() -> Result<()> {
 
     if let Some(shell) = cli.setup_stdout {
         print!("{}", get_shell_content(&shell));
+        return Ok(());
+    }
+
+    if let Some(shell) = cli.completions {
+        generate_completions(&shell)?;
         return Ok(());
     }
 

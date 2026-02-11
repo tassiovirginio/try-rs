@@ -21,6 +21,10 @@ pub struct Cli {
     #[arg(long)]
     pub setup_stdout: Option<Shell>,
 
+    /// Generate shell completion script for tab completion of directory names
+    #[arg(long)]
+    pub completions: Option<Shell>,
+
     /// Use shallow clone (--depth 1) when cloning repositories
     #[arg(short, long)]
     pub shallow_clone: bool,

@@ -43,6 +43,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
 | **Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
+| **Shell Tab Completion** | Dynamic tab completion for directory names from your tries path.                       |
 | **Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
 
 ## Installation
@@ -163,6 +164,57 @@ try-rs --setup power-shell
 ```bash
 try-rs --setup nu-shell
 ```
+
+### Shell Tab Completion (Optional)
+
+`try-rs` supports dynamic tab completion for directory names in your `tries_path`. When you type `try-rs <partial-name>` and press `<Tab>`, it will suggest existing directories from your tries folder.
+
+To enable tab completion, run:
+
+```bash
+# For Bash
+try-rs --completions bash >> ~/.bashrc
+
+# For Zsh
+try-rs --completions zsh >> ~/.zshrc
+
+# For Fish
+try-rs --completions fish > ~/.config/fish/completions/try-rs.fish
+
+# For PowerShell
+try-rs --completions power-shell >> $PROFILE
+
+# For Nushell
+try-rs --completions nu-shell >> ~/.config/nushell/config.nu
+```
+
+Or generate the completion script to stdout and redirect it manually:
+
+```bash
+try-rs --completions bash
+```
+
+The completion script automatically detects your `tries_path` from:
+1. The `TRY_PATH` environment variable (highest priority)
+2. The `tries_path` setting in your config file
+3. The default `~/work/tries` path
+
+**Example usage:**
+
+If you have folders like `rust-test`, `go-playground`, and `python-ml` in your tries path:
+
+```bash
+$ try-rs ru<Tab>
+# Completes to: try-rs rust-test
+
+$ try-rs go<Tab>
+# Completes to: try-rs go-playground
+
+$ try-rs py<Tab>
+# Completes to: try-rs python-ml
+```
+
+You can also use it with the TUI - typing a partial name will fuzzy-match existing directories.
 
 ### 2. Config File
 
@@ -292,6 +344,7 @@ You can also bypass the UI:
 | `try-rs -w <name>` / `try-rs --worktree`       | Create a git worktree from current repository (must be inside repo) |
 | `try-rs --setup <shell>`                       | Setup shell integration (fish, zsh, bash, nu-shell, power-shell)    |
 | `try-rs --setup-stdout <shell>`                | Print shell integration script to stdout (for manual setup)         |
+| `try-rs --completions <shell>`                 | Generate shell completion script for tab completion                 |
 | `try-rs --version`                             | Show application version                                            |
 | `try-rs --help`                                | Show help message                                                   |
 
