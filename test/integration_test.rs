@@ -1,10 +1,12 @@
 use std::{
     env::current_dir,
     fs,
-    os::unix::process::ExitStatusExt,
     path::PathBuf,
     process::{Command, ExitStatus},
 };
+
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt;
 
 use chrono::Local;
 use tempdir::TempDir;
@@ -225,18 +227,14 @@ fn new_worktree() {
     // then
     let expected_dir = h.tries_path().join("my-brand-new-feature");
     assert!(output.status.success());
-    assert!(
-        output
-            .stdout
-            .contains(&format!("cd '{}'", expected_dir.display()))
-    );
+    assert!(output
+        .stdout
+        .contains(&format!("cd '{}'", expected_dir.display())));
     assert!(expected_dir.exists());
     assert!(expected_dir.is_dir());
-    assert!(
-        output
-            .stderr
-            .starts_with("Creating worktree 'my-brand-new-feature'")
-    );
+    assert!(output
+        .stderr
+        .starts_with("Creating worktree 'my-brand-new-feature'"));
     let git_status = command(&expected_dir, "git", &["worktree", "list"]).unwrap();
     assert!(
         git_status.status.success(),
@@ -282,13 +280,19 @@ fn command(dir: &PathBuf, cmd: &str, args: &[&str]) -> Result<Output, String> {
             if ok.status.success() {
                 Ok(ok)
             } else {
-                Err(format!(
-                    "command not successful (exit code {:?}, signal {:?}):\nstdout::{}\nstderr:\n{}",
-                    ok.status.code(),
-                    ok.status.signal(),
-                    ok.stdout,
-                    ok.stderr,
-                ))
+                {
+                    #[cfg(unix)]
+                    let signal = ok.status.signal();
+                    #[cfg(not(unix))]
+                    let signal: Option<i32> = None;
+                    Err(format!(
+                        "command not successful (exit code {:?}, signal {:?}):\nstdout::{}\nstderr:\n{}",
+                        ok.status.code(),
+                        signal,
+                        ok.stdout,
+                        ok.stderr,
+                    ))
+                }
             }
         }
         Err(err) => Err(err.to_string()),
