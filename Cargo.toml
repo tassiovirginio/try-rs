@@ -79,3 +79,18 @@ test = true
 name = "themes_test"
 path = "test/themes_test.rs"
 test = true
+
+[[test]]
+name = "cli_test"
+path = "test/cli_test.rs"
+test = true
+
+[[test]]
+name = "shell_test"
+path = "test/shell_test.rs"
+test = true
+
+[[test]]
+name = "tui_test"
+path = "test/tui_test.rs"
+test = true
