@@ -7,6 +7,7 @@ use try_rs::shell::*;
 fn get_shell_content_fish_contains_function() {
     let content = get_shell_content(&Shell::Fish);
     assert!(content.contains("function try-rs"));
+    assert!(content.contains("function try-rs-picker"));
     assert!(content.contains("end"));
 }
 

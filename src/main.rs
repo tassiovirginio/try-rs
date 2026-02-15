@@ -1,15 +1,19 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow, bail};
 
 use clap::Parser;
 use crossterm::{
+    cursor::MoveTo,
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{
+        Clear, ClearType, EnterAlternateScreen, LeaveAlternateScreen, ScrollUp, disable_raw_mode,
+        enable_raw_mode,
+    },
 };
-use ratatui::prelude::*;
+use ratatui::{TerminalOptions, Viewport, prelude::*};
 use std::process::Stdio;
 use std::{
     fs,
-    io::{self, Write},
+    io::{self, IsTerminal, Write},
 };
 
 mod cli;
@@ -33,6 +37,80 @@ fn print_cd_or_editor(path: &std::path::Path, open_editor: bool, editor_cmd: &Op
     } else {
         println!("cd '{}'", path.to_string_lossy());
     }
+}
+
+const DSR: &str = "\x1b[6n";
+
+fn get_cursor_position_for_inline_picker() -> io::Result<(u16, u16)> {
+    #[cfg(windows)]
+    {
+        return crossterm::cursor::position();
+    }
+
+    #[cfg(not(windows))]
+    {
+        use std::fs::OpenOptions;
+        use std::io::{BufReader, Read};
+
+        let mut tty = OpenOptions::new().read(true).write(true).open("/dev/tty")?;
+        write!(tty, "{DSR}")?;
+        tty.flush()?;
+
+        let mut response = Vec::new();
+        for byte in BufReader::new(tty).bytes() {
+            match byte {
+                Ok(b'R') => break,
+                Ok(b'\x1b' | b'[') => {}
+                Ok(b) => response.push(b),
+                Err(e) => return Err(e),
+            }
+        }
+
+        let mut parts = response.split(|b| *b == b';');
+        let row = parts
+            .next()
+            .and_then(|p| std::str::from_utf8(p).ok())
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(1);
+        let col = parts
+            .next()
+            .and_then(|p| std::str::from_utf8(p).ok())
+            .and_then(|s| s.parse::<u16>().ok())
+            .unwrap_or(1);
+
+        Ok((col.saturating_sub(1), row.saturating_sub(1)))
+    }
+}
+
+fn compute_inline_picker_area(
+    backend: &mut CrosstermBackend<io::Stderr>,
+    requested_height: u16,
+) -> io::Result<Rect> {
+    let terminal_size = backend.size()?;
+    let (_, mut cursor_y) = get_cursor_position_for_inline_picker()?;
+
+    cursor_y = cursor_y.min(terminal_size.height.saturating_sub(1));
+
+    let desired_height = requested_height.clamp(1, terminal_size.height.max(1));
+    let available_height = terminal_size.height.saturating_sub(cursor_y);
+
+    if available_height < desired_height {
+        let scroll_amount = desired_height - available_height;
+
+        if scroll_amount > 0 {
+            execute!(backend, ScrollUp(scroll_amount))?;
+        }
+
+        cursor_y = cursor_y.saturating_sub(scroll_amount);
+    }
+
+    let final_height = terminal_size.height.saturating_sub(cursor_y).max(1);
+    Ok(Rect::new(
+        0,
+        cursor_y,
+        terminal_size.width,
+        desired_height.min(final_height),
+    ))
 }
 
 /// Handles the --worktree flag: creates a git worktree in the tries dir.
@@ -282,11 +360,43 @@ fn main() -> Result<()> {
             );
         }
     } else {
+        const DEFAULT_INLINE_PICKER_HEIGHT: u16 = 18;
+        const MIN_INLINE_PICKER_HEIGHT: u16 = 8;
+
+        if cli.inline_picker && (!io::stdin().is_terminal() || !io::stderr().is_terminal()) {
+            bail!("--inline-picker requires an interactive terminal session");
+        }
+
         enable_raw_mode()?;
         let mut stderr = io::stderr();
-        execute!(stderr, EnterAlternateScreen)?;
+        let mut inline_picker_area = None;
+
+        if !cli.inline_picker {
+            execute!(stderr, EnterAlternateScreen)?;
+        }
+
         let backend = CrosstermBackend::new(stderr);
-        let mut terminal = Terminal::new(backend)?;
+        let mut terminal = if cli.inline_picker {
+            let inline_height = cli
+                .inline_height
+                .unwrap_or(DEFAULT_INLINE_PICKER_HEIGHT)
+                .max(MIN_INLINE_PICKER_HEIGHT);
+
+            let mut backend = backend;
+            let picker_area = compute_inline_picker_area(&mut backend, inline_height).map_err(
+                |err| anyhow!("--inline-picker requires an interactive terminal session ({err})"),
+            )?;
+            inline_picker_area = Some(picker_area);
+
+            Terminal::with_options(
+                backend,
+                TerminalOptions {
+                    viewport: Viewport::Fixed(picker_area),
+                },
+            )?
+        } else {
+            Terminal::new(backend)?
+        };
 
         let app = App::new(
             tries_dir.clone(),
@@ -300,7 +410,23 @@ fn main() -> Result<()> {
         let res = run_app(&mut terminal, app);
 
         disable_raw_mode()?;
-        execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+        if cli.inline_picker {
+            if let Some(area) = inline_picker_area {
+                let end_y = area.y.saturating_add(area.height);
+                for row in area.y..end_y {
+                    execute!(
+                        terminal.backend_mut(),
+                        MoveTo(0, row),
+                        Clear(ClearType::CurrentLine)
+                    )?;
+                }
+                execute!(terminal.backend_mut(), MoveTo(0, area.y))?;
+            } else {
+                terminal.clear()?;
+            }
+        } else {
+            execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+        }
         terminal.show_cursor()?;
 
         (selection_result, open_editor) = res?;

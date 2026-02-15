@@ -5,6 +5,33 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
+const FISH_PICKER_FUNCTION: &str = r#"function try-rs-picker
+    set -l picker_args --inline-picker
+
+    if set -q TRY_RS_PICKER_HEIGHT
+        if string match -qr '^[0-9]+$' -- "$TRY_RS_PICKER_HEIGHT"
+            set picker_args $picker_args --inline-height $TRY_RS_PICKER_HEIGHT
+        end
+    end
+
+    if status --is-interactive
+        printf "\n"
+    end
+
+    set command (command try-rs $picker_args | string collect)
+    set command_status $status
+
+    if test $command_status -eq 0; and test -n "$command"
+        eval $command
+    end
+
+    if status --is-interactive
+        printf "\033[A"
+        commandline -f repaint
+    end
+end
+"#;
+
 /// Returns the shell integration script content for the given shell type.
 /// This is used by --setup-stdout to print the content to stdout.
 pub fn get_shell_content(shell: &Shell) -> String {
@@ -24,13 +51,17 @@ pub fn get_shell_content(shell: &Shell) -> String {
     # Captures the output of the binary (stdout) which is the "cd" command
     # The TUI is rendered on stderr, so it doesn't interfere.
     set command (command try-rs $argv | string collect)
+    set command_status $status
 
-    if test -n "$command"
+    if test $command_status -eq 0; and test -n "$command"
         eval $command
     end
 end
 
-{completions}"#
+{picker_function}
+
+{completions}"#,
+                picker_function = FISH_PICKER_FUNCTION,
             )
         }
         Shell::Zsh => {
@@ -448,6 +479,21 @@ pub fn get_shell_integration_path(shell: &Shell) -> PathBuf {
     }
 }
 
+fn write_fish_picker_function() -> Result<PathBuf> {
+    let file_path = get_base_config_dir()
+        .join("fish")
+        .join("functions")
+        .join("try-rs-picker.fish");
+    if let Some(parent) = file_path.parent()
+        && !parent.exists()
+    {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(&file_path, FISH_PICKER_FUNCTION)?;
+    eprintln!("Fish picker function file created at: {}", file_path.display());
+    Ok(file_path)
+}
+
 pub fn is_shell_integration_configured(shell: &Shell) -> bool {
     get_shell_integration_path(shell).exists()
 }
@@ -498,10 +544,18 @@ pub fn setup_shell(shell: &Shell) -> Result<()> {
 
     match shell {
         Shell::Fish => {
+            let _picker_path = write_fish_picker_function()?;
+            let fish_config_path = get_base_config_dir().join("fish").join("config.fish");
             eprintln!(
                 "You may need to restart your shell or run 'source {}' to apply changes.",
                 file_path.display()
             );
+            eprintln!(
+                "Optional: append the following to {} to bind Ctrl+T:",
+                fish_config_path.display()
+            );
+            eprintln!("bind \\ct try-rs-picker");
+            eprintln!("bind -M insert \\ct try-rs-picker");
         }
         Shell::Zsh => {
             let source_cmd = format!("source '{}'", file_path.display());
