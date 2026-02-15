@@ -81,7 +81,11 @@ fn known_themes_exist() {
         "Tron",
     ];
     for name in expected {
-        assert!(names.contains(&name.to_string()), "missing theme '{}'", name);
+        assert!(
+            names.contains(&name.to_string()),
+            "missing theme '{}'",
+            name
+        );
     }
 }
 

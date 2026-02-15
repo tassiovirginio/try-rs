@@ -27,6 +27,7 @@ pub struct Theme {
     pub list_date: Color,
     pub list_highlight_bg: Color,
     pub list_highlight_fg: Color,
+    pub list_selected_fg: Color,
     // Helpers/status bar
     pub helpers_colors: Color,
     pub status_message: Color,
@@ -104,6 +105,7 @@ impl Theme {
             list_date: p.subtext,
             list_highlight_bg: p.surface,
             list_highlight_fg: p.text,
+            list_selected_fg: p.text,
             helpers_colors: p.overlay,
             status_message: p.yellow,
             popup_bg: p.base,
@@ -142,18 +144,18 @@ impl Theme {
                 "Default",
                 None,
                 Palette {
-                    accent1: Color::Rgb(137, 180, 250),        // Blue
-                    accent2: Color::Rgb(243, 139, 168),        // Red
-                    warm: Color::Rgb(250, 179, 135),           // Peach
-                    cool: Color::Rgb(0, 173, 216),             // Cyan
-                    green: Color::Rgb(166, 227, 161),          // Green
-                    yellow: Color::Rgb(249, 226, 175),         // Yellow
-                    purple: Color::Rgb(203, 166, 247),         // Mauve
-                    overlay: Color::Rgb(147, 153, 178),        // Overlay
-                    subtext: Color::Rgb(166, 173, 200),        // Subtext
-                    surface: Color::Rgb(88, 91, 112),          // Surface
-                    text: Color::Rgb(205, 214, 244),           // Text
-                    base: Color::Rgb(30, 30, 46),              // Base
+                    accent1: Color::Rgb(137, 180, 250), // Blue
+                    accent2: Color::Rgb(243, 139, 168), // Red
+                    warm: Color::Rgb(250, 179, 135),    // Peach
+                    cool: Color::Rgb(0, 173, 216),      // Cyan
+                    green: Color::Rgb(166, 227, 161),   // Green
+                    yellow: Color::Rgb(249, 226, 175),  // Yellow
+                    purple: Color::Rgb(203, 166, 247),  // Mauve
+                    overlay: Color::Rgb(147, 153, 178), // Overlay
+                    subtext: Color::Rgb(166, 173, 200), // Subtext
+                    surface: Color::Rgb(88, 91, 112),   // Surface
+                    text: Color::Rgb(205, 214, 244),    // Text
+                    base: Color::Rgb(30, 30, 46),       // Base
                 },
             )
         }
@@ -164,43 +166,43 @@ impl Theme {
             "Catppuccin Mocha",
             Some(Color::Rgb(30, 30, 46)),
             Palette {
-                accent1: Color::Rgb(137, 180, 250),        // Blue
-                accent2: Color::Rgb(243, 139, 168),        // Red
-                warm: Color::Rgb(250, 179, 135),           // Peach
-                cool: Color::Rgb(148, 226, 213),           // Teal
-                green: Color::Rgb(166, 227, 161),          // Green
-                yellow: Color::Rgb(249, 226, 175),         // Yellow
-                purple: Color::Rgb(203, 166, 247),         // Mauve
-                overlay: Color::Rgb(147, 153, 178),        // Overlay2
-                subtext: Color::Rgb(166, 173, 200),        // Subtext0
-                surface: Color::Rgb(88, 91, 112),          // Surface2
-                text: Color::Rgb(205, 214, 244),           // Text
-                base: Color::Rgb(30, 30, 46),              // Base
+                accent1: Color::Rgb(137, 180, 250), // Blue
+                accent2: Color::Rgb(243, 139, 168), // Red
+                warm: Color::Rgb(250, 179, 135),    // Peach
+                cool: Color::Rgb(148, 226, 213),    // Teal
+                green: Color::Rgb(166, 227, 161),   // Green
+                yellow: Color::Rgb(249, 226, 175),  // Yellow
+                purple: Color::Rgb(203, 166, 247),  // Mauve
+                overlay: Color::Rgb(147, 153, 178), // Overlay2
+                subtext: Color::Rgb(166, 173, 200), // Subtext0
+                surface: Color::Rgb(88, 91, 112),   // Surface2
+                text: Color::Rgb(205, 214, 244),    // Text
+                base: Color::Rgb(30, 30, 46),       // Base
             },
         )
     }
 
     pub fn catppuccin_macchiato() -> Self {
         Self {
-            title_rs: Color::Rgb(238, 153, 160),          // Maroon (not Red)
+            title_rs: Color::Rgb(238, 153, 160), // Maroon (not Red)
             ..Self::from_palette(
-            "Catppuccin Macchiato",
-            Some(Color::Rgb(36, 39, 58)),
-            Palette {
-                accent1: Color::Rgb(138, 173, 244),        // Blue
-                accent2: Color::Rgb(237, 135, 150),        // Red
-                warm: Color::Rgb(245, 169, 127),           // Peach
-                cool: Color::Rgb(139, 213, 202),           // Teal
-                green: Color::Rgb(166, 218, 149),          // Green
-                yellow: Color::Rgb(238, 212, 159),         // Yellow
-                purple: Color::Rgb(198, 160, 246),         // Mauve
-                overlay: Color::Rgb(147, 154, 183),        // Overlay1
-                subtext: Color::Rgb(165, 173, 203),        // Subtext0
-                surface: Color::Rgb(91, 96, 120),          // Surface2
-                text: Color::Rgb(202, 211, 245),           // Text
-                base: Color::Rgb(36, 39, 58),              // Base
-            },
-        )
+                "Catppuccin Macchiato",
+                Some(Color::Rgb(36, 39, 58)),
+                Palette {
+                    accent1: Color::Rgb(138, 173, 244), // Blue
+                    accent2: Color::Rgb(237, 135, 150), // Red
+                    warm: Color::Rgb(245, 169, 127),    // Peach
+                    cool: Color::Rgb(139, 213, 202),    // Teal
+                    green: Color::Rgb(166, 218, 149),   // Green
+                    yellow: Color::Rgb(238, 212, 159),  // Yellow
+                    purple: Color::Rgb(198, 160, 246),  // Mauve
+                    overlay: Color::Rgb(147, 154, 183), // Overlay1
+                    subtext: Color::Rgb(165, 173, 203), // Subtext0
+                    surface: Color::Rgb(91, 96, 120),   // Surface2
+                    text: Color::Rgb(202, 211, 245),    // Text
+                    base: Color::Rgb(36, 39, 58),       // Base
+                },
+            )
         }
     }
 
@@ -209,28 +211,28 @@ impl Theme {
         Self {
             preview_title: cyan,
             list_date: cyan,
-            popup_text: Color::Rgb(255, 85, 85),     // Red (not Pink)
+            popup_text: Color::Rgb(255, 85, 85), // Red (not Pink)
             icon_flutter: cyan,
             icon_go: cyan,
             icon_file: cyan,
-            icon_maven: Color::Rgb(255, 85, 85),          // Red (not Pink)
+            icon_maven: Color::Rgb(255, 85, 85), // Red (not Pink)
             icon_worktree_lock: Color::Rgb(248, 248, 242), // Foreground
             ..Self::from_palette(
                 "Dracula",
                 Some(Color::Rgb(40, 42, 54)),
                 Palette {
-                    accent1: Color::Rgb(189, 147, 249),    // Purple
-                    accent2: Color::Rgb(255, 121, 198),    // Pink
-                    warm: Color::Rgb(255, 184, 108),       // Orange
-                    cool: Color::Rgb(139, 233, 253),       // Cyan
-                    green: Color::Rgb(80, 250, 123),       // Green
-                    yellow: Color::Rgb(241, 250, 140),     // Yellow
-                    purple: Color::Rgb(189, 147, 249),     // Purple
-                    overlay: Color::Rgb(98, 114, 164),     // Comment
-                    subtext: Color::Rgb(139, 233, 253),    // Cyan (for dates)
-                    surface: Color::Rgb(68, 71, 90),       // Selection
-                    text: Color::Rgb(248, 248, 242),       // Foreground
-                    base: Color::Rgb(40, 42, 54),          // Background
+                    accent1: Color::Rgb(189, 147, 249), // Purple
+                    accent2: Color::Rgb(255, 121, 198), // Pink
+                    warm: Color::Rgb(255, 184, 108),    // Orange
+                    cool: Color::Rgb(139, 233, 253),    // Cyan
+                    green: Color::Rgb(80, 250, 123),    // Green
+                    yellow: Color::Rgb(241, 250, 140),  // Yellow
+                    purple: Color::Rgb(189, 147, 249),  // Purple
+                    overlay: Color::Rgb(98, 114, 164),  // Comment
+                    subtext: Color::Rgb(139, 233, 253), // Cyan (for dates)
+                    surface: Color::Rgb(68, 71, 90),    // Selection
+                    text: Color::Rgb(248, 248, 242),    // Foreground
+                    base: Color::Rgb(40, 42, 54),       // Background
                 },
             )
         }
@@ -244,23 +246,23 @@ impl Theme {
             icon_worktree: Color::Rgb(106, 135, 89),       // Green
             icon_worktree_lock: Color::Rgb(187, 187, 187), // Light Grey
             ..Self::from_palette(
-            "JetBrains Darcula",
-            Some(Color::Rgb(43, 43, 43)),
-            Palette {
-                accent1: Color::Rgb(78, 124, 238),         // Blue
-                accent2: Color::Rgb(204, 120, 50),         // Orange
-                warm: Color::Rgb(204, 120, 50),            // Orange
-                cool: Color::Rgb(0, 173, 216),             // Go cyan
-                green: Color::Rgb(255, 198, 109),          // Gold
-                yellow: Color::Rgb(255, 198, 109),         // Gold
-                purple: Color::Rgb(152, 118, 170),         // Purple
-                overlay: Color::Rgb(128, 128, 128),        // Grey
-                subtext: Color::Rgb(128, 128, 128),        // Grey
-                surface: Color::Rgb(33, 66, 131),          // Selection
-                text: Color::Rgb(187, 187, 187),           // Light Grey
-                base: Color::Rgb(60, 63, 65),              // Bg
-            },
-        )
+                "JetBrains Darcula",
+                Some(Color::Rgb(43, 43, 43)),
+                Palette {
+                    accent1: Color::Rgb(78, 124, 238),  // Blue
+                    accent2: Color::Rgb(204, 120, 50),  // Orange
+                    warm: Color::Rgb(204, 120, 50),     // Orange
+                    cool: Color::Rgb(0, 173, 216),      // Go cyan
+                    green: Color::Rgb(255, 198, 109),   // Gold
+                    yellow: Color::Rgb(255, 198, 109),  // Gold
+                    purple: Color::Rgb(152, 118, 170),  // Purple
+                    overlay: Color::Rgb(128, 128, 128), // Grey
+                    subtext: Color::Rgb(128, 128, 128), // Grey
+                    surface: Color::Rgb(33, 66, 131),   // Selection
+                    text: Color::Rgb(187, 187, 187),    // Light Grey
+                    base: Color::Rgb(60, 63, 65),       // Bg
+                },
+            )
         }
     }
 
@@ -275,48 +277,48 @@ impl Theme {
             icon_flutter: Color::Rgb(131, 165, 152),       // Aqua
             icon_worktree_lock: Color::Rgb(168, 153, 132), // Grey (overlay)
             ..Self::from_palette(
-            "Gruvbox Dark",
-            Some(Color::Rgb(40, 40, 40)),
-            Palette {
-                accent1: Color::Rgb(251, 73, 52),          // Red
-                accent2: Color::Rgb(251, 73, 52),          // Red
-                warm: Color::Rgb(254, 128, 25),            // Orange
-                cool: Color::Rgb(131, 165, 152),           // Aqua
-                green: Color::Rgb(184, 187, 38),           // Green
-                yellow: Color::Rgb(250, 189, 47),          // Yellow
-                purple: Color::Rgb(211, 134, 155),         // Purple
-                overlay: Color::Rgb(168, 153, 132),        // Grey
-                subtext: Color::Rgb(146, 131, 116),        // Grey
-                surface: Color::Rgb(80, 73, 69),           // Bg2
-                text: Color::Rgb(235, 219, 178),           // Fg
-                base: Color::Rgb(40, 40, 40),              // Bg0
-            },
-        )
+                "Gruvbox Dark",
+                Some(Color::Rgb(40, 40, 40)),
+                Palette {
+                    accent1: Color::Rgb(251, 73, 52),   // Red
+                    accent2: Color::Rgb(251, 73, 52),   // Red
+                    warm: Color::Rgb(254, 128, 25),     // Orange
+                    cool: Color::Rgb(131, 165, 152),    // Aqua
+                    green: Color::Rgb(184, 187, 38),    // Green
+                    yellow: Color::Rgb(250, 189, 47),   // Yellow
+                    purple: Color::Rgb(211, 134, 155),  // Purple
+                    overlay: Color::Rgb(168, 153, 132), // Grey
+                    subtext: Color::Rgb(146, 131, 116), // Grey
+                    surface: Color::Rgb(80, 73, 69),    // Bg2
+                    text: Color::Rgb(235, 219, 178),    // Fg
+                    base: Color::Rgb(40, 40, 40),       // Bg0
+                },
+            )
         }
     }
 
     pub fn nord() -> Self {
         Self {
-            search_title: Color::Rgb(163, 190, 140),     // Green (not warm)
-            folder_title: Color::Rgb(235, 203, 139),     // Yellow (not green)
-            disk_title: Color::Rgb(208, 135, 112),       // Aurora Orange
-            icon_worktree: Color::Rgb(163, 190, 140),    // Aurora Green
+            search_title: Color::Rgb(163, 190, 140),  // Green (not warm)
+            folder_title: Color::Rgb(235, 203, 139),  // Yellow (not green)
+            disk_title: Color::Rgb(208, 135, 112),    // Aurora Orange
+            icon_worktree: Color::Rgb(163, 190, 140), // Aurora Green
             ..Self::from_palette(
                 "Nord",
                 Some(Color::Rgb(46, 52, 64)),
                 Palette {
-                    accent1: Color::Rgb(136, 192, 208),    // Frost Cyan
-                    accent2: Color::Rgb(191, 97, 106),     // Aurora Red
-                    warm: Color::Rgb(208, 135, 112),       // Aurora Orange
-                    cool: Color::Rgb(136, 192, 208),       // Frost Cyan
-                    green: Color::Rgb(163, 190, 140),      // Aurora Green
-                    yellow: Color::Rgb(235, 203, 139),     // Aurora Yellow
-                    purple: Color::Rgb(180, 142, 173),     // Aurora Purple
-                    overlay: Color::Rgb(76, 86, 106),      // Polar Night 2
-                    subtext: Color::Rgb(216, 222, 233),    // Snow Storm
-                    surface: Color::Rgb(67, 76, 94),       // Polar Night 3
-                    text: Color::Rgb(236, 239, 244),       // Snow Storm 3
-                    base: Color::Rgb(46, 52, 64),          // Polar Night 0
+                    accent1: Color::Rgb(136, 192, 208), // Frost Cyan
+                    accent2: Color::Rgb(191, 97, 106),  // Aurora Red
+                    warm: Color::Rgb(208, 135, 112),    // Aurora Orange
+                    cool: Color::Rgb(136, 192, 208),    // Frost Cyan
+                    green: Color::Rgb(163, 190, 140),   // Aurora Green
+                    yellow: Color::Rgb(235, 203, 139),  // Aurora Yellow
+                    purple: Color::Rgb(180, 142, 173),  // Aurora Purple
+                    overlay: Color::Rgb(76, 86, 106),   // Polar Night 2
+                    subtext: Color::Rgb(216, 222, 233), // Snow Storm
+                    surface: Color::Rgb(67, 76, 94),    // Polar Night 3
+                    text: Color::Rgb(236, 239, 244),    // Snow Storm 3
+                    base: Color::Rgb(46, 52, 64),       // Polar Night 0
                 },
             )
         }
@@ -325,28 +327,28 @@ impl Theme {
     pub fn tokyo_night() -> Self {
         let cyan = Color::Rgb(125, 207, 255);
         Self {
-            search_title: Color::Rgb(158, 206, 106),     // Green
-            disk_title: Color::Rgb(255, 158, 100),       // Orange
+            search_title: Color::Rgb(158, 206, 106), // Green
+            disk_title: Color::Rgb(255, 158, 100),   // Orange
             preview_title: cyan,
             icon_flutter: cyan,
             icon_go: cyan,
-            icon_worktree: Color::Rgb(158, 206, 106),    // Green
+            icon_worktree: Color::Rgb(158, 206, 106), // Green
             ..Self::from_palette(
                 "Tokyo Night",
                 Some(Color::Rgb(26, 27, 38)),
                 Palette {
-                    accent1: Color::Rgb(122, 162, 247),    // Blue
-                    accent2: Color::Rgb(247, 118, 142),    // Red
-                    warm: Color::Rgb(255, 158, 100),       // Orange
-                    cool: Color::Rgb(125, 207, 255),       // Cyan
-                    green: Color::Rgb(224, 175, 104),      // Yellow (folder)
-                    yellow: Color::Rgb(224, 175, 104),     // Yellow
-                    purple: Color::Rgb(187, 154, 247),     // Purple
-                    overlay: Color::Rgb(86, 95, 137),      // Comment
-                    subtext: Color::Rgb(169, 177, 214),    // Fg
-                    surface: Color::Rgb(65, 72, 104),      // Terminal Black
-                    text: Color::Rgb(192, 202, 245),       // Terminal White
-                    base: Color::Rgb(26, 27, 38),          // Bg
+                    accent1: Color::Rgb(122, 162, 247), // Blue
+                    accent2: Color::Rgb(247, 118, 142), // Red
+                    warm: Color::Rgb(255, 158, 100),    // Orange
+                    cool: Color::Rgb(125, 207, 255),    // Cyan
+                    green: Color::Rgb(224, 175, 104),   // Yellow (folder)
+                    yellow: Color::Rgb(224, 175, 104),  // Yellow
+                    purple: Color::Rgb(187, 154, 247),  // Purple
+                    overlay: Color::Rgb(86, 95, 137),   // Comment
+                    subtext: Color::Rgb(169, 177, 214), // Fg
+                    surface: Color::Rgb(65, 72, 104),   // Terminal Black
+                    text: Color::Rgb(192, 202, 245),    // Terminal White
+                    base: Color::Rgb(26, 27, 38),       // Bg
                 },
             )
         }
@@ -362,18 +364,18 @@ impl Theme {
                 "One Dark Pro",
                 Some(Color::Rgb(40, 44, 52)),
                 Palette {
-                    accent1: Color::Rgb(97, 175, 239),     // Blue
-                    accent2: Color::Rgb(224, 108, 117),    // Red
-                    warm: Color::Rgb(209, 154, 102),       // Orange
-                    cool: Color::Rgb(86, 182, 194),        // Cyan
-                    green: Color::Rgb(152, 195, 121),      // Green
-                    yellow: Color::Rgb(229, 192, 123),     // Yellow
-                    purple: Color::Rgb(198, 120, 221),     // Purple
-                    overlay: Color::Rgb(92, 99, 112),      // Comment
-                    subtext: Color::Rgb(171, 178, 191),    // Fg
-                    surface: Color::Rgb(62, 68, 81),       // Selection
-                    text: Color::Rgb(220, 223, 228),       // Bright Fg
-                    base: Color::Rgb(40, 44, 52),          // Bg
+                    accent1: Color::Rgb(97, 175, 239),  // Blue
+                    accent2: Color::Rgb(224, 108, 117), // Red
+                    warm: Color::Rgb(209, 154, 102),    // Orange
+                    cool: Color::Rgb(86, 182, 194),     // Cyan
+                    green: Color::Rgb(152, 195, 121),   // Green
+                    yellow: Color::Rgb(229, 192, 123),  // Yellow
+                    purple: Color::Rgb(198, 120, 221),  // Purple
+                    overlay: Color::Rgb(92, 99, 112),   // Comment
+                    subtext: Color::Rgb(171, 178, 191), // Fg
+                    surface: Color::Rgb(62, 68, 81),    // Selection
+                    text: Color::Rgb(220, 223, 228),    // Bright Fg
+                    base: Color::Rgb(40, 44, 52),       // Bg
                 },
             )
         }
@@ -384,45 +386,45 @@ impl Theme {
             "Everforest",
             Some(Color::Rgb(45, 51, 48)),
             Palette {
-                accent1: Color::Rgb(127, 187, 179),        // Aqua
-                accent2: Color::Rgb(230, 126, 128),        // Red
-                warm: Color::Rgb(230, 152, 117),           // Orange
-                cool: Color::Rgb(127, 187, 179),           // Aqua
-                green: Color::Rgb(167, 192, 128),          // Green
-                yellow: Color::Rgb(219, 188, 127),         // Yellow
-                purple: Color::Rgb(214, 153, 182),         // Purple
-                overlay: Color::Rgb(127, 132, 120),        // Grey
-                subtext: Color::Rgb(211, 198, 170),        // Fg
-                surface: Color::Rgb(80, 88, 77),           // Bg Visual
-                text: Color::Rgb(211, 198, 170),           // Fg
-                base: Color::Rgb(45, 51, 48),              // Bg
+                accent1: Color::Rgb(127, 187, 179), // Aqua
+                accent2: Color::Rgb(230, 126, 128), // Red
+                warm: Color::Rgb(230, 152, 117),    // Orange
+                cool: Color::Rgb(127, 187, 179),    // Aqua
+                green: Color::Rgb(167, 192, 128),   // Green
+                yellow: Color::Rgb(219, 188, 127),  // Yellow
+                purple: Color::Rgb(214, 153, 182),  // Purple
+                overlay: Color::Rgb(127, 132, 120), // Grey
+                subtext: Color::Rgb(211, 198, 170), // Fg
+                surface: Color::Rgb(80, 88, 77),    // Bg Visual
+                text: Color::Rgb(211, 198, 170),    // Fg
+                base: Color::Rgb(45, 51, 48),       // Bg
             },
         )
     }
 
     pub fn synthwave_84() -> Self {
         Self {
-            search_title: Color::Rgb(255, 203, 107),      // Yellow (not orange)
-            legends_title: Color::Rgb(254, 78, 174),      // Hot Pink
-            popup_text: Color::Rgb(254, 78, 174),         // Hot Pink
-            icon_rust: Color::Rgb(255, 140, 66),          // Orange (unique)
-            icon_gitmodules: Color::Rgb(254, 78, 174),    // Hot Pink
+            search_title: Color::Rgb(255, 203, 107), // Yellow (not orange)
+            legends_title: Color::Rgb(254, 78, 174), // Hot Pink
+            popup_text: Color::Rgb(254, 78, 174),    // Hot Pink
+            icon_rust: Color::Rgb(255, 140, 66),     // Orange (unique)
+            icon_gitmodules: Color::Rgb(254, 78, 174), // Hot Pink
             ..Self::from_palette(
                 "SynthWave '84",
                 Some(Color::Rgb(38, 29, 53)),
                 Palette {
-                    accent1: Color::Rgb(54, 244, 244),     // Cyan
-                    accent2: Color::Rgb(255, 126, 185),    // Pink
-                    warm: Color::Rgb(255, 140, 66),        // Orange
-                    cool: Color::Rgb(54, 244, 244),        // Cyan
-                    green: Color::Rgb(114, 241, 177),      // Green
-                    yellow: Color::Rgb(255, 203, 107),     // Yellow
-                    purple: Color::Rgb(254, 78, 174),      // Hot Pink
-                    overlay: Color::Rgb(129, 91, 164),     // Purple dim
-                    subtext: Color::Rgb(187, 186, 201),    // Fg
-                    surface: Color::Rgb(57, 43, 75),       // Selection
-                    text: Color::Rgb(255, 255, 255),       // White
-                    base: Color::Rgb(38, 29, 53),          // Bg
+                    accent1: Color::Rgb(54, 244, 244),  // Cyan
+                    accent2: Color::Rgb(255, 126, 185), // Pink
+                    warm: Color::Rgb(255, 140, 66),     // Orange
+                    cool: Color::Rgb(54, 244, 244),     // Cyan
+                    green: Color::Rgb(114, 241, 177),   // Green
+                    yellow: Color::Rgb(255, 203, 107),  // Yellow
+                    purple: Color::Rgb(254, 78, 174),   // Hot Pink
+                    overlay: Color::Rgb(129, 91, 164),  // Purple dim
+                    subtext: Color::Rgb(187, 186, 201), // Fg
+                    surface: Color::Rgb(57, 43, 75),    // Selection
+                    text: Color::Rgb(255, 255, 255),    // White
+                    base: Color::Rgb(38, 29, 53),       // Bg
                 },
             )
         }
@@ -430,25 +432,25 @@ impl Theme {
 
     pub fn oled_true_black() -> Self {
         Self {
-            helpers_colors: Color::Rgb(100, 100, 100),    // Grey (different from overlay)
-            icon_rust: Color::Rgb(255, 120, 50),          // Bright Orange
-            icon_mise: Color::Rgb(255, 180, 0),           // Orange (different from warm)
+            helpers_colors: Color::Rgb(100, 100, 100), // Grey (different from overlay)
+            icon_rust: Color::Rgb(255, 120, 50),       // Bright Orange
+            icon_mise: Color::Rgb(255, 180, 0),        // Orange (different from warm)
             ..Self::from_palette(
                 "OLED True Black",
                 Some(Color::Rgb(0, 0, 0)),
                 Palette {
-                    accent1: Color::Rgb(0, 200, 255),      // Bright Cyan
-                    accent2: Color::Rgb(255, 80, 100),     // Bright Red
-                    warm: Color::Rgb(255, 180, 0),         // Orange
-                    cool: Color::Rgb(0, 200, 255),         // Bright Cyan
-                    green: Color::Rgb(0, 230, 130),        // Bright Green
-                    yellow: Color::Rgb(255, 220, 0),       // Yellow
-                    purple: Color::Rgb(200, 100, 255),     // Purple
-                    overlay: Color::Rgb(60, 60, 60),       // Dark Grey
-                    subtext: Color::Rgb(180, 180, 180),    // Light Grey
-                    surface: Color::Rgb(30, 30, 30),       // Near Black
-                    text: Color::Rgb(255, 255, 255),       // White
-                    base: Color::Rgb(0, 0, 0),             // True Black
+                    accent1: Color::Rgb(0, 200, 255),   // Bright Cyan
+                    accent2: Color::Rgb(255, 80, 100),  // Bright Red
+                    warm: Color::Rgb(255, 180, 0),      // Orange
+                    cool: Color::Rgb(0, 200, 255),      // Bright Cyan
+                    green: Color::Rgb(0, 230, 130),     // Bright Green
+                    yellow: Color::Rgb(255, 220, 0),    // Yellow
+                    purple: Color::Rgb(200, 100, 255),  // Purple
+                    overlay: Color::Rgb(60, 60, 60),    // Dark Grey
+                    subtext: Color::Rgb(180, 180, 180), // Light Grey
+                    surface: Color::Rgb(30, 30, 30),    // Near Black
+                    text: Color::Rgb(255, 255, 255),    // White
+                    base: Color::Rgb(0, 0, 0),          // True Black
                 },
             )
         }
@@ -456,25 +458,25 @@ impl Theme {
 
     pub fn silver_gray() -> Self {
         Self {
-            preview_title: Color::Rgb(176, 196, 222),     // Light Steel Blue
-            icon_rust: Color::Rgb(210, 105, 30),          // Chocolate
-            icon_go: Color::Rgb(176, 196, 222),           // Light Steel Blue
+            preview_title: Color::Rgb(176, 196, 222), // Light Steel Blue
+            icon_rust: Color::Rgb(210, 105, 30),      // Chocolate
+            icon_go: Color::Rgb(176, 196, 222),       // Light Steel Blue
             ..Self::from_palette(
                 "Silver Gray",
                 Some(Color::Rgb(47, 47, 47)),
                 Palette {
-                    accent1: Color::Rgb(100, 149, 237),    // Cornflower Blue
-                    accent2: Color::Rgb(205, 92, 92),      // Indian Red
-                    warm: Color::Rgb(218, 165, 32),        // Goldenrod
-                    cool: Color::Rgb(176, 196, 222),       // Light Steel Blue
-                    green: Color::Rgb(144, 238, 144),      // Light Green
-                    yellow: Color::Rgb(240, 230, 140),     // Khaki
-                    purple: Color::Rgb(186, 85, 211),      // Medium Orchid
-                    overlay: Color::Rgb(128, 128, 128),    // Gray
-                    subtext: Color::Rgb(192, 192, 192),    // Silver
-                    surface: Color::Rgb(70, 70, 70),       // Dark Gray
-                    text: Color::Rgb(245, 245, 245),       // White Smoke
-                    base: Color::Rgb(47, 47, 47),          // Dark Bg
+                    accent1: Color::Rgb(100, 149, 237), // Cornflower Blue
+                    accent2: Color::Rgb(205, 92, 92),   // Indian Red
+                    warm: Color::Rgb(218, 165, 32),     // Goldenrod
+                    cool: Color::Rgb(176, 196, 222),    // Light Steel Blue
+                    green: Color::Rgb(144, 238, 144),   // Light Green
+                    yellow: Color::Rgb(240, 230, 140),  // Khaki
+                    purple: Color::Rgb(186, 85, 211),   // Medium Orchid
+                    overlay: Color::Rgb(128, 128, 128), // Gray
+                    subtext: Color::Rgb(192, 192, 192), // Silver
+                    surface: Color::Rgb(70, 70, 70),    // Dark Gray
+                    text: Color::Rgb(245, 245, 245),    // White Smoke
+                    base: Color::Rgb(47, 47, 47),       // Dark Bg
                 },
             )
         }
@@ -484,24 +486,28 @@ impl Theme {
         Self {
             icon_mise: Color::Gray,
             icon_gitmodules: Color::Gray,
+            popup_text: Color::White,
+            list_highlight_bg: Color::White,
+            list_highlight_fg: Color::Gray,
+            list_selected_fg: Color::Black,
             ..Self::from_palette(
-            "Black & White",
-            Some(Color::Black),
-            Palette {
-                accent1: Color::White,
-                accent2: Color::White,
-                warm: Color::White,
-                cool: Color::White,
-                green: Color::White,
-                yellow: Color::White,
-                purple: Color::White,
-                overlay: Color::Gray,
-                subtext: Color::Gray,
-                surface: Color::White,
-                text: Color::Black,
-                base: Color::Black,
-            },
-        )
+                "Black & White",
+                Some(Color::Black),
+                Palette {
+                    accent1: Color::White,
+                    accent2: Color::White,
+                    warm: Color::White,
+                    cool: Color::White,
+                    green: Color::White,
+                    yellow: Color::White,
+                    purple: Color::White,
+                    overlay: Color::Gray,
+                    subtext: Color::Gray,
+                    surface: Color::White,
+                    text: Color::White,
+                    base: Color::Black,
+                },
+            )
         }
     }
 
@@ -511,12 +517,12 @@ impl Theme {
         let muted = Color::Rgb(0, 150, 40);
         let darker = Color::Rgb(0, 200, 50);
         Self {
-            helpers_colors: Color::Rgb(0, 150, 40),        // Muted green
-            popup_text: Color::Rgb(0, 255, 65),               // Bright green
+            helpers_colors: Color::Rgb(0, 150, 40), // Muted green
+            popup_text: Color::Rgb(0, 255, 65),     // Bright green
             icon_maven: Color::Rgb(0, 220, 55),
-            icon_flutter: Color::Rgb(0, 200, 50),             // Darker green
+            icon_flutter: Color::Rgb(0, 200, 50), // Darker green
             icon_go: Color::Rgb(0, 180, 45),
-            icon_mise: Color::Rgb(0, 150, 40),                // Muted green
+            icon_mise: Color::Rgb(0, 150, 40), // Muted green
             icon_worktree: darker,
             icon_worktree_lock: Color::Rgb(0, 120, 35),
             icon_gitmodules: Color::Rgb(0, 180, 45),

@@ -465,7 +465,10 @@ fn append_source_to_rc(rc_path: &std::path::Path, source_cmd: &str) -> Result<()
             eprintln!("Configuration already present in {}", rc_path.display());
         }
     } else {
-        eprintln!("You need to add the following line to {}:", rc_path.display());
+        eprintln!(
+            "You need to add the following line to {}:",
+            rc_path.display()
+        );
         eprintln!("{}", source_cmd);
     }
     Ok(())
@@ -480,7 +483,11 @@ fn write_shell_integration(shell: &Shell) -> Result<std::path::PathBuf> {
         fs::create_dir_all(parent)?;
     }
     fs::write(&file_path, get_shell_content(shell))?;
-    eprintln!("{:?} function file created at: {}", shell, file_path.display());
+    eprintln!(
+        "{:?} function file created at: {}",
+        shell,
+        file_path.display()
+    );
     Ok(file_path)
 }
 

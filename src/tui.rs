@@ -348,7 +348,7 @@ fn draw_theme_select(f: &mut Frame, app: &mut App) {
         .highlight_style(
             Style::default()
                 .bg(app.theme.list_highlight_bg)
-                .fg(app.theme.list_highlight_fg)
+                .fg(app.theme.list_selected_fg)
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol(">> ");
@@ -411,7 +411,7 @@ fn draw_config_location_select(f: &mut Frame, app: &mut App) {
         .highlight_style(
             Style::default()
                 .bg(app.theme.list_highlight_bg)
-                .fg(app.theme.list_highlight_fg)
+                .fg(app.theme.list_selected_fg)
                 .add_modifier(Modifier::BOLD),
         )
         .highlight_symbol(">> ");
@@ -610,16 +610,16 @@ pub fn run_app(
 
                     // Build icon list: (flag, icon_str, color)
                     let icons: &[(bool, &str, Color)] = &[
-                        (entry.is_cargo,                " ", app.theme.icon_rust),
-                        (entry.is_maven,                " ", app.theme.icon_maven),
-                        (entry.is_flutter,              " ", app.theme.icon_flutter),
-                        (entry.is_go,                   " ", app.theme.icon_go),
-                        (entry.is_python,               " ", app.theme.icon_python),
-                        (entry.is_mise,                 "󰬔 ", app.theme.icon_mise),
-                        (entry.is_worktree,             "󰙅 ", app.theme.icon_worktree),
-                        (entry.is_worktree_locked,      " ", app.theme.icon_worktree_lock),
-                        (entry.is_gitmodules,           " ", app.theme.icon_gitmodules),
-                        (entry.is_git,                  " ", app.theme.icon_git),
+                        (entry.is_cargo, " ", app.theme.icon_rust),
+                        (entry.is_maven, " ", app.theme.icon_maven),
+                        (entry.is_flutter, " ", app.theme.icon_flutter),
+                        (entry.is_go, " ", app.theme.icon_go),
+                        (entry.is_python, " ", app.theme.icon_python),
+                        (entry.is_mise, "󰬔 ", app.theme.icon_mise),
+                        (entry.is_worktree, "󰙅 ", app.theme.icon_worktree),
+                        (entry.is_worktree_locked, " ", app.theme.icon_worktree_lock),
+                        (entry.is_gitmodules, " ", app.theme.icon_gitmodules),
+                        (entry.is_git, " ", app.theme.icon_git),
                     ];
                     let icons_width: usize = icons.iter().filter(|(f, _, _)| *f).count() * 2;
                     let icon_width = 2; // folder icon
@@ -640,7 +640,12 @@ pub fn run_app(
                         (
                             entry.display_name.clone(),
                             width.saturating_sub(
-                                icon_width + created_width + 1 + name_len + date_width + icons_width,
+                                icon_width
+                                    + created_width
+                                    + 1
+                                    + name_len
+                                    + date_width
+                                    + icons_width,
                             ),
                         )
                     };
@@ -656,7 +661,10 @@ pub fn run_app(
                             spans.push(Span::styled(icon, Style::default().fg(color)));
                         }
                     }
-                    spans.push(Span::styled(date_text, Style::default().fg(app.theme.list_date)));
+                    spans.push(Span::styled(
+                        date_text,
+                        Style::default().fg(app.theme.list_date),
+                    ));
 
                     ListItem::new(Line::from(spans))
                 })
@@ -675,7 +683,7 @@ pub fn run_app(
                 .highlight_style(
                     Style::default()
                         .bg(app.theme.list_highlight_bg)
-                        .fg(app.theme.list_highlight_fg)
+                        .fg(app.theme.list_selected_fg)
                         .add_modifier(Modifier::BOLD),
                 )
                 .highlight_symbol("→ ");
@@ -967,7 +975,9 @@ pub fn run_app(
                         if let Some(original) = app.original_theme.take() {
                             app.theme = original;
                         }
-                        if let Some(original_transparent) = app.original_transparent_background.take() {
+                        if let Some(original_transparent) =
+                            app.original_transparent_background.take()
+                        {
                             app.transparent_background = original_transparent;
                         }
                         app.mode = AppMode::Normal;
@@ -977,7 +987,9 @@ pub fn run_app(
                         if let Some(original) = app.original_theme.take() {
                             app.theme = original;
                         }
-                        if let Some(original_transparent) = app.original_transparent_background.take() {
+                        if let Some(original_transparent) =
+                            app.original_transparent_background.take()
+                        {
                             app.transparent_background = original_transparent;
                         }
                         app.mode = AppMode::Normal;

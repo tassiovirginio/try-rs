@@ -345,9 +345,11 @@ fn extract_repo_name_single_word() {
 fn expand_path_with_tilde_and_complex_path() {
     let expanded = expand_path("~/work/projects/my-project");
     assert!(!expanded.starts_with("~"));
-    assert!(expanded
-        .to_string_lossy()
-        .contains("work/projects/my-project"));
+    assert!(
+        expanded
+            .to_string_lossy()
+            .contains("work/projects/my-project")
+    );
 }
 
 #[test]

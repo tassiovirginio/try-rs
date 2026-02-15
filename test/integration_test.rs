@@ -227,14 +227,18 @@ fn new_worktree() {
     // then
     let expected_dir = h.tries_path().join("my-brand-new-feature");
     assert!(output.status.success());
-    assert!(output
-        .stdout
-        .contains(&format!("cd '{}'", expected_dir.display())));
+    assert!(
+        output
+            .stdout
+            .contains(&format!("cd '{}'", expected_dir.display()))
+    );
     assert!(expected_dir.exists());
     assert!(expected_dir.is_dir());
-    assert!(output
-        .stderr
-        .starts_with("Creating worktree 'my-brand-new-feature'"));
+    assert!(
+        output
+            .stderr
+            .starts_with("Creating worktree 'my-brand-new-feature'")
+    );
     let git_status = command(&expected_dir, "git", &["worktree", "list"]).unwrap();
     assert!(
         git_status.status.success(),
