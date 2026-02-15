@@ -215,6 +215,7 @@ fn new_worktree() {
         .current_dir(git_dir)
         .args(["--worktree", "my-brand-new-feature"])
         .env("SHELL", "")
+        .env_remove("TRY_PATH")
         .env("TRY_CONFIG_DIR", h.dir.path())
         .output()
         .map(|output| Output {
@@ -346,6 +347,7 @@ impl Harness {
             .arg("--")
             .args(args)
             .env("SHELL", "")
+            .env_remove("TRY_PATH")
             .env("TRY_CONFIG_DIR", self.dir.path())
             .output()
             .map(|output| Output {
@@ -365,6 +367,7 @@ impl Harness {
             .arg("run")
             .arg("--")
             .args(args)
+            .env_remove("TRY_PATH")
             .env("TRY_CONFIG_DIR", self.dir.path())
             .env(env_key, env_val)
             .output()
@@ -438,6 +441,34 @@ fn help_contains_expected_flags() {
         output.contains("--worktree") || output.contains("-w"),
         "should document worktree flag"
     );
+    assert!(
+        output.contains("--inline-picker"),
+        "should document inline picker flag"
+    );
+}
+
+#[test]
+fn inline_height_requires_inline_picker() {
+    let p = Command::new("cargo")
+        .arg("run")
+        .arg("--")
+        .arg("--inline-height")
+        .arg("22")
+        .output()
+        .expect("failed to spawn");
+
+    assert!(
+        !p.status.success(),
+        "--inline-height should require --inline-picker"
+    );
+
+    let stdout = String::from_utf8(p.stdout).unwrap();
+    let stderr = String::from_utf8(p.stderr).unwrap();
+    let output = format!("{stdout}\n{stderr}");
+    assert!(
+        output.contains("--inline-picker"),
+        "error should mention missing --inline-picker"
+    );
 }
 
 #[test]
@@ -455,6 +486,10 @@ fn setup_stdout_fish() {
     assert!(
         stdout.contains("function try-rs"),
         "fish integration should define try-rs function"
+    );
+    assert!(
+        stdout.contains("function try-rs-picker"),
+        "fish integration should define picker function"
     );
 }
 

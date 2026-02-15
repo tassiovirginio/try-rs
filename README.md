@@ -42,6 +42,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
+| **Inline Picker**        | Adds support for a non-fullscreen picker.                                                 |
 | **Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
 | **Shell Tab Completion** | Dynamic tab completion for directory names from your tries path.                       |
 | **Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
@@ -140,6 +141,19 @@ try-rs --setup fish
 ```bash
 alias try "try-rs"
 ```
+
+To bind the inline (non-fullscreen) picker to `Ctrl+T`, append this to `~/.config/fish/config.fish`:
+
+```fish
+bind \ct try-rs-picker
+bind -M insert \ct try-rs-picker
+```
+
+- Use `Ctrl+T` at the Fish prompt to open the picker and jump directly into a selected folder.
+- Optional: set `TRY_RS_PICKER_HEIGHT` to control picker height in rows (default: `18`).
+  ```fish
+  set -Ux TRY_RS_PICKER_HEIGHT 22
+  ```
 
 - Zsh
 
@@ -345,6 +359,7 @@ You can also bypass the UI:
 | `try-rs --setup <shell>`                       | Setup shell integration (fish, zsh, bash, nu-shell, power-shell)    |
 | `try-rs --setup-stdout <shell>`                | Print shell integration script to stdout (for manual setup)         |
 | `try-rs --completions <shell>`                 | Generate shell completion script for tab completion                 |
+| `try-rs --inline-picker [--inline-height <n>]` | Open the picker inline (non-fullscreen) in the current terminal     |
 | `try-rs --version`                             | Show application version                                            |
 | `try-rs --help`                                | Show help message                                                   |
 

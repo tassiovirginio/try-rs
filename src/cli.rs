@@ -32,6 +32,14 @@ pub struct Cli {
     /// Create a git worktree from current repository (must be inside a git repo)
     #[arg(short = 'w', long = "worktree", value_name = "WORKTREE_NAME")]
     pub worktree: Option<String>,
+
+    /// Render the picker inline (non-fullscreen), useful for shell key bindings
+    #[arg(long)]
+    pub inline_picker: bool,
+
+    /// Inline picker height in terminal rows (default: 18)
+    #[arg(long, value_name = "LINES", requires = "inline_picker")]
+    pub inline_height: Option<u16>,
 }
 
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq, Debug, Hash)]
