@@ -5,6 +5,8 @@
 #
 # If no version is provided, uses the version from Cargo.toml
 
+git pull
+
 set -e
 
 # Get version from argument or Cargo.toml
