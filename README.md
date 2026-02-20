@@ -363,6 +363,14 @@ You can also bypass the UI:
 | `try-rs --version`                             | Show application version                                            |
 | `try-rs --help`                                | Show help message                                                   |
 
+## Contribution
+
+Thank you to all the people who already contributed to Thaw!
+
+<a href="https://github.com/tassiovirginio/try-rsgraphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tassiovirginio/try-rs" />
+</a>
+
 ## Inspiration
 
 This project is a Rust port and re-imagination of the excellent [try](https://github.com/tobi/try) tool by **Tobi Lütke**.
