@@ -37,6 +37,7 @@ pub enum AppMode {
 pub struct TryEntry {
     pub name: String,
     pub display_name: String,
+    pub match_indices: Vec<usize>,
     pub modified: SystemTime,
     pub created: SystemTime,
     pub score: i64,
@@ -123,6 +124,7 @@ impl App {
                     entries.push(TryEntry {
                         name,
                         display_name,
+                        match_indices: Vec::new(),
                         modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                         created,
                         score: 0,
@@ -189,6 +191,40 @@ impl App {
         self.all_entries.iter().any(|e| e.name == self.query)
     }
 
+    fn map_name_indices_to_display(entry: &TryEntry, indices: &[usize]) -> Vec<usize> {
+        let display_len = entry.display_name.chars().count();
+        if display_len == 0 {
+            return Vec::new();
+        }
+
+        let offset = if entry.name.ends_with(&entry.display_name) {
+            entry
+                .name
+                .chars()
+                .count()
+                .saturating_sub(entry.display_name.chars().count())
+        } else {
+            0
+        };
+
+        let mut mapped = indices
+            .iter()
+            .filter_map(|idx| {
+                let idx = *idx;
+                if idx < offset {
+                    None
+                } else {
+                    let translated = idx - offset;
+                    (translated < display_len).then_some(translated)
+                }
+            })
+            .collect::<Vec<_>>();
+
+        mapped.sort_unstable();
+        mapped.dedup();
+        mapped
+    }
+
     pub fn update_search(&mut self) {
         let matcher = SkimMatcherV2::default();
 
@@ -199,11 +235,16 @@ impl App {
                 .all_entries
                 .iter()
                 .filter_map(|entry| {
-                    matcher.fuzzy_match(&entry.name, &self.query).map(|score| {
-                        let mut e = entry.clone();
-                        e.score = score;
-                        e
-                    })
+                    matcher
+                        .fuzzy_indices(&entry.name, &self.query)
+                        .map(|(score, indices)| {
+                            let mut e = entry.clone();
+                            e.score = score;
+                            let converted =
+                                indices.iter().map(|idx| *idx as usize).collect::<Vec<_>>();
+                            e.match_indices = Self::map_name_indices_to_display(entry, &converted);
+                            e
+                        })
                 })
                 .collect();
 
@@ -507,6 +548,60 @@ fn draw_about_popup(f: &mut Frame, theme: &Theme) {
     f.render_widget(paragraph, popup_area);
 }
 
+fn build_highlighted_name_spans(
+    text: &str,
+    match_indices: &[usize],
+    highlight_style: Style,
+) -> Vec<Span<'static>> {
+    if text.is_empty() {
+        return Vec::new();
+    }
+
+    let chars = text.chars().collect::<Vec<_>>();
+    let mut normalized_indices = match_indices
+        .iter()
+        .copied()
+        .filter(|idx| *idx < chars.len())
+        .collect::<Vec<_>>();
+
+    if normalized_indices.is_empty() {
+        return vec![Span::raw(text.to_string())];
+    }
+
+    normalized_indices.sort_unstable();
+    normalized_indices.dedup();
+
+    let mut spans = Vec::new();
+    let mut cursor = 0usize;
+    let mut idx = 0usize;
+
+    while idx < normalized_indices.len() {
+        let start = normalized_indices[idx];
+        if cursor < start {
+            spans.push(Span::raw(chars[cursor..start].iter().collect::<String>()));
+        }
+
+        let mut end = start + 1;
+        idx += 1;
+        while idx < normalized_indices.len() && normalized_indices[idx] == end {
+            end += 1;
+            idx += 1;
+        }
+
+        spans.push(Span::styled(
+            chars[start..end].iter().collect::<String>(),
+            highlight_style,
+        ));
+        cursor = end;
+    }
+
+    if cursor < chars.len() {
+        spans.push(Span::raw(chars[cursor..].iter().collect::<String>()));
+    }
+
+    spans
+}
+
 pub fn run_app(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     mut app: App,
@@ -596,6 +691,10 @@ pub fn run_app(
             .alignment(Alignment::Center);
             f.render_widget(memory_info, search_chunks[1]);
 
+            let matched_char_style = Style::default()
+                .fg(app.theme.list_match_fg)
+                .add_modifier(Modifier::BOLD | Modifier::UNDERLINED);
+
             let mut items: Vec<ListItem> = app
                 .filtered_entries
                 .iter()
@@ -639,13 +738,27 @@ pub fn run_app(
                     let available_for_name = width.saturating_sub(reserved);
                     let name_len = entry.display_name.chars().count();
 
-                    let (display_name, padding) = if name_len > available_for_name {
+                    let (display_name, display_match_indices, is_truncated, padding) = if name_len
+                        > available_for_name
+                    {
                         let safe_len = available_for_name.saturating_sub(3);
                         let truncated: String = entry.display_name.chars().take(safe_len).collect();
-                        (format!("{}...", truncated), 1)
+                        (
+                            truncated,
+                            entry
+                                .match_indices
+                                .iter()
+                                .copied()
+                                .filter(|idx| *idx < safe_len)
+                                .collect::<Vec<_>>(),
+                            true,
+                            1,
+                        )
                     } else {
                         (
                             entry.display_name.clone(),
+                            entry.match_indices.clone(),
+                            false,
                             width.saturating_sub(
                                 icon_width
                                     + created_width
@@ -660,9 +773,17 @@ pub fn run_app(
                     let mut spans = vec![
                         Span::styled(" 󰝰 ", Style::default().fg(app.theme.icon_folder)),
                         Span::styled(created_text, Style::default().fg(app.theme.list_date)),
-                        Span::raw(format!(" {}", display_name)),
-                        Span::raw(" ".repeat(padding)),
+                        Span::raw(" "),
                     ];
+                    spans.extend(build_highlighted_name_spans(
+                        &display_name,
+                        &display_match_indices,
+                        matched_char_style,
+                    ));
+                    if is_truncated {
+                        spans.push(Span::raw("..."));
+                    }
+                    spans.push(Span::raw(" ".repeat(padding)));
                     for &(flag, icon, color) in icons {
                         if flag {
                             spans.push(Span::styled(icon, Style::default().fg(color)));
@@ -674,6 +795,7 @@ pub fn run_app(
                     ));
 
                     ListItem::new(Line::from(spans))
+                        .style(Style::default().fg(app.theme.list_highlight_fg))
                 })
                 .collect();
 
@@ -704,7 +826,6 @@ pub fn run_app(
                 .highlight_style(
                     Style::default()
                         .bg(app.theme.list_highlight_bg)
-                        .fg(app.theme.list_selected_fg)
                         .add_modifier(Modifier::BOLD),
                 )
                 .highlight_symbol("→ ");

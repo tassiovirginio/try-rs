@@ -8,6 +8,7 @@ fn try_entry_default_values() {
     let entry = TryEntry {
         name: "test".to_string(),
         display_name: "test".to_string(),
+        match_indices: vec![],
         modified: SystemTime::UNIX_EPOCH,
         created: SystemTime::UNIX_EPOCH,
         score: 0,
@@ -35,6 +36,7 @@ fn try_entry_clone() {
     let entry = TryEntry {
         name: "project".to_string(),
         display_name: "My Project".to_string(),
+        match_indices: vec![],
         modified: SystemTime::UNIX_EPOCH,
         created: SystemTime::UNIX_EPOCH,
         score: 100,
@@ -62,6 +64,7 @@ fn try_entry_with_flags() {
     let entry = TryEntry {
         name: "rust-project".to_string(),
         display_name: "rust-project".to_string(),
+        match_indices: vec![],
         modified: SystemTime::now(),
         created: SystemTime::now(),
         score: 50,
@@ -278,6 +281,53 @@ fn app_update_search_with_match() {
 
     assert_eq!(app.filtered_entries.len(), 1);
     assert_eq!(app.filtered_entries[0].name, "alpha-test");
+}
+
+#[test]
+fn app_update_search_populates_match_indices() {
+    let tmp = TempDir::new("app-search-indices").unwrap();
+    std::fs::create_dir(tmp.path().join("alpha-test")).unwrap();
+
+    let theme = Theme::default();
+    let mut app = App::new(
+        tmp.path().to_path_buf(),
+        theme,
+        None,
+        None,
+        None,
+        false,
+        None,
+    );
+
+    app.query = "alp".to_string();
+    app.update_search();
+
+    assert_eq!(app.filtered_entries.len(), 1);
+    assert_eq!(app.filtered_entries[0].match_indices, vec![0, 1, 2]);
+}
+
+#[test]
+fn app_update_search_maps_indices_for_prefixed_names() {
+    let tmp = TempDir::new("app-search-prefix-indices").unwrap();
+    std::fs::create_dir(tmp.path().join("2026-02-01 project-alpha")).unwrap();
+
+    let theme = Theme::default();
+    let mut app = App::new(
+        tmp.path().to_path_buf(),
+        theme,
+        None,
+        None,
+        None,
+        false,
+        None,
+    );
+
+    app.query = "pro".to_string();
+    app.update_search();
+
+    assert_eq!(app.filtered_entries.len(), 1);
+    assert_eq!(app.filtered_entries[0].display_name, "project-alpha");
+    assert_eq!(app.filtered_entries[0].match_indices, vec![0, 1, 2]);
 }
 
 #[test]

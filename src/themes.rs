@@ -27,6 +27,7 @@ pub struct Theme {
     pub list_date: Color,
     pub list_highlight_bg: Color,
     pub list_highlight_fg: Color,
+    pub list_match_fg: Color,
     pub list_selected_fg: Color,
     // Helpers/status bar
     pub helpers_colors: Color,
@@ -59,7 +60,7 @@ impl Default for Theme {
 /// Most themes map these roles consistently:
 ///   accent1 → title_try, preview_title, icon_flutter
 ///   accent2 → title_rs, popup_text, icon_maven, icon_git
-///   warm    → search_title, icon_rust, icon_mise
+///   warm    → search_title, list_match_fg, icon_rust, icon_mise
 ///   cool    → icon_go
 ///   green   → folder_title, icon_worktree
 ///   yellow  → disk_title, status_message, icon_python, icon_folder
@@ -105,6 +106,7 @@ impl Theme {
             list_date: p.subtext,
             list_highlight_bg: p.surface,
             list_highlight_fg: p.text,
+            list_match_fg: p.warm,
             list_selected_fg: p.text,
             helpers_colors: p.overlay,
             status_message: p.yellow,
@@ -241,6 +243,7 @@ impl Theme {
     pub fn jetbrains_darcula() -> Self {
         Self {
             search_title: Color::Rgb(106, 135, 89),        // Green
+            list_match_fg: Color::Rgb(106, 135, 89),       // Green
             disk_title: Color::Rgb(204, 120, 50),          // Orange
             icon_maven: Color::Rgb(255, 198, 109),         // Gold
             icon_worktree: Color::Rgb(106, 135, 89),       // Green
@@ -270,6 +273,7 @@ impl Theme {
         Self {
             title_rs: Color::Rgb(250, 189, 47),            // Yellow
             search_title: Color::Rgb(184, 187, 38),        // Green
+            list_match_fg: Color::Rgb(184, 187, 38),       // Green
             folder_title: Color::Rgb(250, 189, 47),        // Yellow
             disk_title: Color::Rgb(254, 128, 25),          // Orange
             preview_title: Color::Rgb(131, 165, 152),      // Aqua
@@ -300,6 +304,7 @@ impl Theme {
     pub fn nord() -> Self {
         Self {
             search_title: Color::Rgb(163, 190, 140),  // Green (not warm)
+            list_match_fg: Color::Rgb(163, 190, 140), // Green (not warm)
             folder_title: Color::Rgb(235, 203, 139),  // Yellow (not green)
             disk_title: Color::Rgb(208, 135, 112),    // Aurora Orange
             icon_worktree: Color::Rgb(163, 190, 140), // Aurora Green
@@ -327,8 +332,9 @@ impl Theme {
     pub fn tokyo_night() -> Self {
         let cyan = Color::Rgb(125, 207, 255);
         Self {
-            search_title: Color::Rgb(158, 206, 106), // Green
-            disk_title: Color::Rgb(255, 158, 100),   // Orange
+            search_title: Color::Rgb(158, 206, 106),  // Green
+            list_match_fg: Color::Rgb(158, 206, 106), // Green
+            disk_title: Color::Rgb(255, 158, 100),    // Orange
             preview_title: cyan,
             icon_flutter: cyan,
             icon_go: cyan,
@@ -405,6 +411,7 @@ impl Theme {
     pub fn synthwave_84() -> Self {
         Self {
             search_title: Color::Rgb(255, 203, 107), // Yellow (not orange)
+            list_match_fg: Color::Rgb(255, 203, 107), // Yellow (not orange)
             legends_title: Color::Rgb(254, 78, 174), // Hot Pink
             popup_text: Color::Rgb(254, 78, 174),    // Hot Pink
             icon_rust: Color::Rgb(255, 140, 66),     // Orange (unique)
@@ -554,6 +561,7 @@ impl Theme {
         let dk_cyan = Color::Rgb(0, 150, 180);
         Self {
             search_title: cyan,
+            list_match_fg: cyan,
             folder_title: cyan,
             legends_title: Color::Rgb(0, 200, 220),
             popup_text: cyan,
