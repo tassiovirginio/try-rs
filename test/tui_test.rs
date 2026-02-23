@@ -8,6 +8,7 @@ fn try_entry_default_values() {
     let entry = TryEntry {
         name: "test".to_string(),
         display_name: "test".to_string(),
+        display_offset: 0,
         match_indices: vec![],
         modified: SystemTime::UNIX_EPOCH,
         created: SystemTime::UNIX_EPOCH,
@@ -36,6 +37,7 @@ fn try_entry_clone() {
     let entry = TryEntry {
         name: "project".to_string(),
         display_name: "My Project".to_string(),
+        display_offset: 0,
         match_indices: vec![],
         modified: SystemTime::UNIX_EPOCH,
         created: SystemTime::UNIX_EPOCH,
@@ -64,6 +66,7 @@ fn try_entry_with_flags() {
     let entry = TryEntry {
         name: "rust-project".to_string(),
         display_name: "rust-project".to_string(),
+        display_offset: 0,
         match_indices: vec![],
         modified: SystemTime::now(),
         created: SystemTime::now(),

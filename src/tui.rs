@@ -37,6 +37,7 @@ pub enum AppMode {
 pub struct TryEntry {
     pub name: String,
     pub display_name: String,
+    pub display_offset: usize,
     pub match_indices: Vec<usize>,
     pub modified: SystemTime,
     pub created: SystemTime,
@@ -80,6 +81,8 @@ pub struct App {
 
     pub cached_free_space_mb: Option<u64>,
     pub folder_size_mb: Arc<AtomicU64>,
+
+    matcher: SkimMatcherV2,
 }
 
 impl App {
@@ -117,6 +120,10 @@ impl App {
                         created = metadata.created().unwrap_or(SystemTime::UNIX_EPOCH);
                         display_name = name.clone();
                     }
+                    let display_offset = name
+                        .chars()
+                        .count()
+                        .saturating_sub(display_name.chars().count());
                     let is_flutter = entry.path().join("pubspec.yaml").exists();
                     let is_go = entry.path().join("go.mod").exists();
                     let is_python = entry.path().join("pyproject.toml").exists()
@@ -124,6 +131,7 @@ impl App {
                     entries.push(TryEntry {
                         name,
                         display_name,
+                        display_offset,
                         match_indices: Vec::new(),
                         modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
                         created,
@@ -173,6 +181,7 @@ impl App {
             config_location_state: ListState::default(),
             cached_free_space_mb: utils::get_free_disk_space_mb(&path),
             folder_size_mb: Arc::new(AtomicU64::new(0)),
+            matcher: SkimMatcherV2::default(),
         };
 
         // Spawn background thread to calculate folder size
@@ -191,43 +200,7 @@ impl App {
         self.all_entries.iter().any(|e| e.name == self.query)
     }
 
-    fn map_name_indices_to_display(entry: &TryEntry, indices: &[usize]) -> Vec<usize> {
-        let display_len = entry.display_name.chars().count();
-        if display_len == 0 {
-            return Vec::new();
-        }
-
-        let offset = if entry.name.ends_with(&entry.display_name) {
-            entry
-                .name
-                .chars()
-                .count()
-                .saturating_sub(entry.display_name.chars().count())
-        } else {
-            0
-        };
-
-        let mut mapped = indices
-            .iter()
-            .filter_map(|idx| {
-                let idx = *idx;
-                if idx < offset {
-                    None
-                } else {
-                    let translated = idx - offset;
-                    (translated < display_len).then_some(translated)
-                }
-            })
-            .collect::<Vec<_>>();
-
-        mapped.sort_unstable();
-        mapped.dedup();
-        mapped
-    }
-
     pub fn update_search(&mut self) {
-        let matcher = SkimMatcherV2::default();
-
         if self.query.is_empty() {
             self.filtered_entries = self.all_entries.clone();
         } else {
@@ -235,14 +208,19 @@ impl App {
                 .all_entries
                 .iter()
                 .filter_map(|entry| {
-                    matcher
+                    self.matcher
                         .fuzzy_indices(&entry.name, &self.query)
                         .map(|(score, indices)| {
                             let mut e = entry.clone();
                             e.score = score;
-                            let converted =
-                                indices.iter().map(|idx| *idx as usize).collect::<Vec<_>>();
-                            e.match_indices = Self::map_name_indices_to_display(entry, &converted);
+                            if entry.display_offset == 0 {
+                                e.match_indices = indices;
+                            } else {
+                                e.match_indices = indices
+                                    .into_iter()
+                                    .filter_map(|idx| idx.checked_sub(entry.display_offset))
+                                    .collect();
+                            }
                             e
                         })
                 })
@@ -557,36 +535,33 @@ fn build_highlighted_name_spans(
         return Vec::new();
     }
 
-    let chars = text.chars().collect::<Vec<_>>();
-    let mut normalized_indices = match_indices
-        .iter()
-        .copied()
-        .filter(|idx| *idx < chars.len())
-        .collect::<Vec<_>>();
-
-    if normalized_indices.is_empty() {
+    if match_indices.is_empty() {
         return vec![Span::raw(text.to_string())];
     }
 
-    normalized_indices.sort_unstable();
-    normalized_indices.dedup();
-
+    let chars = text.chars().collect::<Vec<_>>();
     let mut spans = Vec::new();
     let mut cursor = 0usize;
     let mut idx = 0usize;
 
-    while idx < normalized_indices.len() {
-        let start = normalized_indices[idx];
+    while idx < match_indices.len() {
+        let start = match_indices[idx];
+        if start >= chars.len() {
+            break;
+        }
+
         if cursor < start {
             spans.push(Span::raw(chars[cursor..start].iter().collect::<String>()));
         }
 
         let mut end = start + 1;
         idx += 1;
-        while idx < normalized_indices.len() && normalized_indices[idx] == end {
+        while idx < match_indices.len() && match_indices[idx] == end {
             end += 1;
             idx += 1;
         }
+
+        let end = end.min(chars.len());
 
         spans.push(Span::styled(
             chars[start..end].iter().collect::<String>(),
