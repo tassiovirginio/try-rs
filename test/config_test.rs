@@ -338,8 +338,6 @@ theme = "Default"
 
 #[test]
 fn config_file_extension_handling() {
-    let tmp = TempDir::new("config-ext").unwrap();
-
     unsafe {
         std::env::remove_var("TRY_CONFIG");
     }

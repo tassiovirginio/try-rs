@@ -6,9 +6,10 @@ use fuzzy_matcher::skim::SkimMatcherV2;
 use ratatui::{prelude::*, widgets::*};
 
 use std::{
+    collections::HashSet,
     fs,
     io::{self},
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
@@ -82,10 +83,39 @@ pub struct App {
     pub cached_free_space_mb: Option<u64>,
     pub folder_size_mb: Arc<AtomicU64>,
 
+    current_entries: HashSet<String>,
     matcher: SkimMatcherV2,
 }
 
 impl App {
+    fn is_current_entry(
+        entry_path: &Path,
+        entry_name: &str,
+        is_symlink: bool,
+        cwd_unresolved: &Path,
+        cwd_real: &Path,
+        base_real: &Path,
+    ) -> bool {
+        if cwd_unresolved.starts_with(entry_path) {
+            return true;
+        }
+
+        if is_symlink {
+            if let Ok(target) = entry_path.canonicalize()
+                && cwd_real.starts_with(&target)
+            {
+                return true;
+            }
+        } else {
+            let resolved_entry = base_real.join(entry_name);
+            if cwd_real.starts_with(&resolved_entry) {
+                return true;
+            }
+        }
+
+        false
+    }
+
     pub fn new(
         path: PathBuf,
         theme: Theme,
@@ -96,20 +126,48 @@ impl App {
         query: Option<String>,
     ) -> Self {
         let mut entries = Vec::new();
+        let mut current_entries = HashSet::new();
+        let cwd_unresolved = std::env::var_os("PWD")
+            .map(PathBuf::from)
+            .filter(|p| !p.as_os_str().is_empty())
+            .or_else(|| std::env::current_dir().ok())
+            .unwrap_or_else(|| PathBuf::from("."));
+        let cwd_real = std::env::current_dir()
+            .ok()
+            .and_then(|cwd| cwd.canonicalize().ok())
+            .unwrap_or_else(|| cwd_unresolved.clone());
+        let base_real = path.canonicalize().unwrap_or_else(|_| path.clone());
+
         if let Ok(read_dir) = fs::read_dir(&path) {
             for entry in read_dir.flatten() {
                 if let Ok(metadata) = entry.metadata()
                     && metadata.is_dir()
                 {
+                    let entry_path = entry.path();
                     let name = entry.file_name().to_string_lossy().to_string();
-                    let git_path = entry.path().join(".git");
+                    let git_path = entry_path.join(".git");
                     let is_git = git_path.exists();
                     let is_worktree = git_path.is_file();
-                    let is_worktree_locked = utils::is_git_worktree_locked(&entry.path());
-                    let is_gitmodules = entry.path().join(".gitmodules").exists();
-                    let is_mise = entry.path().join("mise.toml").exists();
-                    let is_cargo = entry.path().join("Cargo.toml").exists();
-                    let is_maven = entry.path().join("pom.xml").exists();
+                    let is_worktree_locked = utils::is_git_worktree_locked(&entry_path);
+                    let is_gitmodules = entry_path.join(".gitmodules").exists();
+                    let is_mise = entry_path.join("mise.toml").exists();
+                    let is_cargo = entry_path.join("Cargo.toml").exists();
+                    let is_maven = entry_path.join("pom.xml").exists();
+                    let is_symlink = entry
+                        .file_type()
+                        .map(|kind| kind.is_symlink())
+                        .unwrap_or(false);
+                    let is_current = Self::is_current_entry(
+                        &entry_path,
+                        &name,
+                        is_symlink,
+                        &cwd_unresolved,
+                        &cwd_real,
+                        &base_real,
+                    );
+                    if is_current {
+                        current_entries.insert(name.clone());
+                    }
 
                     let created;
                     let display_name;
@@ -124,10 +182,10 @@ impl App {
                         .chars()
                         .count()
                         .saturating_sub(display_name.chars().count());
-                    let is_flutter = entry.path().join("pubspec.yaml").exists();
-                    let is_go = entry.path().join("go.mod").exists();
-                    let is_python = entry.path().join("pyproject.toml").exists()
-                        || entry.path().join("requirements.txt").exists();
+                    let is_flutter = entry_path.join("pubspec.yaml").exists();
+                    let is_go = entry_path.join("go.mod").exists();
+                    let is_python = entry_path.join("pyproject.toml").exists()
+                        || entry_path.join("requirements.txt").exists();
                     entries.push(TryEntry {
                         name,
                         display_name,
@@ -181,6 +239,7 @@ impl App {
             config_location_state: ListState::default(),
             cached_free_space_mb: utils::get_free_disk_space_mb(&path),
             folder_size_mb: Arc::new(AtomicU64::new(0)),
+            current_entries,
             matcher: SkimMatcherV2::default(),
         };
 
@@ -745,8 +804,19 @@ pub fn run_app(
                         )
                     };
 
+                    let is_current = app.current_entries.contains(&entry.name);
+                    let marker = if is_current { "* " } else { "  " };
+                    let marker_style = if is_current {
+                        Style::default()
+                            .fg(app.theme.list_match_fg)
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default()
+                    };
+
                     let mut spans = vec![
-                        Span::styled(" 󰝰 ", Style::default().fg(app.theme.icon_folder)),
+                        Span::styled(marker, marker_style),
+                        Span::styled("󰝰 ", Style::default().fg(app.theme.icon_folder)),
                         Span::styled(created_text, Style::default().fg(app.theme.list_date)),
                         Span::raw(" "),
                     ];
@@ -1313,4 +1383,53 @@ pub fn run_app(
     }
 
     Ok((app.final_selection, app.wants_editor))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::App;
+    use std::{fs, path::PathBuf};
+    use tempdir::TempDir;
+
+    #[test]
+    fn current_entry_detects_nested_path() {
+        let temp = TempDir::new("current-entry-nested").unwrap();
+        let base_path = temp.path().to_path_buf();
+        let entry_name = "2025-11-20-gamma";
+        let entry_path = base_path.join(entry_name);
+        let nested_path = entry_path.join("nested/deeper");
+
+        fs::create_dir_all(&nested_path).unwrap();
+
+        assert!(App::is_current_entry(
+            &entry_path,
+            entry_name,
+            false,
+            &nested_path,
+            &nested_path,
+            &base_path,
+        ));
+    }
+
+    #[test]
+    fn current_entry_detects_nested_path_with_stale_pwd() {
+        let temp = TempDir::new("current-entry-script").unwrap();
+        let base_path = temp.path().to_path_buf();
+        let entry_name = "2025-11-20-gamma";
+        let entry_path = base_path.join(entry_name);
+        let nested_path = entry_path.join("nested/deeper");
+
+        fs::create_dir_all(&nested_path).unwrap();
+
+        let stale_pwd = PathBuf::from("/tmp/not-the-real-cwd");
+
+        assert!(App::is_current_entry(
+            &entry_path,
+            entry_name,
+            false,
+            &stale_pwd,
+            &nested_path,
+            &base_path,
+        ));
+    }
 }
