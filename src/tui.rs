@@ -1,8 +1,8 @@
 use anyhow::Result;
 use chrono::Local;
 use crossterm::event::{self, Event, KeyCode};
-use fuzzy_matcher::FuzzyMatcher;
-use fuzzy_matcher::skim::SkimMatcherV2;
+use skim::fuzzy_matcher::FuzzyMatcher;
+use skim::fuzzy_matcher::skim::SkimMatcherV2;
 use ratatui::{prelude::*, widgets::*};
 
 use std::{
