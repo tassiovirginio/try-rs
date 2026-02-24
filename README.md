@@ -27,6 +27,14 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 
 ![try-rs.gif](https://raw.githubusercontent.com/tassiovirginio/try-rs/refs/heads/main/try-rs.gif)
 
+## Contribution
+
+Thank you to all the people who already contributed to Thaw!
+
+<a href="https://github.com/tassiovirginio/try-rsgraphs/contributors">
+  <img src="https://contrib.rocks/image?repo=tassiovirginio/try-rs" />
+</a>
+
 ## Features
 
 | Feature                  | Description                                                                            |
@@ -363,13 +371,6 @@ You can also bypass the UI:
 | `try-rs --version`                             | Show application version                                            |
 | `try-rs --help`                                | Show help message                                                   |
 
-## Contribution
-
-Thank you to all the people who already contributed to Thaw!
-
-<a href="https://github.com/tassiovirginio/try-rsgraphs/contributors">
-  <img src="https://contrib.rocks/image?repo=tassiovirginio/try-rs" />
-</a>
 
 ## Inspiration
 

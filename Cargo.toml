@@ -2,7 +2,7 @@ cargo-features = ["edition2024"]
 
 [package]
 name = "try-rs"
-version = "1.5.0"
+version = "1.5.2"
 authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
 homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
@@ -17,13 +17,13 @@ keywords = ["tui", "workspace", "experiments", "cli", "ratatui"]
 ratatui = "0.30.0"
 crossterm = "0.29.0"
 dirs = "6.0.0"
-fuzzy-matcher = "0.3.7"
+fuzzy-matcher = "0.3"
 chrono = "0.4.44"
 anyhow = "1.0.102"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
 toml = "1.0.3+spec-1.1.0"
 clap = { version = "4.5.60", features = ["derive"] }
-libc = "0.2.182"
+libc = "0.2.180"
 
 [dev-dependencies]
 tempdir = "0.3"
