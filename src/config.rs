@@ -13,6 +13,9 @@ pub struct Config {
     pub editor: Option<String>,
     pub apply_date_prefix: Option<bool>,
     pub transparent_background: Option<bool>,
+    pub no_disk: Option<bool>,
+    pub no_preview: Option<bool>,
+    pub no_legend: Option<bool>,
 }
 
 pub fn get_file_config_toml_name() -> String {
@@ -69,6 +72,9 @@ pub struct AppConfig {
     pub config_path: Option<PathBuf>,
     pub apply_date_prefix: Option<bool>,
     pub transparent_background: Option<bool>,
+    pub no_disk: Option<bool>,
+    pub no_preview: Option<bool>,
+    pub no_legend: Option<bool>,
 }
 
 pub fn load_configuration() -> AppConfig {
@@ -86,6 +92,9 @@ pub fn load_configuration() -> AppConfig {
         .or_else(|| std::env::var("EDITOR").ok());
     let mut apply_date_prefix = None;
     let mut transparent_background = None;
+    let mut no_disk = None;
+    let mut no_preview = None;
+    let mut no_legend = None;
 
     let loaded_config_path = find_config_path();
 
@@ -105,6 +114,9 @@ pub fn load_configuration() -> AppConfig {
         }
         apply_date_prefix = config.apply_date_prefix;
         transparent_background = config.transparent_background;
+        no_disk = config.no_disk;
+        no_preview = config.no_preview;
+        no_legend = config.no_legend;
     }
 
     AppConfig {
@@ -114,6 +126,9 @@ pub fn load_configuration() -> AppConfig {
         config_path: loaded_config_path,
         apply_date_prefix,
         transparent_background,
+        no_disk,
+        no_preview,
+        no_legend,
     }
 }
 
@@ -124,6 +139,9 @@ pub fn save_config(
     editor: &Option<String>,
     apply_date_prefix: Option<bool>,
     transparent_background: Option<bool>,
+    no_disk: Option<bool>,
+    no_preview: Option<bool>,
+    no_legend: Option<bool>,
 ) -> std::io::Result<()> {
     let config = Config {
         tries_path: Some(tries_path.to_string_lossy().to_string()),
@@ -131,6 +149,9 @@ pub fn save_config(
         editor: editor.clone(),
         apply_date_prefix,
         transparent_background,
+        no_disk,
+        no_preview,
+        no_legend,
     };
 
     let toml_string =

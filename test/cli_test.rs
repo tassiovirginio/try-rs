@@ -11,6 +11,9 @@ fn cli_default_values() {
     assert!(cli.completions.is_none());
     assert!(!cli.shallow_clone);
     assert!(cli.worktree.is_none());
+    assert!(!cli.no_disk);
+    assert!(!cli.no_preview);
+    assert!(!cli.no_legend);
 }
 
 #[test]
@@ -125,6 +128,24 @@ fn cli_multiple_flags() {
         Some("https://github.com/user/repo.git".to_string())
     );
     assert_eq!(cli.destination, Some("my-dest".to_string()));
+}
+
+#[test]
+fn cli_no_disk_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--no-disk"]).unwrap();
+    assert!(cli.no_disk);
+}
+
+#[test]
+fn cli_no_preview_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--no-preview"]).unwrap();
+    assert!(cli.no_preview);
+}
+
+#[test]
+fn cli_no_legend_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--no-legend"]).unwrap();
+    assert!(cli.no_legend);
 }
 
 #[test]

@@ -490,7 +490,10 @@ fn write_fish_picker_function() -> Result<PathBuf> {
         fs::create_dir_all(parent)?;
     }
     fs::write(&file_path, FISH_PICKER_FUNCTION)?;
-    eprintln!("Fish picker function file created at: {}", file_path.display());
+    eprintln!(
+        "Fish picker function file created at: {}",
+        file_path.display()
+    );
     Ok(file_path)
 }
 

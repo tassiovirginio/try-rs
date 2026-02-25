@@ -18,6 +18,9 @@ fn save_and_reload_config() {
         &Some("code".to_string()),
         Some(true),
         Some(false),
+        Some(true),
+        Some(false),
+        Some(true),
     )
     .unwrap();
 
@@ -28,6 +31,9 @@ fn save_and_reload_config() {
     assert_eq!(loaded.editor.as_deref(), Some("code"));
     assert_eq!(loaded.apply_date_prefix, Some(true));
     assert_eq!(loaded.transparent_background, Some(false));
+    assert_eq!(loaded.no_disk, Some(true));
+    assert_eq!(loaded.no_preview, Some(false));
+    assert_eq!(loaded.no_legend, Some(true));
 }
 
 #[test]
@@ -41,6 +47,9 @@ fn save_config_creates_parent_dirs() {
         &theme,
         &PathBuf::from("/tmp/t"),
         &None,
+        None,
+        None,
+        None,
         None,
         None,
     )
@@ -62,6 +71,9 @@ fn save_config_none_optionals() {
         &None,
         None,
         None,
+        None,
+        None,
+        None,
     )
     .unwrap();
 
@@ -70,6 +82,9 @@ fn save_config_none_optionals() {
     assert!(loaded.editor.is_none());
     assert!(loaded.apply_date_prefix.is_none());
     assert!(loaded.transparent_background.is_none());
+    assert!(loaded.no_disk.is_none());
+    assert!(loaded.no_preview.is_none());
+    assert!(loaded.no_legend.is_none());
 }
 
 #[test]
@@ -80,6 +95,9 @@ fn config_serialization_roundtrip() {
         editor: Some("nvim".to_string()),
         apply_date_prefix: Some(true),
         transparent_background: Some(true),
+        no_disk: Some(true),
+        no_preview: Some(false),
+        no_legend: Some(true),
     };
 
     let toml_str = toml::to_string(&config).unwrap();
@@ -90,6 +108,9 @@ fn config_serialization_roundtrip() {
     assert_eq!(loaded.editor, config.editor);
     assert_eq!(loaded.apply_date_prefix, config.apply_date_prefix);
     assert_eq!(loaded.transparent_background, config.transparent_background);
+    assert_eq!(loaded.no_disk, config.no_disk);
+    assert_eq!(loaded.no_preview, config.no_preview);
+    assert_eq!(loaded.no_legend, config.no_legend);
 }
 
 #[test]
@@ -100,6 +121,9 @@ fn config_deserialize_empty() {
     assert!(config.editor.is_none());
     assert!(config.apply_date_prefix.is_none());
     assert!(config.transparent_background.is_none());
+    assert!(config.no_disk.is_none());
+    assert!(config.no_preview.is_none());
+    assert!(config.no_legend.is_none());
 }
 
 #[test]
@@ -148,6 +172,9 @@ fn save_config_preserves_theme_name() {
             &None,
             None,
             None,
+            None,
+            None,
+            None,
         )
         .unwrap();
 
@@ -165,6 +192,9 @@ theme = "Tokyo Night"
 editor = "vim"
 apply_date_prefix = true
 transparent_background = false
+no_disk = true
+no_preview = false
+no_legend = true
 "#;
 
     let config: Config = toml::from_str(toml_str).unwrap();
@@ -173,6 +203,9 @@ transparent_background = false
     assert_eq!(config.editor, Some("vim".to_string()));
     assert_eq!(config.apply_date_prefix, Some(true));
     assert_eq!(config.transparent_background, Some(false));
+    assert_eq!(config.no_disk, Some(true));
+    assert_eq!(config.no_preview, Some(false));
+    assert_eq!(config.no_legend, Some(true));
 }
 
 #[test]
@@ -188,6 +221,9 @@ fn config_save_and_load_roundtrip() {
         &Some("nvim".to_string()),
         Some(true),
         Some(true),
+        Some(true),
+        Some(false),
+        Some(false),
     )
     .unwrap();
 
@@ -198,6 +234,9 @@ fn config_save_and_load_roundtrip() {
     assert_eq!(loaded.editor, Some("nvim".to_string()));
     assert_eq!(loaded.apply_date_prefix, Some(true));
     assert_eq!(loaded.transparent_background, Some(true));
+    assert_eq!(loaded.no_disk, Some(true));
+    assert_eq!(loaded.no_preview, Some(false));
+    assert_eq!(loaded.no_legend, Some(false));
 }
 
 #[test]
@@ -235,6 +274,9 @@ fn config_preserve_booleans_exact() {
         editor: None,
         apply_date_prefix: Some(true),
         transparent_background: Some(false),
+        no_disk: Some(true),
+        no_preview: Some(false),
+        no_legend: Some(true),
     };
 
     let toml = toml::to_string(&config1).unwrap();
@@ -245,6 +287,9 @@ fn config_preserve_booleans_exact() {
         config1.transparent_background,
         config2.transparent_background
     );
+    assert_eq!(config1.no_disk, config2.no_disk);
+    assert_eq!(config1.no_preview, config2.no_preview);
+    assert_eq!(config1.no_legend, config2.no_legend);
 }
 
 #[test]
@@ -255,6 +300,9 @@ fn config_with_empty_strings() {
         editor: Some("".to_string()),
         apply_date_prefix: None,
         transparent_background: None,
+        no_disk: None,
+        no_preview: None,
+        no_legend: None,
     };
 
     let toml = toml::to_string(&config).unwrap();
@@ -278,6 +326,9 @@ fn config_save_overwrites_existing() {
         &Some("editor1".to_string()),
         Some(true),
         None,
+        None,
+        None,
+        None,
     )
     .unwrap();
 
@@ -289,6 +340,9 @@ fn config_save_overwrites_existing() {
         &Some("editor2".to_string()),
         Some(false),
         Some(true),
+        Some(false),
+        Some(true),
+        Some(false),
     )
     .unwrap();
 
@@ -299,6 +353,9 @@ fn config_save_overwrites_existing() {
     assert_eq!(loaded.editor, Some("editor2".to_string()));
     assert_eq!(loaded.apply_date_prefix, Some(false));
     assert_eq!(loaded.transparent_background, Some(true));
+    assert_eq!(loaded.no_disk, Some(false));
+    assert_eq!(loaded.no_preview, Some(true));
+    assert_eq!(loaded.no_legend, Some(false));
     assert_eq!(loaded.theme, Some("Tokyo Night".to_string()));
 }
 
@@ -310,6 +367,9 @@ fn config_serialization_order() {
         editor: Some("vim".to_string()),
         apply_date_prefix: Some(true),
         transparent_background: Some(false),
+        no_disk: Some(true),
+        no_preview: Some(false),
+        no_legend: Some(true),
     };
 
     let toml = toml::to_string(&config).unwrap();
@@ -320,6 +380,9 @@ fn config_serialization_order() {
     assert!(toml.contains("editor"));
     assert!(toml.contains("apply_date_prefix"));
     assert!(toml.contains("transparent_background"));
+    assert!(toml.contains("no_disk"));
+    assert!(toml.contains("no_preview"));
+    assert!(toml.contains("no_legend"));
 }
 
 #[test]
@@ -378,6 +441,9 @@ fn config_handles_very_long_values() {
         editor: None,
         apply_date_prefix: None,
         transparent_background: None,
+        no_disk: None,
+        no_preview: None,
+        no_legend: None,
     };
 
     let toml = toml::to_string(&config).unwrap();
