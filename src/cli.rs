@@ -41,17 +41,57 @@ pub struct Cli {
     #[arg(long, value_name = "LINES", requires = "inline_picker")]
     pub inline_height: Option<u16>,
 
+    /// Show the disk information panel in the TUI
+    #[arg(long, overrides_with = "hide_disk", action = clap::ArgAction::SetTrue)]
+    pub show_disk: bool,
+
     /// Hide the disk information panel in the TUI
-    #[arg(long)]
-    pub no_disk: bool,
+    #[arg(
+        long,
+        overrides_with = "show_disk",
+        action = clap::ArgAction::SetFalse,
+        default_value_t = true
+    )]
+    pub hide_disk: bool,
+
+    /// Show the preview panel in the TUI
+    #[arg(long, overrides_with = "hide_preview", action = clap::ArgAction::SetTrue)]
+    pub show_preview: bool,
 
     /// Hide the preview panel in the TUI
-    #[arg(long)]
-    pub no_preview: bool,
+    #[arg(
+        long,
+        overrides_with = "show_preview",
+        action = clap::ArgAction::SetFalse,
+        default_value_t = true
+    )]
+    pub hide_preview: bool,
+
+    /// Show the icon legend panel in the TUI
+    #[arg(long, overrides_with = "hide_legend", action = clap::ArgAction::SetTrue)]
+    pub show_legend: bool,
 
     /// Hide the icon legend panel in the TUI
-    #[arg(long)]
-    pub no_legend: bool,
+    #[arg(
+        long,
+        overrides_with = "show_legend",
+        action = clap::ArgAction::SetFalse,
+        default_value_t = true
+    )]
+    pub hide_legend: bool,
+
+    /// Show the right panel in the TUI
+    #[arg(long, overrides_with = "hide_right_panel", action = clap::ArgAction::SetTrue)]
+    pub show_right_panel: bool,
+
+    /// Hide the right panel in the TUI
+    #[arg(
+        long,
+        overrides_with = "show_right_panel",
+        action = clap::ArgAction::SetFalse,
+        default_value_t = true
+    )]
+    pub hide_right_panel: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq, Debug, Hash)]

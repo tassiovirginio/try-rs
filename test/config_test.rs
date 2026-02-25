@@ -18,6 +18,7 @@ fn save_and_reload_config() {
         &Some("code".to_string()),
         Some(true),
         Some(false),
+        Some(false),
         Some(true),
         Some(false),
         Some(true),
@@ -32,9 +33,10 @@ fn save_and_reload_config() {
     assert_eq!(loaded.editor.as_deref(), Some("code"));
     assert_eq!(loaded.apply_date_prefix, Some(true));
     assert_eq!(loaded.transparent_background, Some(false));
-    assert_eq!(loaded.no_disk, Some(true));
-    assert_eq!(loaded.no_preview, Some(false));
-    assert_eq!(loaded.no_legend, Some(true));
+    assert_eq!(loaded.show_disk, Some(false));
+    assert_eq!(loaded.show_preview, Some(true));
+    assert_eq!(loaded.show_legend, Some(false));
+    assert_eq!(loaded.show_right_panel, Some(true));
     assert_eq!(loaded.right_panel_width, Some(40));
 }
 
@@ -49,6 +51,7 @@ fn save_config_creates_parent_dirs() {
         &theme,
         &PathBuf::from("/tmp/t"),
         &None,
+        None,
         None,
         None,
         None,
@@ -78,6 +81,7 @@ fn save_config_none_optionals() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -86,9 +90,10 @@ fn save_config_none_optionals() {
     assert!(loaded.editor.is_none());
     assert!(loaded.apply_date_prefix.is_none());
     assert!(loaded.transparent_background.is_none());
-    assert!(loaded.no_disk.is_none());
-    assert!(loaded.no_preview.is_none());
-    assert!(loaded.no_legend.is_none());
+    assert!(loaded.show_disk.is_none());
+    assert!(loaded.show_preview.is_none());
+    assert!(loaded.show_legend.is_none());
+    assert!(loaded.show_right_panel.is_none());
     assert!(loaded.right_panel_width.is_none());
 }
 
@@ -100,9 +105,10 @@ fn config_serialization_roundtrip() {
         editor: Some("nvim".to_string()),
         apply_date_prefix: Some(true),
         transparent_background: Some(true),
-        no_disk: Some(true),
-        no_preview: Some(false),
-        no_legend: Some(true),
+        show_disk: Some(false),
+        show_preview: Some(true),
+        show_legend: Some(false),
+        show_right_panel: Some(true),
         right_panel_width: Some(25),
     };
 
@@ -114,9 +120,10 @@ fn config_serialization_roundtrip() {
     assert_eq!(loaded.editor, config.editor);
     assert_eq!(loaded.apply_date_prefix, config.apply_date_prefix);
     assert_eq!(loaded.transparent_background, config.transparent_background);
-    assert_eq!(loaded.no_disk, config.no_disk);
-    assert_eq!(loaded.no_preview, config.no_preview);
-    assert_eq!(loaded.no_legend, config.no_legend);
+    assert_eq!(loaded.show_disk, config.show_disk);
+    assert_eq!(loaded.show_preview, config.show_preview);
+    assert_eq!(loaded.show_legend, config.show_legend);
+    assert_eq!(loaded.show_right_panel, config.show_right_panel);
     assert_eq!(loaded.right_panel_width, config.right_panel_width);
 }
 
@@ -128,9 +135,10 @@ fn config_deserialize_empty() {
     assert!(config.editor.is_none());
     assert!(config.apply_date_prefix.is_none());
     assert!(config.transparent_background.is_none());
-    assert!(config.no_disk.is_none());
-    assert!(config.no_preview.is_none());
-    assert!(config.no_legend.is_none());
+    assert!(config.show_disk.is_none());
+    assert!(config.show_preview.is_none());
+    assert!(config.show_legend.is_none());
+    assert!(config.show_right_panel.is_none());
     assert!(config.right_panel_width.is_none());
 }
 
@@ -184,6 +192,7 @@ fn save_config_preserves_theme_name() {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -201,9 +210,10 @@ theme = "Tokyo Night"
 editor = "vim"
 apply_date_prefix = true
 transparent_background = false
-no_disk = true
-no_preview = false
-no_legend = true
+show_disk = false
+show_preview = true
+show_legend = false
+show_right_panel = true
 right_panel_width = 44
 "#;
 
@@ -213,9 +223,10 @@ right_panel_width = 44
     assert_eq!(config.editor, Some("vim".to_string()));
     assert_eq!(config.apply_date_prefix, Some(true));
     assert_eq!(config.transparent_background, Some(false));
-    assert_eq!(config.no_disk, Some(true));
-    assert_eq!(config.no_preview, Some(false));
-    assert_eq!(config.no_legend, Some(true));
+    assert_eq!(config.show_disk, Some(false));
+    assert_eq!(config.show_preview, Some(true));
+    assert_eq!(config.show_legend, Some(false));
+    assert_eq!(config.show_right_panel, Some(true));
     assert_eq!(config.right_panel_width, Some(44));
 }
 
@@ -232,8 +243,9 @@ fn config_save_and_load_roundtrip() {
         &Some("nvim".to_string()),
         Some(true),
         Some(true),
-        Some(true),
         Some(false),
+        Some(true),
+        Some(true),
         Some(false),
         Some(52),
     )
@@ -246,9 +258,10 @@ fn config_save_and_load_roundtrip() {
     assert_eq!(loaded.editor, Some("nvim".to_string()));
     assert_eq!(loaded.apply_date_prefix, Some(true));
     assert_eq!(loaded.transparent_background, Some(true));
-    assert_eq!(loaded.no_disk, Some(true));
-    assert_eq!(loaded.no_preview, Some(false));
-    assert_eq!(loaded.no_legend, Some(false));
+    assert_eq!(loaded.show_disk, Some(false));
+    assert_eq!(loaded.show_preview, Some(true));
+    assert_eq!(loaded.show_legend, Some(true));
+    assert_eq!(loaded.show_right_panel, Some(false));
     assert_eq!(loaded.right_panel_width, Some(52));
 }
 
@@ -287,9 +300,10 @@ fn config_preserve_booleans_exact() {
         editor: None,
         apply_date_prefix: Some(true),
         transparent_background: Some(false),
-        no_disk: Some(true),
-        no_preview: Some(false),
-        no_legend: Some(true),
+        show_disk: Some(false),
+        show_preview: Some(true),
+        show_legend: Some(false),
+        show_right_panel: Some(true),
         right_panel_width: Some(41),
     };
 
@@ -301,9 +315,10 @@ fn config_preserve_booleans_exact() {
         config1.transparent_background,
         config2.transparent_background
     );
-    assert_eq!(config1.no_disk, config2.no_disk);
-    assert_eq!(config1.no_preview, config2.no_preview);
-    assert_eq!(config1.no_legend, config2.no_legend);
+    assert_eq!(config1.show_disk, config2.show_disk);
+    assert_eq!(config1.show_preview, config2.show_preview);
+    assert_eq!(config1.show_legend, config2.show_legend);
+    assert_eq!(config1.show_right_panel, config2.show_right_panel);
     assert_eq!(config1.right_panel_width, config2.right_panel_width);
 }
 
@@ -315,9 +330,10 @@ fn config_with_empty_strings() {
         editor: Some("".to_string()),
         apply_date_prefix: None,
         transparent_background: None,
-        no_disk: None,
-        no_preview: None,
-        no_legend: None,
+        show_disk: None,
+        show_preview: None,
+        show_legend: None,
+        show_right_panel: None,
         right_panel_width: None,
     };
 
@@ -346,6 +362,7 @@ fn config_save_overwrites_existing() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -356,6 +373,7 @@ fn config_save_overwrites_existing() {
         &PathBuf::from("/path2"),
         &Some("editor2".to_string()),
         Some(false),
+        Some(true),
         Some(true),
         Some(false),
         Some(true),
@@ -371,9 +389,10 @@ fn config_save_overwrites_existing() {
     assert_eq!(loaded.editor, Some("editor2".to_string()));
     assert_eq!(loaded.apply_date_prefix, Some(false));
     assert_eq!(loaded.transparent_background, Some(true));
-    assert_eq!(loaded.no_disk, Some(false));
-    assert_eq!(loaded.no_preview, Some(true));
-    assert_eq!(loaded.no_legend, Some(false));
+    assert_eq!(loaded.show_disk, Some(true));
+    assert_eq!(loaded.show_preview, Some(false));
+    assert_eq!(loaded.show_legend, Some(true));
+    assert_eq!(loaded.show_right_panel, Some(false));
     assert_eq!(loaded.right_panel_width, Some(63));
     assert_eq!(loaded.theme, Some("Tokyo Night".to_string()));
 }
@@ -386,9 +405,10 @@ fn config_serialization_order() {
         editor: Some("vim".to_string()),
         apply_date_prefix: Some(true),
         transparent_background: Some(false),
-        no_disk: Some(true),
-        no_preview: Some(false),
-        no_legend: Some(true),
+        show_disk: Some(false),
+        show_preview: Some(true),
+        show_legend: Some(false),
+        show_right_panel: Some(true),
         right_panel_width: Some(37),
     };
 
@@ -400,9 +420,10 @@ fn config_serialization_order() {
     assert!(toml.contains("editor"));
     assert!(toml.contains("apply_date_prefix"));
     assert!(toml.contains("transparent_background"));
-    assert!(toml.contains("no_disk"));
-    assert!(toml.contains("no_preview"));
-    assert!(toml.contains("no_legend"));
+    assert!(toml.contains("show_disk"));
+    assert!(toml.contains("show_preview"));
+    assert!(toml.contains("show_legend"));
+    assert!(toml.contains("show_right_panel"));
     assert!(toml.contains("right_panel_width"));
 }
 
@@ -462,9 +483,10 @@ fn config_handles_very_long_values() {
         editor: None,
         apply_date_prefix: None,
         transparent_background: None,
-        no_disk: None,
-        no_preview: None,
-        no_legend: None,
+        show_disk: None,
+        show_preview: None,
+        show_legend: None,
+        show_right_panel: None,
         right_panel_width: None,
     };
 
