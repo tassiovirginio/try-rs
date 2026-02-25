@@ -39,6 +39,7 @@ fn print_cd_or_editor(path: &std::path::Path, open_editor: bool, editor_cmd: &Op
     }
 }
 
+#[cfg(not(windows))]
 const DSR: &str = "\x1b[6n";
 
 fn get_cursor_position_for_inline_picker() -> io::Result<(u16, u16)> {
