@@ -297,15 +297,31 @@ fn main() -> Result<()> {
         config_path,
         apply_date_prefix,
         transparent_background,
-        no_disk,
-        no_preview,
-        no_legend,
+        show_disk,
+        show_preview,
+        show_legend,
+        show_right_panel,
         right_panel_width,
     } = load_configuration();
 
-    let no_disk = cli.no_disk || no_disk.unwrap_or(false);
-    let no_preview = cli.no_preview || no_preview.unwrap_or(false);
-    let no_legend = cli.no_legend || no_legend.unwrap_or(false);
+    let resolve_visibility = |cli_show: bool, cli_hide: bool, config_show: Option<bool>| -> bool {
+        if !cli_hide {
+            false
+        } else if cli_show {
+            true
+        } else {
+            config_show.unwrap_or(true)
+        }
+    };
+
+    let show_disk = resolve_visibility(cli.show_disk, cli.hide_disk, show_disk);
+    let show_preview = resolve_visibility(cli.show_preview, cli.hide_preview, show_preview);
+    let show_legend = resolve_visibility(cli.show_legend, cli.hide_legend, show_legend);
+    let show_right_panel = resolve_visibility(
+        cli.show_right_panel,
+        cli.hide_right_panel,
+        show_right_panel,
+    );
     let right_panel_width = right_panel_width.unwrap_or(25).clamp(10, 90);
 
     if !tries_dir.exists() {
@@ -418,9 +434,10 @@ fn main() -> Result<()> {
             transparent_background.unwrap_or(true),
             query,
         );
-        app.no_disk = no_disk;
-        app.no_preview = no_preview;
-        app.no_legend = no_legend;
+        app.show_disk = show_disk;
+        app.show_preview = show_preview;
+        app.show_legend = show_legend;
+        app.right_panel_visible = show_right_panel;
         app.right_panel_width = right_panel_width;
         let res = run_app(&mut terminal, app);
 

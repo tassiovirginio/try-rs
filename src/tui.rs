@@ -71,9 +71,9 @@ pub struct App {
     pub apply_date_prefix: Option<bool>,
     pub transparent_background: bool,
     pub show_new_option: bool,
-    pub no_disk: bool,
-    pub no_preview: bool,
-    pub no_legend: bool,
+    pub show_disk: bool,
+    pub show_preview: bool,
+    pub show_legend: bool,
     pub right_panel_visible: bool,
     pub right_panel_width: u16,
 
@@ -236,9 +236,9 @@ impl App {
             apply_date_prefix,
             transparent_background,
             show_new_option: false,
-            no_disk: false,
-            no_preview: false,
-            no_legend: false,
+            show_disk: true,
+            show_preview: true,
+            show_legend: true,
             right_panel_visible: true,
             right_panel_width: 25,
             available_themes: themes,
@@ -670,14 +670,14 @@ pub fn run_app(
                 .constraints([Constraint::Min(1), Constraint::Length(1)])
                 .split(f.area());
 
-            let show_disk_panel = !app.no_disk;
-            let show_preview_panel = !app.no_preview;
-            let show_legend_panel = !app.no_legend;
+            let show_disk_panel = app.show_disk;
+            let show_preview_panel = app.show_preview;
+            let show_legend_panel = app.show_legend;
             let has_right_panel_content =
                 show_disk_panel || show_preview_panel || show_legend_panel;
             let show_right_panel = app.right_panel_visible && has_right_panel_content;
 
-            let right_panel_width = app.right_panel_width.clamp(10, 90);
+            let right_panel_width = app.right_panel_width.clamp(20, 80);
             let content_constraints = if !show_right_panel {
                 [Constraint::Percentage(100), Constraint::Percentage(0)]
             } else {
@@ -1394,9 +1394,10 @@ pub fn run_app(
                                         &app.editor_cmd,
                                         app.apply_date_prefix,
                                         Some(app.transparent_background),
-                                        Some(app.no_disk),
-                                        Some(app.no_preview),
-                                        Some(app.no_legend),
+                                        Some(app.show_disk),
+                                        Some(app.show_preview),
+                                        Some(app.show_legend),
+                                        Some(app.right_panel_visible),
                                         Some(app.right_panel_width),
                                     ) {
                                         app.status_message = Some(format!("Error saving: {}", e));
@@ -1482,9 +1483,10 @@ pub fn run_app(
                                 &app.editor_cmd,
                                 app.apply_date_prefix,
                                 Some(app.transparent_background),
-                                Some(app.no_disk),
-                                Some(app.no_preview),
-                                Some(app.no_legend),
+                                Some(app.show_disk),
+                                Some(app.show_preview),
+                                Some(app.show_legend),
+                                Some(app.right_panel_visible),
                                 Some(app.right_panel_width),
                             ) {
                                 app.status_message = Some(format!("Error saving config: {}", e));

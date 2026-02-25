@@ -248,7 +248,13 @@ tries_path = "~/Development/playground"
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
 transparent_background = true # optional, default is true (uses terminal background)
-right_panel_width = 25 # optional, right panel width in percentage (10-90)
+
+# ui configuration
+show_right_panel = true # optional, default is true
+right_panel_width = 25 # optional, right panel width in percentage (20-80)
+show_disk = true # optional, default is true
+show_preview = true # optional, default is true
+show_legend = true # optional, default is true
 
 # Theme configuration (choose one of the available themes)
 theme = "Catppuccin Mocha"
@@ -271,6 +277,20 @@ You can also resize the right panel area (disk/preview/legend):
 ```toml
 right_panel_width = 25
 ```
+
+Panel visibility can be configured in `config.toml`:
+
+```toml
+show_right_panel = true
+show_disk = true
+show_preview = true
+show_legend = true
+```
+
+Behavior notes:
+
+- If `show_disk`, `show_preview`, and `show_legend` are all `false`, the right panel is effectively hidden.
+- If `show_right_panel = false`, individual panel sections are ignored.
 
 **Available Themes:**
 
@@ -320,7 +340,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Ctrl+E`                                              | Open in editor (configured in config.toml)             |
 | `Ctrl+T`                                              | Open theme selector                                    |
 | `Ctrl+A`                                              | Open about popup                                       |
-| `Alt+P`                                              | Toggle right panel (disk/preview/etc)              |
+| `Alt+P`                                               | Toggle right panel (disk/preview/etc)                  |
 | `Esc/Ctrl+C`                                          | Cancel / Close Popup / Exit                            |
 
 #### Theme Selector Key Bindings
@@ -368,8 +388,12 @@ You can also bypass the UI:
 | `try-rs --setup-stdout <shell>`                | Print shell integration script to stdout (for manual setup)         |
 | `try-rs --completions <shell>`                 | Generate shell completion script for tab completion                 |
 | `try-rs --inline-picker [--inline-height <n>]` | Open the picker inline (non-fullscreen) in the current terminal     |
+| `try-rs --show-preview --show-legend`          | Explicitly show panel sections                                      |
+| `try-rs --hide-preview --hide-disk`            | Explicitly hide panel sections                                      |
 | `try-rs --version`                             | Show application version                                            |
 | `try-rs --help`                                | Show help message                                                   |
+
+Note: each `--show-*` flag can be overridden by its `--hide-*` counterpart.
 
 ## Contribution
 

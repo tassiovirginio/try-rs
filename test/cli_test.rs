@@ -11,9 +11,14 @@ fn cli_default_values() {
     assert!(cli.completions.is_none());
     assert!(!cli.shallow_clone);
     assert!(cli.worktree.is_none());
-    assert!(!cli.no_disk);
-    assert!(!cli.no_preview);
-    assert!(!cli.no_legend);
+    assert!(!cli.show_disk);
+    assert!(cli.hide_disk);
+    assert!(!cli.show_preview);
+    assert!(cli.hide_preview);
+    assert!(!cli.show_legend);
+    assert!(cli.hide_legend);
+    assert!(!cli.show_right_panel);
+    assert!(cli.hide_right_panel);
 }
 
 #[test]
@@ -131,21 +136,51 @@ fn cli_multiple_flags() {
 }
 
 #[test]
-fn cli_no_disk_flag() {
-    let cli = Cli::try_parse_from(["try-rs", "--no-disk"]).unwrap();
-    assert!(cli.no_disk);
+fn cli_show_disk_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--show-disk"]).unwrap();
+    assert!(cli.show_disk);
 }
 
 #[test]
-fn cli_no_preview_flag() {
-    let cli = Cli::try_parse_from(["try-rs", "--no-preview"]).unwrap();
-    assert!(cli.no_preview);
+fn cli_hide_disk_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--hide-disk"]).unwrap();
+    assert!(!cli.hide_disk);
 }
 
 #[test]
-fn cli_no_legend_flag() {
-    let cli = Cli::try_parse_from(["try-rs", "--no-legend"]).unwrap();
-    assert!(cli.no_legend);
+fn cli_show_preview_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--show-preview"]).unwrap();
+    assert!(cli.show_preview);
+}
+
+#[test]
+fn cli_hide_preview_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--hide-preview"]).unwrap();
+    assert!(!cli.hide_preview);
+}
+
+#[test]
+fn cli_show_legend_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--show-legend"]).unwrap();
+    assert!(cli.show_legend);
+}
+
+#[test]
+fn cli_hide_legend_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--hide-legend"]).unwrap();
+    assert!(!cli.hide_legend);
+}
+
+#[test]
+fn cli_show_right_panel_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--show-right-panel"]).unwrap();
+    assert!(cli.show_right_panel);
+}
+
+#[test]
+fn cli_hide_right_panel_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "--hide-right-panel"]).unwrap();
+    assert!(!cli.hide_right_panel);
 }
 
 #[test]
