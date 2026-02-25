@@ -296,7 +296,14 @@ fn main() -> Result<()> {
         config_path,
         apply_date_prefix,
         transparent_background,
+        no_disk,
+        no_preview,
+        no_legend,
     } = load_configuration();
+
+    let no_disk = cli.no_disk || no_disk.unwrap_or(false);
+    let no_preview = cli.no_preview || no_preview.unwrap_or(false);
+    let no_legend = cli.no_legend || no_legend.unwrap_or(false);
 
     if !tries_dir.exists() {
         fs::create_dir_all(&tries_dir)?;
@@ -383,9 +390,10 @@ fn main() -> Result<()> {
                 .max(MIN_INLINE_PICKER_HEIGHT);
 
             let mut backend = backend;
-            let picker_area = compute_inline_picker_area(&mut backend, inline_height).map_err(
-                |err| anyhow!("--inline-picker requires an interactive terminal session ({err})"),
-            )?;
+            let picker_area =
+                compute_inline_picker_area(&mut backend, inline_height).map_err(|err| {
+                    anyhow!("--inline-picker requires an interactive terminal session ({err})")
+                })?;
             inline_picker_area = Some(picker_area);
 
             Terminal::with_options(
@@ -398,7 +406,7 @@ fn main() -> Result<()> {
             Terminal::new(backend)?
         };
 
-        let app = App::new(
+        let mut app = App::new(
             tries_dir.clone(),
             theme,
             editor_cmd.clone(),
@@ -407,6 +415,9 @@ fn main() -> Result<()> {
             transparent_background.unwrap_or(true),
             query,
         );
+        app.no_disk = no_disk;
+        app.no_preview = no_preview;
+        app.no_legend = no_legend;
         let res = run_app(&mut terminal, app);
 
         disable_raw_mode()?;

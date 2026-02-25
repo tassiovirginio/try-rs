@@ -40,6 +40,18 @@ pub struct Cli {
     /// Inline picker height in terminal rows (default: 18)
     #[arg(long, value_name = "LINES", requires = "inline_picker")]
     pub inline_height: Option<u16>,
+
+    /// Hide the disk information panel in the TUI
+    #[arg(long)]
+    pub no_disk: bool,
+
+    /// Hide the preview panel in the TUI
+    #[arg(long)]
+    pub no_preview: bool,
+
+    /// Hide the icon legend panel in the TUI
+    #[arg(long)]
+    pub no_legend: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, PartialEq, Eq, Debug, Hash)]

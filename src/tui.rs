@@ -71,6 +71,9 @@ pub struct App {
     pub apply_date_prefix: Option<bool>,
     pub transparent_background: bool,
     pub show_new_option: bool,
+    pub no_disk: bool,
+    pub no_preview: bool,
+    pub no_legend: bool,
 
     pub available_themes: Vec<Theme>,
     pub theme_list_state: ListState,
@@ -231,6 +234,9 @@ impl App {
             apply_date_prefix,
             transparent_background,
             show_new_option: false,
+            no_disk: false,
+            no_preview: false,
+            no_legend: false,
             available_themes: themes,
             theme_list_state: theme_state,
             original_theme: None,
@@ -367,6 +373,7 @@ fn draw_popup(f: &mut Frame, title: &str, message: &str, theme: &Theme) {
     let block = Block::default()
         .title(title)
         .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
         .style(Style::default().bg(theme.popup_bg));
 
     // Vertically center the text inside the popup
@@ -418,6 +425,7 @@ fn draw_theme_select(f: &mut Frame, app: &mut App) {
     let block = Block::default()
         .title(" Select Theme ")
         .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
         .style(Style::default().bg(app.theme.popup_bg));
 
     let items: Vec<ListItem> = app
@@ -449,6 +457,7 @@ fn draw_theme_select(f: &mut Frame, app: &mut App) {
     let transparency_text = format!(" {} Transparent Background (Space to toggle)", checkbox);
     let transparency_block = Block::default()
         .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
         .style(Style::default().bg(app.theme.popup_bg));
     let transparency_paragraph = Paragraph::new(transparency_text)
         .style(Style::default().fg(app.theme.list_highlight_fg))
@@ -481,6 +490,7 @@ fn draw_config_location_select(f: &mut Frame, app: &mut App) {
     let block = Block::default()
         .title(" Select Config Location ")
         .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
         .style(Style::default().bg(app.theme.popup_bg));
 
     let config_name = get_file_config_toml_name();
@@ -529,6 +539,7 @@ fn draw_about_popup(f: &mut Frame, theme: &Theme) {
     let block = Block::default()
         .title(" About ")
         .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
         .style(Style::default().bg(theme.popup_bg));
 
     let text = vec![
@@ -659,14 +670,27 @@ pub fn run_app(
                 ])
                 .split(f.area());
 
+            let show_disk_panel = !app.no_disk;
+            let show_preview_panel = !app.no_preview;
+            let show_legend_panel = !app.no_legend;
+
+            let show_right_panel = show_preview_panel || show_legend_panel;
+            let content_constraints = if !show_right_panel {
+                [Constraint::Percentage(100), Constraint::Percentage(0)]
+            } else {
+                [Constraint::Percentage(65), Constraint::Percentage(35)]
+            };
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Percentage(70), Constraint::Percentage(30)])
+                .constraints(content_constraints)
                 .split(chunks[1]);
 
             let search_chunks = Layout::default()
                 .direction(Direction::Horizontal)
-                .constraints([Constraint::Min(20), Constraint::Length(45)])
+                .constraints([
+                    Constraint::Min(20),
+                    Constraint::Length(if show_disk_panel { 45 } else { 0 }),
+                ])
                 .split(chunks[0]);
 
             let search_text = Paragraph::new(app.query.clone())
@@ -674,6 +698,7 @@ pub fn run_app(
                 .block(
                     Block::default()
                         .borders(Borders::ALL)
+                        .padding(Padding::horizontal(1))
                         .title(Span::styled(
                             " Search/New ",
                             Style::default().fg(app.theme.search_title),
@@ -682,58 +707,62 @@ pub fn run_app(
                 );
             f.render_widget(search_text, search_chunks[0]);
 
-            let free_space = app
-                .cached_free_space_mb
-                .map(|s| {
-                    if s >= 1000 {
-                        format!("{:.1} GB", s as f64 / 1024.0)
-                    } else {
-                        format!("{} MB", s)
-                    }
-                })
-                .unwrap_or_else(|| "N/A".to_string());
+            if show_disk_panel {
+                let free_space = app
+                    .cached_free_space_mb
+                    .map(|s| {
+                        if s >= 1000 {
+                            format!("{:.1} GB", s as f64 / 1024.0)
+                        } else {
+                            format!("{} MB", s)
+                        }
+                    })
+                    .unwrap_or_else(|| "N/A".to_string());
 
-            let folder_size = app.folder_size_mb.load(Ordering::Relaxed);
-            let folder_size_str = if folder_size == 0 {
-                "---".to_string()
-            } else if folder_size >= 1000 {
-                format!("{:.1} GB", folder_size as f64 / 1024.0)
-            } else {
-                format!("{} MB", folder_size)
-            };
+                let folder_size = app.folder_size_mb.load(Ordering::Relaxed);
+                let folder_size_str = if folder_size == 0 {
+                    "---".to_string()
+                } else if folder_size >= 1000 {
+                    format!("{:.1} GB", folder_size as f64 / 1024.0)
+                } else {
+                    format!("{} MB", folder_size)
+                };
 
-            let memory_info = Paragraph::new(Line::from(vec![
-                Span::styled("󰋊 ", Style::default().fg(app.theme.title_rs)),
-                Span::styled("Used: ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(
-                    folder_size_str,
-                    Style::default().fg(app.theme.status_message),
-                ),
-                Span::styled(" | ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled("Free: ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(free_space, Style::default().fg(app.theme.status_message)),
-            ]))
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(Span::styled(
-                        " Disk ",
-                        Style::default().fg(app.theme.disk_title),
-                    ))
-                    .border_style(Style::default().fg(app.theme.disk_border)),
-            )
-            .alignment(Alignment::Center);
-            f.render_widget(memory_info, search_chunks[1]);
+                let memory_info = Paragraph::new(Line::from(vec![
+                    Span::styled("󰋊 ", Style::default().fg(app.theme.title_rs)),
+                    Span::styled("Used: ", Style::default().fg(app.theme.helpers_colors)),
+                    Span::styled(
+                        folder_size_str,
+                        Style::default().fg(app.theme.status_message),
+                    ),
+                    Span::styled(" | ", Style::default().fg(app.theme.helpers_colors)),
+                    Span::styled("Free: ", Style::default().fg(app.theme.helpers_colors)),
+                    Span::styled(free_space, Style::default().fg(app.theme.status_message)),
+                ]))
+                .block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .padding(Padding::horizontal(1))
+                        .title(Span::styled(
+                            " Disk ",
+                            Style::default().fg(app.theme.disk_title),
+                        ))
+                        .border_style(Style::default().fg(app.theme.disk_border)),
+                )
+                .alignment(Alignment::Center);
+                f.render_widget(memory_info, search_chunks[1]);
+            }
 
             let matched_char_style = Style::default()
                 .fg(app.theme.list_match_fg)
                 .add_modifier(Modifier::BOLD | Modifier::UNDERLINED);
 
+            let now = SystemTime::now();
+
             let mut items: Vec<ListItem> = app
                 .filtered_entries
                 .iter()
                 .map(|entry| {
-                    let now = SystemTime::now();
                     let elapsed = now
                         .duration_since(entry.modified)
                         .unwrap_or(std::time::Duration::ZERO);
@@ -743,10 +772,9 @@ pub fn run_app(
                     let minutes = (secs % 3600) / 60;
                     let date_str = format!("({:02}d {:02}h {:02}m)", days, hours, minutes);
 
-                    let width = content_chunks[0].width.saturating_sub(5) as usize;
+                    let width = content_chunks[0].width.saturating_sub(7) as usize;
 
-                    let date_text = date_str.to_string();
-                    let date_width = date_text.chars().count();
+                    let date_width = date_str.chars().count();
 
                     // Build icon list: (flag, icon_str, color)
                     let icons: &[(bool, &str, Color)] = &[
@@ -835,7 +863,7 @@ pub fn run_app(
                         }
                     }
                     spans.push(Span::styled(
-                        date_text,
+                        date_str,
                         Style::default().fg(app.theme.list_date),
                     ));
 
@@ -862,6 +890,7 @@ pub fn run_app(
                 .block(
                     Block::default()
                         .borders(Borders::ALL)
+                        .padding(Padding::horizontal(1))
                         .title(Span::styled(
                             " Folders ",
                             Style::default().fg(app.theme.folder_title),
@@ -879,125 +908,170 @@ pub fn run_app(
             state.select(Some(app.selected_index));
             f.render_stateful_widget(list, content_chunks[0], &mut state);
 
-            // Split right area between Preview and Icon Legend
-            let right_chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Min(1), Constraint::Length(4)])
-                .split(content_chunks[1]);
+            if show_right_panel {
+                let legend_items: [(&str, Color, &str); 10] = [
+                    ("", app.theme.icon_rust, "Rust"),
+                    ("", app.theme.icon_maven, "Maven"),
+                    ("", app.theme.icon_flutter, "Flutter"),
+                    ("", app.theme.icon_go, "Go"),
+                    ("", app.theme.icon_python, "Python"),
+                    ("󰬔", app.theme.icon_mise, "Mise"),
+                    ("", app.theme.icon_worktree_lock, "Locked"),
+                    ("󰙅", app.theme.icon_worktree, "Worktree"),
+                    ("", app.theme.icon_gitmodules, "Submodule"),
+                    ("", app.theme.icon_git, "Git"),
+                ];
 
-            // Check if "new" option is currently selected
-            let is_new_selected =
-                app.show_new_option && app.selected_index == app.filtered_entries.len();
+                let legend_required_lines = if show_legend_panel {
+                    let legend_inner_width = content_chunks[1].width.saturating_sub(4).max(1);
+                    let mut lines: u16 = 1;
+                    let mut used: u16 = 0;
 
-            if is_new_selected {
-                // Show "new folder" preview
-                let preview_lines = vec![Line::from(Span::styled(
-                    " (new folder) ",
-                    Style::default()
-                        .fg(app.theme.search_title)
-                        .add_modifier(Modifier::ITALIC),
-                ))];
-                let preview = Paragraph::new(preview_lines).block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(Span::styled(
-                            " Preview ",
-                            Style::default().fg(app.theme.preview_title),
-                        ))
-                        .border_style(Style::default().fg(app.theme.preview_border)),
-                );
-                f.render_widget(preview, right_chunks[0]);
-            } else if let Some(selected) = app.filtered_entries.get(app.selected_index) {
-                let preview_path = app.base_path.join(&selected.name);
-                let mut preview_lines = Vec::new();
+                    for (idx, (icon, _, label)) in legend_items.iter().enumerate() {
+                        let item_width = (icon.chars().count() + 1 + label.chars().count()) as u16;
+                        let separator_width = if idx == 0 { 0 } else { 2 };
 
-                if let Ok(entries) = fs::read_dir(&preview_path) {
-                    for e in entries
-                        .take(right_chunks[0].height.saturating_sub(2) as usize)
-                        .flatten()
-                    {
-                        let file_name = e.file_name().to_string_lossy().to_string();
-                        let is_dir = e.file_type().map(|t| t.is_dir()).unwrap_or(false);
-                        let (icon, color) = if is_dir {
-                            ("󰝰 ", app.theme.icon_folder)
+                        if used > 0 && used + separator_width + item_width > legend_inner_width {
+                            lines += 1;
+                            used = item_width;
                         } else {
-                            ("󰈙 ", app.theme.icon_file)
-                        };
-                        preview_lines.push(Line::from(vec![
-                            Span::styled(icon, Style::default().fg(color)),
-                            Span::raw(file_name),
-                        ]));
+                            used += separator_width + item_width;
+                        }
+                    }
+
+                    lines
+                } else {
+                    0
+                };
+
+                let legend_height = legend_required_lines.saturating_add(2).max(3);
+
+                // Split right area between Preview and Icon Legend
+                let right_constraints = if !show_preview_panel {
+                    [Constraint::Length(0), Constraint::Min(1)]
+                } else if !show_legend_panel {
+                    [Constraint::Min(1), Constraint::Length(0)]
+                } else {
+                    [Constraint::Min(1), Constraint::Length(legend_height)]
+                };
+                let right_chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(right_constraints)
+                    .split(content_chunks[1]);
+
+                if show_preview_panel {
+                    // Check if "new" option is currently selected
+                    let is_new_selected =
+                        app.show_new_option && app.selected_index == app.filtered_entries.len();
+
+                    if is_new_selected {
+                        // Show "new folder" preview
+                        let preview_lines = vec![Line::from(Span::styled(
+                            "(new folder)",
+                            Style::default()
+                                .fg(app.theme.search_title)
+                                .add_modifier(Modifier::ITALIC),
+                        ))];
+                        let preview = Paragraph::new(preview_lines).block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .padding(Padding::horizontal(1))
+                                .title(Span::styled(
+                                    " Preview ",
+                                    Style::default().fg(app.theme.preview_title),
+                                ))
+                                .border_style(Style::default().fg(app.theme.preview_border)),
+                        );
+                        f.render_widget(preview, right_chunks[0]);
+                    } else if let Some(selected) = app.filtered_entries.get(app.selected_index) {
+                        let preview_path = app.base_path.join(&selected.name);
+                        let mut preview_lines = Vec::new();
+
+                        if let Ok(entries) = fs::read_dir(&preview_path) {
+                            for e in entries
+                                .take(right_chunks[0].height.saturating_sub(2) as usize)
+                                .flatten()
+                            {
+                                let file_name = e.file_name().to_string_lossy().to_string();
+                                let is_dir = e.file_type().map(|t| t.is_dir()).unwrap_or(false);
+                                let (icon, color) = if is_dir {
+                                    ("󰝰 ", app.theme.icon_folder)
+                                } else {
+                                    ("󰈙 ", app.theme.icon_file)
+                                };
+                                preview_lines.push(Line::from(vec![
+                                    Span::styled(icon, Style::default().fg(color)),
+                                    Span::raw(file_name),
+                                ]));
+                            }
+                        }
+
+                        if preview_lines.is_empty() {
+                            preview_lines.push(Line::from(Span::styled(
+                                " (empty) ",
+                                Style::default().fg(app.theme.helpers_colors),
+                            )));
+                        }
+
+                        let preview = Paragraph::new(preview_lines).block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .padding(Padding::horizontal(1))
+                                .title(Span::styled(
+                                    " Preview ",
+                                    Style::default().fg(app.theme.preview_title),
+                                ))
+                                .border_style(Style::default().fg(app.theme.preview_border)),
+                        );
+                        f.render_widget(preview, right_chunks[0]);
+                    } else {
+                        let preview = Block::default()
+                            .borders(Borders::ALL)
+                            .padding(Padding::horizontal(1))
+                            .title(Span::styled(
+                                " Preview ",
+                                Style::default().fg(app.theme.preview_title),
+                            ))
+                            .border_style(Style::default().fg(app.theme.preview_border));
+                        f.render_widget(preview, right_chunks[0]);
                     }
                 }
 
-                if preview_lines.is_empty() {
-                    preview_lines.push(Line::from(Span::styled(
-                        " (empty) ",
-                        Style::default().fg(Color::DarkGray),
-                    )));
+                if show_legend_panel {
+                    // Icon legend
+                    let mut legend_spans = Vec::with_capacity(legend_items.len() * 4);
+                    for (idx, (icon, color, label)) in legend_items.iter().enumerate() {
+                        if idx > 0 {
+                            legend_spans.push(Span::raw("  "));
+                        }
+                        legend_spans.push(Span::styled(*icon, Style::default().fg(*color)));
+                        legend_spans.push(Span::styled(
+                            "\u{00A0}",
+                            Style::default().fg(app.theme.helpers_colors),
+                        ));
+                        legend_spans.push(Span::styled(
+                            *label,
+                            Style::default().fg(app.theme.helpers_colors),
+                        ));
+                    }
+                    let legend_lines = vec![Line::from(legend_spans)];
+
+                    let legend = Paragraph::new(legend_lines)
+                        .block(
+                            Block::default()
+                                .borders(Borders::ALL)
+                                .padding(Padding::horizontal(1))
+                                .title(Span::styled(
+                                    " Legends ",
+                                    Style::default().fg(app.theme.legends_title),
+                                ))
+                                .border_style(Style::default().fg(app.theme.legends_border)),
+                        )
+                        .alignment(Alignment::Left)
+                        .wrap(Wrap { trim: true });
+                    f.render_widget(legend, right_chunks[1]);
                 }
-
-                let preview = Paragraph::new(preview_lines).block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(Span::styled(
-                            " Preview ",
-                            Style::default().fg(app.theme.preview_title),
-                        ))
-                        .border_style(Style::default().fg(app.theme.preview_border)),
-                );
-                f.render_widget(preview, right_chunks[0]);
-            } else {
-                let preview = Block::default()
-                    .borders(Borders::ALL)
-                    .title(Span::styled(
-                        " Preview ",
-                        Style::default().fg(app.theme.preview_title),
-                    ))
-                    .border_style(Style::default().fg(app.theme.preview_border));
-                f.render_widget(preview, right_chunks[0]);
             }
-
-            // Icon legend
-            let legend_lines = vec![Line::from(vec![
-                Span::styled(" ", Style::default().fg(app.theme.icon_rust)),
-                Span::styled("Rust ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_maven)),
-                Span::styled("Maven ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_flutter)),
-                Span::styled("Flutter ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_go)),
-                Span::styled("Go ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_python)),
-                Span::styled("Python ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled("󰬔 ", Style::default().fg(app.theme.icon_mise)),
-                Span::styled("Mise ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_worktree_lock)),
-                Span::styled("Locked ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled("󰙅 ", Style::default().fg(app.theme.icon_worktree)),
-                Span::styled(
-                    "Git-Worktree ",
-                    Style::default().fg(app.theme.helpers_colors),
-                ),
-                Span::styled(" ", Style::default().fg(app.theme.icon_gitmodules)),
-                Span::styled("Git-Submod ", Style::default().fg(app.theme.helpers_colors)),
-                Span::styled(" ", Style::default().fg(app.theme.icon_git)),
-                Span::styled("Git ", Style::default().fg(app.theme.helpers_colors)),
-            ])];
-
-            let legend = Paragraph::new(legend_lines)
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title(Span::styled(
-                            " Legends ",
-                            Style::default().fg(app.theme.legends_title),
-                        ))
-                        .border_style(Style::default().fg(app.theme.legends_border)),
-                )
-                .alignment(Alignment::Left)
-                .wrap(Wrap { trim: true });
-            f.render_widget(legend, right_chunks[1]);
 
             let help_text = if let Some(msg) = &app.status_message {
                 Line::from(vec![Span::styled(
@@ -1274,6 +1348,9 @@ pub fn run_app(
                                         &app.editor_cmd,
                                         app.apply_date_prefix,
                                         Some(app.transparent_background),
+                                        Some(app.no_disk),
+                                        Some(app.no_preview),
+                                        Some(app.no_legend),
                                     ) {
                                         app.status_message = Some(format!("Error saving: {}", e));
                                     } else {
@@ -1358,6 +1435,9 @@ pub fn run_app(
                                 &app.editor_cmd,
                                 app.apply_date_prefix,
                                 Some(app.transparent_background),
+                                Some(app.no_disk),
+                                Some(app.no_preview),
+                                Some(app.no_legend),
                             ) {
                                 app.status_message = Some(format!("Error saving config: {}", e));
                             } else {
