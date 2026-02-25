@@ -300,11 +300,13 @@ fn main() -> Result<()> {
         no_disk,
         no_preview,
         no_legend,
+        right_panel_width,
     } = load_configuration();
 
     let no_disk = cli.no_disk || no_disk.unwrap_or(false);
     let no_preview = cli.no_preview || no_preview.unwrap_or(false);
     let no_legend = cli.no_legend || no_legend.unwrap_or(false);
+    let right_panel_width = right_panel_width.unwrap_or(25).clamp(10, 90);
 
     if !tries_dir.exists() {
         fs::create_dir_all(&tries_dir)?;
@@ -419,6 +421,7 @@ fn main() -> Result<()> {
         app.no_disk = no_disk;
         app.no_preview = no_preview;
         app.no_legend = no_legend;
+        app.right_panel_width = right_panel_width;
         let res = run_app(&mut terminal, app);
 
         disable_raw_mode()?;

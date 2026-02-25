@@ -16,6 +16,7 @@ pub struct Config {
     pub no_disk: Option<bool>,
     pub no_preview: Option<bool>,
     pub no_legend: Option<bool>,
+    pub right_panel_width: Option<u16>,
 }
 
 pub fn get_file_config_toml_name() -> String {
@@ -75,6 +76,7 @@ pub struct AppConfig {
     pub no_disk: Option<bool>,
     pub no_preview: Option<bool>,
     pub no_legend: Option<bool>,
+    pub right_panel_width: Option<u16>,
 }
 
 pub fn load_configuration() -> AppConfig {
@@ -95,6 +97,7 @@ pub fn load_configuration() -> AppConfig {
     let mut no_disk = None;
     let mut no_preview = None;
     let mut no_legend = None;
+    let mut right_panel_width = None;
 
     let loaded_config_path = find_config_path();
 
@@ -117,6 +120,7 @@ pub fn load_configuration() -> AppConfig {
         no_disk = config.no_disk;
         no_preview = config.no_preview;
         no_legend = config.no_legend;
+        right_panel_width = config.right_panel_width;
     }
 
     AppConfig {
@@ -129,6 +133,7 @@ pub fn load_configuration() -> AppConfig {
         no_disk,
         no_preview,
         no_legend,
+        right_panel_width,
     }
 }
 
@@ -142,6 +147,7 @@ pub fn save_config(
     no_disk: Option<bool>,
     no_preview: Option<bool>,
     no_legend: Option<bool>,
+    right_panel_width: Option<u16>,
 ) -> std::io::Result<()> {
     let config = Config {
         tries_path: Some(tries_path.to_string_lossy().to_string()),
@@ -152,6 +158,7 @@ pub fn save_config(
         no_disk,
         no_preview,
         no_legend,
+        right_panel_width,
     };
 
     let toml_string =

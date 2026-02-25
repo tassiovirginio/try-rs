@@ -21,6 +21,7 @@ fn save_and_reload_config() {
         Some(true),
         Some(false),
         Some(true),
+        Some(40),
     )
     .unwrap();
 
@@ -34,6 +35,7 @@ fn save_and_reload_config() {
     assert_eq!(loaded.no_disk, Some(true));
     assert_eq!(loaded.no_preview, Some(false));
     assert_eq!(loaded.no_legend, Some(true));
+    assert_eq!(loaded.right_panel_width, Some(40));
 }
 
 #[test]
@@ -47,6 +49,7 @@ fn save_config_creates_parent_dirs() {
         &theme,
         &PathBuf::from("/tmp/t"),
         &None,
+        None,
         None,
         None,
         None,
@@ -74,6 +77,7 @@ fn save_config_none_optionals() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -85,6 +89,7 @@ fn save_config_none_optionals() {
     assert!(loaded.no_disk.is_none());
     assert!(loaded.no_preview.is_none());
     assert!(loaded.no_legend.is_none());
+    assert!(loaded.right_panel_width.is_none());
 }
 
 #[test]
@@ -98,6 +103,7 @@ fn config_serialization_roundtrip() {
         no_disk: Some(true),
         no_preview: Some(false),
         no_legend: Some(true),
+        right_panel_width: Some(25),
     };
 
     let toml_str = toml::to_string(&config).unwrap();
@@ -111,6 +117,7 @@ fn config_serialization_roundtrip() {
     assert_eq!(loaded.no_disk, config.no_disk);
     assert_eq!(loaded.no_preview, config.no_preview);
     assert_eq!(loaded.no_legend, config.no_legend);
+    assert_eq!(loaded.right_panel_width, config.right_panel_width);
 }
 
 #[test]
@@ -124,6 +131,7 @@ fn config_deserialize_empty() {
     assert!(config.no_disk.is_none());
     assert!(config.no_preview.is_none());
     assert!(config.no_legend.is_none());
+    assert!(config.right_panel_width.is_none());
 }
 
 #[test]
@@ -175,6 +183,7 @@ fn save_config_preserves_theme_name() {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -195,6 +204,7 @@ transparent_background = false
 no_disk = true
 no_preview = false
 no_legend = true
+right_panel_width = 44
 "#;
 
     let config: Config = toml::from_str(toml_str).unwrap();
@@ -206,6 +216,7 @@ no_legend = true
     assert_eq!(config.no_disk, Some(true));
     assert_eq!(config.no_preview, Some(false));
     assert_eq!(config.no_legend, Some(true));
+    assert_eq!(config.right_panel_width, Some(44));
 }
 
 #[test]
@@ -224,6 +235,7 @@ fn config_save_and_load_roundtrip() {
         Some(true),
         Some(false),
         Some(false),
+        Some(52),
     )
     .unwrap();
 
@@ -237,6 +249,7 @@ fn config_save_and_load_roundtrip() {
     assert_eq!(loaded.no_disk, Some(true));
     assert_eq!(loaded.no_preview, Some(false));
     assert_eq!(loaded.no_legend, Some(false));
+    assert_eq!(loaded.right_panel_width, Some(52));
 }
 
 #[test]
@@ -277,6 +290,7 @@ fn config_preserve_booleans_exact() {
         no_disk: Some(true),
         no_preview: Some(false),
         no_legend: Some(true),
+        right_panel_width: Some(41),
     };
 
     let toml = toml::to_string(&config1).unwrap();
@@ -290,6 +304,7 @@ fn config_preserve_booleans_exact() {
     assert_eq!(config1.no_disk, config2.no_disk);
     assert_eq!(config1.no_preview, config2.no_preview);
     assert_eq!(config1.no_legend, config2.no_legend);
+    assert_eq!(config1.right_panel_width, config2.right_panel_width);
 }
 
 #[test]
@@ -303,6 +318,7 @@ fn config_with_empty_strings() {
         no_disk: None,
         no_preview: None,
         no_legend: None,
+        right_panel_width: None,
     };
 
     let toml = toml::to_string(&config).unwrap();
@@ -329,6 +345,7 @@ fn config_save_overwrites_existing() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -343,6 +360,7 @@ fn config_save_overwrites_existing() {
         Some(false),
         Some(true),
         Some(false),
+        Some(63),
     )
     .unwrap();
 
@@ -356,6 +374,7 @@ fn config_save_overwrites_existing() {
     assert_eq!(loaded.no_disk, Some(false));
     assert_eq!(loaded.no_preview, Some(true));
     assert_eq!(loaded.no_legend, Some(false));
+    assert_eq!(loaded.right_panel_width, Some(63));
     assert_eq!(loaded.theme, Some("Tokyo Night".to_string()));
 }
 
@@ -370,6 +389,7 @@ fn config_serialization_order() {
         no_disk: Some(true),
         no_preview: Some(false),
         no_legend: Some(true),
+        right_panel_width: Some(37),
     };
 
     let toml = toml::to_string(&config).unwrap();
@@ -383,6 +403,7 @@ fn config_serialization_order() {
     assert!(toml.contains("no_disk"));
     assert!(toml.contains("no_preview"));
     assert!(toml.contains("no_legend"));
+    assert!(toml.contains("right_panel_width"));
 }
 
 #[test]
@@ -444,6 +465,7 @@ fn config_handles_very_long_values() {
         no_disk: None,
         no_preview: None,
         no_legend: None,
+        right_panel_width: None,
     };
 
     let toml = toml::to_string(&config).unwrap();

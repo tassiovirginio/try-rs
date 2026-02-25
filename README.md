@@ -248,6 +248,7 @@ tries_path = "~/Development/playground"
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
 transparent_background = true # optional, default is true (uses terminal background)
+right_panel_width = 25 # optional, right panel width in percentage (10-90)
 
 # Theme configuration (choose one of the available themes)
 theme = "Catppuccin Mocha"
@@ -263,6 +264,12 @@ transparent_background = false
 
 # Use terminal's background (transparent/inherit) - default
 transparent_background = true
+```
+
+You can also resize the right panel area (disk/preview/legend):
+
+```toml
+right_panel_width = 25
 ```
 
 **Available Themes:**
@@ -313,6 +320,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Ctrl+E`                                              | Open in editor (configured in config.toml)             |
 | `Ctrl+T`                                              | Open theme selector                                    |
 | `Ctrl+A`                                              | Open about popup                                       |
+| `Alt+P`                                              | Toggle right panel (disk/preview/etc)              |
 | `Esc/Ctrl+C`                                          | Cancel / Close Popup / Exit                            |
 
 #### Theme Selector Key Bindings

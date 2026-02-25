@@ -74,6 +74,8 @@ pub struct App {
     pub no_disk: bool,
     pub no_preview: bool,
     pub no_legend: bool,
+    pub right_panel_visible: bool,
+    pub right_panel_width: u16,
 
     pub available_themes: Vec<Theme>,
     pub theme_list_state: ListState,
@@ -237,6 +239,8 @@ impl App {
             no_disk: false,
             no_preview: false,
             no_legend: false,
+            right_panel_visible: true,
+            right_panel_width: 25,
             available_themes: themes,
             theme_list_state: theme_state,
             original_theme: None,
@@ -663,35 +667,34 @@ pub fn run_app(
 
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Length(3),
-                    Constraint::Min(1),
-                    Constraint::Length(1),
-                ])
+                .constraints([Constraint::Min(1), Constraint::Length(1)])
                 .split(f.area());
 
             let show_disk_panel = !app.no_disk;
             let show_preview_panel = !app.no_preview;
             let show_legend_panel = !app.no_legend;
+            let has_right_panel_content =
+                show_disk_panel || show_preview_panel || show_legend_panel;
+            let show_right_panel = app.right_panel_visible && has_right_panel_content;
 
-            let show_right_panel = show_preview_panel || show_legend_panel;
+            let right_panel_width = app.right_panel_width.clamp(10, 90);
             let content_constraints = if !show_right_panel {
                 [Constraint::Percentage(100), Constraint::Percentage(0)]
             } else {
-                [Constraint::Percentage(65), Constraint::Percentage(35)]
+                [
+                    Constraint::Percentage(100 - right_panel_width),
+                    Constraint::Percentage(right_panel_width),
+                ]
             };
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints(content_constraints)
-                .split(chunks[1]);
-
-            let search_chunks = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints([
-                    Constraint::Min(20),
-                    Constraint::Length(if show_disk_panel { 45 } else { 0 }),
-                ])
                 .split(chunks[0]);
+
+            let left_chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([Constraint::Length(3), Constraint::Min(1)])
+                .split(content_chunks[0]);
 
             let search_text = Paragraph::new(app.query.clone())
                 .style(Style::default().fg(app.theme.search_title))
@@ -705,53 +708,7 @@ pub fn run_app(
                         ))
                         .border_style(Style::default().fg(app.theme.search_border)),
                 );
-            f.render_widget(search_text, search_chunks[0]);
-
-            if show_disk_panel {
-                let free_space = app
-                    .cached_free_space_mb
-                    .map(|s| {
-                        if s >= 1000 {
-                            format!("{:.1} GB", s as f64 / 1024.0)
-                        } else {
-                            format!("{} MB", s)
-                        }
-                    })
-                    .unwrap_or_else(|| "N/A".to_string());
-
-                let folder_size = app.folder_size_mb.load(Ordering::Relaxed);
-                let folder_size_str = if folder_size == 0 {
-                    "---".to_string()
-                } else if folder_size >= 1000 {
-                    format!("{:.1} GB", folder_size as f64 / 1024.0)
-                } else {
-                    format!("{} MB", folder_size)
-                };
-
-                let memory_info = Paragraph::new(Line::from(vec![
-                    Span::styled("󰋊 ", Style::default().fg(app.theme.title_rs)),
-                    Span::styled("Used: ", Style::default().fg(app.theme.helpers_colors)),
-                    Span::styled(
-                        folder_size_str,
-                        Style::default().fg(app.theme.status_message),
-                    ),
-                    Span::styled(" | ", Style::default().fg(app.theme.helpers_colors)),
-                    Span::styled("Free: ", Style::default().fg(app.theme.helpers_colors)),
-                    Span::styled(free_space, Style::default().fg(app.theme.status_message)),
-                ]))
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .padding(Padding::horizontal(1))
-                        .title(Span::styled(
-                            " Disk ",
-                            Style::default().fg(app.theme.disk_title),
-                        ))
-                        .border_style(Style::default().fg(app.theme.disk_border)),
-                )
-                .alignment(Alignment::Center);
-                f.render_widget(memory_info, search_chunks[1]);
-            }
+            f.render_widget(search_text, left_chunks[0]);
 
             let matched_char_style = Style::default()
                 .fg(app.theme.list_match_fg)
@@ -772,7 +729,7 @@ pub fn run_app(
                     let minutes = (secs % 3600) / 60;
                     let date_str = format!("({:02}d {:02}h {:02}m)", days, hours, minutes);
 
-                    let width = content_chunks[0].width.saturating_sub(7) as usize;
+                    let width = left_chunks[1].width.saturating_sub(7) as usize;
 
                     let date_width = date_str.chars().count();
 
@@ -906,9 +863,29 @@ pub fn run_app(
 
             let mut state = ListState::default();
             state.select(Some(app.selected_index));
-            f.render_stateful_widget(list, content_chunks[0], &mut state);
+            f.render_stateful_widget(list, left_chunks[1], &mut state);
 
             if show_right_panel {
+                let free_space = app
+                    .cached_free_space_mb
+                    .map(|s| {
+                        if s >= 1000 {
+                            format!("{:.1} GB", s as f64 / 1024.0)
+                        } else {
+                            format!("{} MB", s)
+                        }
+                    })
+                    .unwrap_or_else(|| "N/A".to_string());
+
+                let folder_size = app.folder_size_mb.load(Ordering::Relaxed);
+                let folder_size_str = if folder_size == 0 {
+                    "---".to_string()
+                } else if folder_size >= 1000 {
+                    format!("{:.1} GB", folder_size as f64 / 1024.0)
+                } else {
+                    format!("{} MB", folder_size)
+                };
+
                 let legend_items: [(&str, Color, &str); 10] = [
                     ("", app.theme.icon_rust, "Rust"),
                     ("", app.theme.icon_maven, "Maven"),
@@ -946,18 +923,81 @@ pub fn run_app(
 
                 let legend_height = legend_required_lines.saturating_add(2).max(3);
 
-                // Split right area between Preview and Icon Legend
-                let right_constraints = if !show_preview_panel {
-                    [Constraint::Length(0), Constraint::Min(1)]
-                } else if !show_legend_panel {
-                    [Constraint::Min(1), Constraint::Length(0)]
+                let right_constraints = if show_disk_panel {
+                    if show_preview_panel && show_legend_panel {
+                        [
+                            Constraint::Length(3),
+                            Constraint::Min(1),
+                            Constraint::Length(legend_height),
+                        ]
+                    } else if show_preview_panel {
+                        [
+                            Constraint::Length(3),
+                            Constraint::Min(1),
+                            Constraint::Length(0),
+                        ]
+                    } else if show_legend_panel {
+                        [
+                            Constraint::Length(3),
+                            Constraint::Length(0),
+                            Constraint::Min(1),
+                        ]
+                    } else {
+                        [
+                            Constraint::Length(3),
+                            Constraint::Length(0),
+                            Constraint::Length(0),
+                        ]
+                    }
+                } else if show_preview_panel && show_legend_panel {
+                    [
+                        Constraint::Length(0),
+                        Constraint::Min(1),
+                        Constraint::Length(legend_height),
+                    ]
+                } else if show_preview_panel {
+                    [
+                        Constraint::Length(0),
+                        Constraint::Min(1),
+                        Constraint::Length(0),
+                    ]
                 } else {
-                    [Constraint::Min(1), Constraint::Length(legend_height)]
+                    [
+                        Constraint::Length(0),
+                        Constraint::Length(0),
+                        Constraint::Min(1),
+                    ]
                 };
                 let right_chunks = Layout::default()
                     .direction(Direction::Vertical)
                     .constraints(right_constraints)
                     .split(content_chunks[1]);
+
+                if show_disk_panel {
+                    let memory_info = Paragraph::new(Line::from(vec![
+                        Span::styled("󰋊 ", Style::default().fg(app.theme.title_rs)),
+                        Span::styled("Used: ", Style::default().fg(app.theme.helpers_colors)),
+                        Span::styled(
+                            folder_size_str,
+                            Style::default().fg(app.theme.status_message),
+                        ),
+                        Span::styled(" | ", Style::default().fg(app.theme.helpers_colors)),
+                        Span::styled("Free: ", Style::default().fg(app.theme.helpers_colors)),
+                        Span::styled(free_space, Style::default().fg(app.theme.status_message)),
+                    ]))
+                    .block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .padding(Padding::horizontal(1))
+                            .title(Span::styled(
+                                " Disk ",
+                                Style::default().fg(app.theme.disk_title),
+                            ))
+                            .border_style(Style::default().fg(app.theme.disk_border)),
+                    )
+                    .alignment(Alignment::Center);
+                    f.render_widget(memory_info, right_chunks[0]);
+                }
 
                 if show_preview_panel {
                     // Check if "new" option is currently selected
@@ -982,14 +1022,14 @@ pub fn run_app(
                                 ))
                                 .border_style(Style::default().fg(app.theme.preview_border)),
                         );
-                        f.render_widget(preview, right_chunks[0]);
+                        f.render_widget(preview, right_chunks[1]);
                     } else if let Some(selected) = app.filtered_entries.get(app.selected_index) {
                         let preview_path = app.base_path.join(&selected.name);
                         let mut preview_lines = Vec::new();
 
                         if let Ok(entries) = fs::read_dir(&preview_path) {
                             for e in entries
-                                .take(right_chunks[0].height.saturating_sub(2) as usize)
+                                .take(right_chunks[1].height.saturating_sub(2) as usize)
                                 .flatten()
                             {
                                 let file_name = e.file_name().to_string_lossy().to_string();
@@ -1023,7 +1063,7 @@ pub fn run_app(
                                 ))
                                 .border_style(Style::default().fg(app.theme.preview_border)),
                         );
-                        f.render_widget(preview, right_chunks[0]);
+                        f.render_widget(preview, right_chunks[1]);
                     } else {
                         let preview = Block::default()
                             .borders(Borders::ALL)
@@ -1033,7 +1073,7 @@ pub fn run_app(
                                 Style::default().fg(app.theme.preview_title),
                             ))
                             .border_style(Style::default().fg(app.theme.preview_border));
-                        f.render_widget(preview, right_chunks[0]);
+                        f.render_widget(preview, right_chunks[1]);
                     }
                 }
 
@@ -1069,7 +1109,7 @@ pub fn run_app(
                         )
                         .alignment(Alignment::Left)
                         .wrap(Wrap { trim: true });
-                    f.render_widget(legend, right_chunks[1]);
+                    f.render_widget(legend, right_chunks[2]);
                 }
             }
 
@@ -1094,6 +1134,8 @@ pub fn run_app(
                     Span::raw(" Theme | "),
                     Span::styled("Ctrl-A", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" About | "),
+                    Span::styled("Alt-P", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" Panel | "),
                     Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Quit"),
                 ])
@@ -1103,7 +1145,7 @@ pub fn run_app(
                 .style(Style::default().fg(app.theme.helpers_colors))
                 .alignment(Alignment::Center);
 
-            f.render_widget(help_message, chunks[2]);
+            f.render_widget(help_message, chunks[1]);
 
             if app.mode == AppMode::DeleteConfirm
                 && let Some(selected) = app.filtered_entries.get(app.selected_index)
@@ -1192,6 +1234,10 @@ pub fn run_app(
                             app.mode = AppMode::ThemeSelect;
                         } else if c == 'a' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.mode = AppMode::About;
+                        } else if matches!(c, 'p')
+                            && key.modifiers.contains(event::KeyModifiers::ALT)
+                        {
+                            app.right_panel_visible = !app.right_panel_visible;
                         } else if matches!(c, 'k' | 'p')
                             && key.modifiers.contains(event::KeyModifiers::CONTROL)
                         {
@@ -1351,6 +1397,7 @@ pub fn run_app(
                                         Some(app.no_disk),
                                         Some(app.no_preview),
                                         Some(app.no_legend),
+                                        Some(app.right_panel_width),
                                     ) {
                                         app.status_message = Some(format!("Error saving: {}", e));
                                     } else {
@@ -1438,6 +1485,7 @@ pub fn run_app(
                                 Some(app.no_disk),
                                 Some(app.no_preview),
                                 Some(app.no_legend),
+                                Some(app.right_panel_width),
                             ) {
                                 app.status_message = Some(format!("Error saving config: {}", e));
                             } else {
