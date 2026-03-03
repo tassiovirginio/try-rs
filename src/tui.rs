@@ -28,6 +28,7 @@ use crate::{
 pub enum AppMode {
     Normal,
     DeleteConfirm,
+    RenamePrompt,
     ThemeSelect,
     ConfigSavePrompt,
     ConfigSaveLocationSelect,
@@ -87,6 +88,8 @@ pub struct App {
 
     pub cached_free_space_mb: Option<u64>,
     pub folder_size_mb: Arc<AtomicU64>,
+
+    pub rename_input: String,
 
     current_entries: HashSet<String>,
     matcher: SkimMatcherV2,
@@ -249,6 +252,7 @@ impl App {
             config_location_state: ListState::default(),
             cached_free_space_mb: utils::get_free_disk_space_mb(&path),
             folder_size_mb: Arc::new(AtomicU64::new(0)),
+            rename_input: String::new(),
             current_entries,
             matcher: SkimMatcherV2::default(),
         };
@@ -347,6 +351,62 @@ impl App {
                 }
             };
         }
+        self.mode = AppMode::Normal;
+    }
+
+    pub fn rename_selected(&mut self) {
+        let new_name = self.rename_input.trim().to_string();
+        if new_name.is_empty() {
+            self.status_message = Some("Rename cancelled: name is empty".to_string());
+            self.mode = AppMode::Normal;
+            return;
+        }
+
+        let Some(entry) = self.filtered_entries.get(self.selected_index) else {
+            self.mode = AppMode::Normal;
+            return;
+        };
+        let old_name = entry.name.clone();
+        if new_name == old_name {
+            self.mode = AppMode::Normal;
+            return;
+        }
+
+        let old_path = self.base_path.join(&old_name);
+        let new_path = self.base_path.join(&new_name);
+
+        if new_path.exists() {
+            self.status_message = Some(format!("Error: '{}' already exists", new_name));
+            self.mode = AppMode::Normal;
+            return;
+        }
+
+        if let Err(e) = fs::rename(&old_path, &new_path) {
+            self.status_message = Some(format!("Error renaming: {}", e));
+            self.mode = AppMode::Normal;
+            return;
+        }
+
+        for e in &mut self.all_entries {
+            if e.name != old_name {
+                continue;
+            }
+            e.name = new_name.clone();
+            let display_name =
+                if let Some((_date, remainder)) = utils::extract_prefix_date(&new_name) {
+                    remainder
+                } else {
+                    new_name.clone()
+                };
+            e.display_offset = new_name
+                .chars()
+                .count()
+                .saturating_sub(display_name.chars().count());
+            e.display_name = display_name;
+            break;
+        }
+        self.update_search();
+        self.status_message = Some(format!("Renamed '{}' → '{}'", old_name, new_name));
         self.mode = AppMode::Normal;
     }
 }
@@ -1128,6 +1188,8 @@ pub fn run_app(
                     Span::raw(" Select | "),
                     Span::styled("Ctrl-D", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Del | "),
+                    Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" Rename | "),
                     Span::styled("Ctrl-E", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Edit | "),
                     Span::styled("Ctrl-T", Style::default().add_modifier(Modifier::BOLD)),
@@ -1152,6 +1214,11 @@ pub fn run_app(
             {
                 let msg = format!("Delete '{}'?\n(y/n)", selected.name);
                 draw_popup(f, " WARNING ", &msg, &app.theme);
+            }
+
+            if app.mode == AppMode::RenamePrompt {
+                let msg = format!("{}_", app.rename_input);
+                draw_popup(f, " Rename ", &msg, &app.theme);
             }
 
             if app.mode == AppMode::ThemeSelect {
@@ -1196,6 +1263,14 @@ pub fn run_app(
                                 && app.selected_index == app.filtered_entries.len();
                             if !app.filtered_entries.is_empty() && !is_new_selected {
                                 app.mode = AppMode::DeleteConfirm;
+                            }
+                        } else if c == 'r' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
+                            let is_new_selected = app.show_new_option
+                                && app.selected_index == app.filtered_entries.len();
+                            if !app.filtered_entries.is_empty() && !is_new_selected {
+                                app.rename_input =
+                                    app.filtered_entries[app.selected_index].name.clone();
+                                app.mode = AppMode::RenamePrompt;
                             }
                         } else if c == 'e' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             if app.editor_cmd.is_some() {
@@ -1311,6 +1386,25 @@ pub fn run_app(
                     }
                     KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
                         app.should_quit = true;
+                    }
+                    _ => {}
+                },
+
+                AppMode::RenamePrompt => match key.code {
+                    KeyCode::Enter => {
+                        app.rename_selected();
+                    }
+                    KeyCode::Esc => {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Backspace => {
+                        app.rename_input.pop();
+                    }
+                    KeyCode::Char(c) => {
+                        app.rename_input.push(c);
                     }
                     _ => {}
                 },
