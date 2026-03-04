@@ -807,7 +807,7 @@ pub fn run_app(
                         (entry.is_git, " ", app.theme.icon_git),
                     ];
                     let icons_width: usize = icons.iter().filter(|(f, _, _)| *f).count() * 2;
-                    let icon_width = 2; // folder icon
+                    let icon_width = 3; // folder icon
 
                     let created_dt: chrono::DateTime<Local> = entry.created.into();
                     let created_text = created_dt.format("%Y-%m-%d").to_string();
