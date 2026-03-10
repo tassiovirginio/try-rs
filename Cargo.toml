@@ -1,4 +1,4 @@
-cargo-features = ["edition2024"]
+# cargo-features = ["edition2024"]
 
 [package]
 name = "try-rs"
@@ -21,9 +21,9 @@ fuzzy-matcher = "0.3.7"
 chrono = "0.4.44"
 anyhow = "1.0.102"
 serde = { version = "1.0.228", features = ["derive"], default-features = false }
-toml = "1.0.3+spec-1.1.0"
+toml = "1.0.6"
 clap = { version = "4.5.60", features = ["derive"] }
-libc = "0.2.182"
+libc = "0.2.183"
 
 [dev-dependencies]
 tempdir = "0.3"
