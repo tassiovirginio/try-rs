@@ -25,7 +25,7 @@ mod utils;
 
 use cli::{Cli, Shell};
 use config::{AppConfig, load_configuration};
-use shell::{generate_completions, get_shell_content, setup_shell, clear_shell_setup};
+use shell::{clear_shell_setup, generate_completions, get_shell_content, setup_shell};
 use tui::{App, run_app};
 
 use crate::utils::{SelectionResult, generate_prefix_date};
@@ -317,11 +317,8 @@ fn main() -> Result<()> {
     let show_disk = resolve_visibility(cli.show_disk, cli.hide_disk, show_disk);
     let show_preview = resolve_visibility(cli.show_preview, cli.hide_preview, show_preview);
     let show_legend = resolve_visibility(cli.show_legend, cli.hide_legend, show_legend);
-    let show_right_panel = resolve_visibility(
-        cli.show_right_panel,
-        cli.hide_right_panel,
-        show_right_panel,
-    );
+    let show_right_panel =
+        resolve_visibility(cli.show_right_panel, cli.hide_right_panel, show_right_panel);
     let right_panel_width = right_panel_width.unwrap_or(25).clamp(10, 90);
 
     if !tries_dir.exists() {

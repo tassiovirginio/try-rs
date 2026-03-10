@@ -468,8 +468,7 @@ pub fn get_shell_integration_path(shell: &Shell) -> PathBuf {
     };
 
     match shell {
-        Shell::Fish => get_fish_functions_dir()
-            .join("try-rs.fish"),
+        Shell::Fish => get_fish_functions_dir().join("try-rs.fish"),
         Shell::Zsh => config_dir.join("try-rs.zsh"),
         Shell::Bash => config_dir.join("try-rs.bash"),
         Shell::PowerShell => config_dir.join("try-rs.ps1"),
@@ -494,8 +493,7 @@ fn get_fish_functions_dir() -> PathBuf {
 }
 
 fn write_fish_picker_function() -> Result<PathBuf> {
-    let file_path = get_fish_functions_dir()
-        .join("try-rs-picker.fish");
+    let file_path = get_fish_functions_dir().join("try-rs-picker.fish");
     if let Some(parent) = file_path.parent()
         && !parent.exists()
     {
@@ -652,7 +650,13 @@ pub fn generate_completions(shell: &Shell) -> Result<()> {
 
 pub fn get_installed_shells() -> Vec<Shell> {
     let mut shells = Vec::new();
-    for shell in [Shell::Fish, Shell::Zsh, Shell::Bash, Shell::PowerShell, Shell::NuShell] {
+    for shell in [
+        Shell::Fish,
+        Shell::Zsh,
+        Shell::Bash,
+        Shell::PowerShell,
+        Shell::NuShell,
+    ] {
         if is_shell_installed(&shell) {
             shells.push(shell);
         }
@@ -677,7 +681,9 @@ fn is_shell_installed(shell: &Shell) -> bool {
         Ok(out) => {
             let result = String::from_utf8_lossy(&out.stdout);
             let trimmed = result.trim();
-            !trimmed.is_empty() && !trimmed.ends_with(':') && trimmed.starts_with(&format!("{}: ", shell_name))
+            !trimmed.is_empty()
+                && !trimmed.ends_with(':')
+                && trimmed.starts_with(&format!("{}: ", shell_name))
         }
         Err(_) => false,
     }
@@ -685,7 +691,7 @@ fn is_shell_installed(shell: &Shell) -> bool {
 
 pub fn clear_shell_setup() -> Result<()> {
     let installed_shells = get_installed_shells();
-    
+
     if installed_shells.is_empty() {
         eprintln!("No supported shells found on this system.");
         return Ok(());
@@ -696,7 +702,7 @@ pub fn clear_shell_setup() -> Result<()> {
 
     for shell in &installed_shells {
         let paths = get_shell_config_paths(shell);
-        
+
         for path in &paths {
             eprintln!("  - {}", path.display());
         }
@@ -704,7 +710,10 @@ pub fn clear_shell_setup() -> Result<()> {
         match shell {
             Shell::Fish => {
                 let fish_functions = get_fish_functions_dir();
-                eprintln!("  - {}", fish_functions.join("try-rs-picker.fish").display());
+                eprintln!(
+                    "  - {}",
+                    fish_functions.join("try-rs-picker.fish").display()
+                );
             }
             _ => {}
         }
@@ -722,7 +731,7 @@ pub fn clear_shell_setup() -> Result<()> {
 
 fn clear_shell_config(shell: &Shell) -> Result<()> {
     let paths = get_shell_config_paths(shell);
-    
+
     for path in &paths {
         if path.exists() {
             fs::remove_file(path)?;
