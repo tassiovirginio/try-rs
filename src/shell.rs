@@ -136,27 +136,37 @@ function try-rs {{
         }
         Shell::NuShell => {
             format!(
-                r#"def --wrapped try-rs [...args] {{
+                r#"def --env --wrapped try-rs [
+    name_or_url?: string@__try_rs_complete
+    ...args
+] {{
+    let all_args = (if $name_or_url == null {{ [] }} else {{ [$name_or_url] }} | append $args)
+
     # Pass flags/options directly to stdout without capturing
-    for arg in $args {{
-        if ($arg | str starts-with '-') {{
-            ^try-rs.exe ...$args
-            return
-        }}
+    if ($all_args | any {{ |arg| $arg | str starts-with '-' }}) {{
+        ^try-rs ...$all_args
+        return
     }}
 
     # Capture output. Stderr (TUI) goes directly to terminal.
-    let output = (try-rs.exe ...$args)
+    let output = (^try-rs ...$all_args | str trim)
 
     if ($output | is-not-empty) {{
-
-        # Grabs the path out of stdout returned by the binary and removes the single quotes
-        let $path = ($output | split row ' ').1 | str replace --all "'" ''
-        cd $path
+        if ($output | str starts-with "cd ") {{
+            # Grabs the path out of stdout returned by the binary and removes the single quotes
+            let path = ($output | str replace --regex '^cd ' '' | str replace --all "'" "" | str replace --all '"' "")
+            if ($path | path exists) {{
+                cd $path
+            }}
+        }} else {{
+            # If it's not a cd command, it's likely an editor command
+            nu -c $output
+        }}
     }}
 }}
 
-{completions}"#
+{completions}"#,
+                completions = get_completions_script(shell),
             )
         }
     }
@@ -385,17 +395,6 @@ export def __try_rs_complete [context: string] {
         []
     }
 }
-
-# Add completion to the try-rs command
-export extern try-rs [
-    name_or_url?: string@__try_rs_complete
-    destination?: string
-    --setup: string
-    --setup-stdout: string
-    --completions: string
-    --shallow-clone(-s)
-    --worktree(-w): string
-]
 "#.to_string()
         }
     }
@@ -515,7 +514,8 @@ pub fn is_shell_integration_configured(shell: &Shell) -> bool {
 fn append_source_to_rc(rc_path: &std::path::Path, source_cmd: &str) -> Result<()> {
     if rc_path.exists() {
         let content = fs::read_to_string(rc_path)?;
-        if !content.contains(source_cmd) {
+        // Check for either the exact source command or our marker comment
+        if !content.contains(source_cmd) && !content.contains("# try-rs integration") {
             let mut file = fs::OpenOptions::new().append(true).open(rc_path)?;
             writeln!(file, "\n# try-rs integration")?;
             writeln!(file, "{}", source_cmd)?;
@@ -698,6 +698,7 @@ pub fn clear_shell_setup() -> Result<()> {
     }
 
     eprintln!("Detected shells: {:?}\n", installed_shells);
+    
     eprintln!("Files to be removed:");
 
     for shell in &installed_shells {
@@ -730,34 +731,80 @@ pub fn clear_shell_setup() -> Result<()> {
 }
 
 fn clear_shell_config(shell: &Shell) -> Result<()> {
-    let paths = get_shell_config_paths(shell);
+    let integration_file = get_shell_integration_path(shell);
+    if integration_file.exists() {
+        fs::remove_file(&integration_file)?;
+        eprintln!("Removed integration file: {}", integration_file.display());
+    }
 
-    for path in &paths {
-        if path.exists() {
-            fs::remove_file(path)?;
-            eprintln!("Removed: {}", path.display());
+    if let Shell::Fish = shell {
+        let picker_path = get_fish_functions_dir().join("try-rs-picker.fish");
+        if picker_path.exists() {
+            fs::remove_file(&picker_path)?;
+            eprintln!("Removed picker file: {}", picker_path.display());
         }
     }
 
-    match shell {
-        Shell::Fish => {
-            let fish_functions = get_fish_functions_dir();
-            let picker_path = fish_functions.join("try-rs-picker.fish");
-            if picker_path.exists() {
-                fs::remove_file(&picker_path)?;
-                eprintln!("Removed: {}", picker_path.display());
+    // Clean up RC files instead of deleting them
+    let home_dir = dirs::home_dir().expect("Could not find home directory");
+    let rc_files = match shell {
+        Shell::Zsh => vec![home_dir.join(".zshrc")],
+        Shell::Bash => vec![home_dir.join(".bashrc")],
+        Shell::NuShell => vec![dirs::config_dir()
+            .expect("Could not find config directory")
+            .join("nushell")
+            .join("config.nu")],
+        Shell::PowerShell => {
+             let profile_path_ps7 = home_dir
+                .join("Documents")
+                .join("PowerShell")
+                .join("Microsoft.PowerShell_profile.ps1");
+            let profile_path_ps5 = home_dir
+                .join("Documents")
+                .join("WindowsPowerShell")
+                .join("Microsoft.PowerShell_profile.ps1");
+            vec![profile_path_ps7, profile_path_ps5]
+        },
+        _ => vec![],
+    };
+
+    for rc_path in rc_files {
+        if rc_path.exists() {
+            remove_source_from_rc(&rc_path)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn remove_source_from_rc(rc_path: &std::path::Path) -> Result<()> {
+    let content = fs::read_to_string(rc_path)?;
+    if content.contains("try-rs") {
+        let mut lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
+        let initial_count = lines.len();
+        
+        // Remove lines containing try-rs integration marker or typical source commands
+        lines.retain(|line| {
+            !line.contains("# try-rs integration") && 
+            !(line.contains("source") && line.contains("try-rs")) &&
+            !(line.contains(".") && line.contains("try-rs") && rc_path.extension().map_or(false, |ext| ext == "ps1"))
+        });
+
+        if lines.len() < initial_count {
+            let mut new_content = lines.join("\n");
+            if !new_content.is_empty() && !new_content.ends_with('\n') {
+                new_content.push('\n');
             }
+            fs::write(rc_path, new_content)?;
+            eprintln!("Cleaned up integration lines from {}", rc_path.display());
         }
-        _ => {}
     }
-
     Ok(())
 }
 
 fn get_shell_config_paths(shell: &Shell) -> Vec<PathBuf> {
     let mut paths = Vec::new();
     let config_dir = get_base_config_dir();
-    let home_dir = dirs::home_dir().expect("Could not find home directory");
 
     match shell {
         Shell::Fish => {
@@ -766,23 +813,9 @@ fn get_shell_config_paths(shell: &Shell) -> Vec<PathBuf> {
         }
         Shell::Zsh => {
             paths.push(config_dir.join("try-rs.zsh"));
-            if home_dir.join(".zshrc").exists() {
-                if let Ok(content) = fs::read_to_string(home_dir.join(".zshrc")) {
-                    if content.contains("try-rs") {
-                        paths.push(home_dir.join(".zshrc"));
-                    }
-                }
-            }
         }
         Shell::Bash => {
             paths.push(config_dir.join("try-rs.bash"));
-            if home_dir.join(".bashrc").exists() {
-                if let Ok(content) = fs::read_to_string(home_dir.join(".bashrc")) {
-                    if content.contains("try-rs") {
-                        paths.push(home_dir.join(".bashrc"));
-                    }
-                }
-            }
         }
         Shell::PowerShell => {
             paths.push(config_dir.join("try-rs.ps1"));
@@ -794,3 +827,4 @@ fn get_shell_config_paths(shell: &Shell) -> Vec<PathBuf> {
 
     paths
 }
+

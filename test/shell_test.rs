@@ -35,8 +35,8 @@ fn get_shell_content_powershell_contains_function() {
 #[test]
 fn get_shell_content_nushell_contains_function() {
     let content = get_shell_content(&Shell::NuShell);
-    assert!(content.contains("def --wrapped try-rs"));
-    assert!(content.contains("try-rs.exe"));
+    assert!(content.contains("def --env --wrapped try-rs"));
+    assert!(content.contains("^try-rs"));
 }
 
 #[test]
@@ -86,9 +86,11 @@ fn get_completions_script_powershell_contains_register() {
 }
 
 #[test]
-fn get_completions_script_nushell_contains_export() {
+fn get_completions_script_nushell_contains_helpers() {
     let script = get_completions_script(&Shell::NuShell);
-    assert!(script.contains("export extern try-rs"));
+    assert!(script.contains("__try_rs_get_tries_path"));
+    assert!(script.contains("__try_rs_complete"));
+    assert!(!script.contains("export extern try-rs"));
 }
 
 #[test]
