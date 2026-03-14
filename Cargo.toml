@@ -2,7 +2,7 @@
 
 [package]
 name = "try-rs"
-version = "1.6.2"
+version = "1.6.3"
 authors = ["Tassio Virginio <tassio.virginio@gmail.com>"]
 homepage = "https://github.com/tassiovirginio/try-rs"
 edition = "2024"
@@ -11,22 +11,7 @@ readme = "README.md"
 license = "MIT"
 repository = "https://github.com/tassiovirginio/try-rs"
 categories = ["command-line-utilities", "development-tools"]
-keywords = ["tui", "workspace", "experiments", "cli", "ratatui"]
-
-[dependencies]
-ratatui = "0.30.0"
-crossterm = "0.29.0"
-dirs = "6.0.0"
-fuzzy-matcher = "0.3.7"
-chrono = "0.4.44"
-anyhow = "1.0.102"
-serde = { version = "1.0.228", features = ["derive"], default-features = false }
-toml = "1.0.6"
-clap = { version = "4.5.60", features = ["derive"] }
-libc = "0.2.183"
-
-[dev-dependencies]
-tempdir = "0.3"
+keywords = ["cli", "experiments", "ratatui", "tui", "workspace"]
 
 [package.metadata.deb]
 maintainer = "Tassio Virginio <tassio.virginio@gmail.com>"
@@ -52,13 +37,6 @@ assets = [
     "644",
   ],
 ]
-
-[profile.release]
-strip = true      # Automatically strip symbols from the binary.
-opt-level = "z"   # Optimize for size.
-lto = true        # Enable LTO
-codegen-units = 1 # Use a single codegen for size optimization
-panic = "abort"   # Remove traceback information
 
 [[test]]
 name = "integration_test"
@@ -94,3 +72,25 @@ test = true
 name = "tui_test"
 path = "test/tui_test.rs"
 test = true
+
+[dependencies]
+anyhow = "1.0.102"
+chrono = "0.4.44"
+clap = { version = "4.5.60", features = ["derive"] }
+crossterm = "0.29.0"
+dirs = "6.0.0"
+fuzzy-matcher = "0.3.7"
+libc = "0.2.183"
+ratatui = "0.30.0"
+serde = { version = "1.0.228", default-features = false, features = ["derive"] }
+toml = "1.0.6"
+
+[dev-dependencies]
+tempdir = "0.3"
+
+[profile.release]
+opt-level = "z"  # Optimize for size.
+strip = true  # Automatically strip symbols from the binary.
+lto = true  # Enable LTO
+panic = "abort"  # Remove traceback information
+codegen-units = 1  # Use a single codegen for size optimization
