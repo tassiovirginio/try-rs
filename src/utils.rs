@@ -169,7 +169,7 @@ pub fn get_folder_size_mb(path: &Path) -> u64 {
     dir_size(path) / (1024 * 1024)
 }
 
-pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<String> {
+pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<(PathBuf, String)> {
     let mut result = vec![];
     if let Ok(read_dir) = fs::read_dir(&path) {
         for entry in read_dir.flatten() {
@@ -178,11 +178,11 @@ pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<String> {
             {
                 let filename = entry.file_name().to_string_lossy().to_string();
                 if filename == name {
-                    result.push(filename);
+                    result.push((path.clone(), filename));
                 } else if let Some((_, stripped_name)) = extract_prefix_date(&filename)
                     && name == stripped_name
                 {
-                    result.push(filename);
+                    result.push((path.clone(), filename));
                 }
             }
         }

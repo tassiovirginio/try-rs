@@ -10,10 +10,11 @@ use crossterm::{
     },
 };
 use ratatui::{TerminalOptions, Viewport, prelude::*};
-use std::process::Stdio;
 use std::{
     fs,
     io::{self, IsTerminal, Write},
+    path::PathBuf,
+    process::Stdio,
 };
 
 mod cli;
@@ -291,7 +292,8 @@ fn main() -> Result<()> {
         }
     };
     let AppConfig {
-        tries_dir,
+        tries_dirs,
+        active_tab,
         theme,
         editor_cmd,
         config_path,
@@ -320,6 +322,8 @@ fn main() -> Result<()> {
     let show_right_panel =
         resolve_visibility(cli.show_right_panel, cli.hide_right_panel, show_right_panel);
     let right_panel_width = right_panel_width.unwrap_or(25).clamp(10, 90);
+
+    let tries_dir = tries_dirs[active_tab].clone();
 
     if !tries_dir.exists() {
         fs::create_dir_all(&tries_dir)?;
@@ -366,12 +370,18 @@ fn main() -> Result<()> {
                 name
             };
 
+            let mut all_matches: Vec<(PathBuf, String)> = Vec::new();
+            for dir in &tries_dirs {
+                let matches = utils::matching_folders(folder_name, dir);
+                all_matches.extend(matches);
+            }
+
             (
-                utils::matching_folders(folder_name, &tries_dir),
+                all_matches,
                 Some(folder_name.to_string()),
             )
         }
-        None => (vec![], None),
+        None => (Vec::<(PathBuf, String)>::new(), None),
     };
 
     if let Some(name) = &cli.name_or_url
@@ -380,90 +390,101 @@ fn main() -> Result<()> {
         if matching_folders.is_empty() {
             selection_result = SelectionResult::New(name.clone());
         } else {
-            selection_result = SelectionResult::Folder(
-                matching_folders
-                    .into_iter()
-                    .next()
-                    .expect("must have exactly 1 items here"),
-            );
+            let (_matched_dir, folder_name) = matching_folders
+                .into_iter()
+                .next()
+                .expect("must have exactly 1 items here");
+            selection_result = SelectionResult::Folder(folder_name);
         }
     } else {
-        const DEFAULT_INLINE_PICKER_HEIGHT: u16 = 18;
-        const MIN_INLINE_PICKER_HEIGHT: u16 = 8;
-
-        if cli.inline_picker && (!io::stdin().is_terminal() || !io::stderr().is_terminal()) {
-            bail!("--inline-picker requires an interactive terminal session");
-        }
-
-        enable_raw_mode()?;
-        let mut stderr = io::stderr();
-        let mut inline_picker_area = None;
-
-        if !cli.inline_picker {
-            execute!(stderr, EnterAlternateScreen)?;
-        }
-
-        let backend = CrosstermBackend::new(stderr);
-        let mut terminal = if cli.inline_picker {
-            let inline_height = cli
-                .inline_height
-                .unwrap_or(DEFAULT_INLINE_PICKER_HEIGHT)
-                .max(MIN_INLINE_PICKER_HEIGHT);
-
-            let mut backend = backend;
-            let picker_area =
-                compute_inline_picker_area(&mut backend, inline_height).map_err(|err| {
-                    anyhow!("--inline-picker requires an interactive terminal session ({err})")
-                })?;
-            inline_picker_area = Some(picker_area);
-
-            Terminal::with_options(
-                backend,
-                TerminalOptions {
-                    viewport: Viewport::Fixed(picker_area),
-                },
-            )?
+        let has_multiple_tabs = tries_dirs.len() > 1;
+        
+        if !has_multiple_tabs && matching_folders.len() > 1 {
+            selection_result = matching_folders
+                .into_iter()
+                .next()
+                .map(|(_, n)| SelectionResult::Folder(n))
+                .unwrap_or(SelectionResult::None);
         } else {
-            Terminal::new(backend)?
-        };
+            const DEFAULT_INLINE_PICKER_HEIGHT: u16 = 18;
+            const MIN_INLINE_PICKER_HEIGHT: u16 = 8;
 
-        let mut app = App::new(
-            tries_dir.clone(),
-            theme,
-            editor_cmd.clone(),
-            config_path.clone(),
-            apply_date_prefix,
-            transparent_background.unwrap_or(true),
-            query,
-        );
-        app.show_disk = show_disk;
-        app.show_preview = show_preview;
-        app.show_legend = show_legend;
-        app.right_panel_visible = show_right_panel;
-        app.right_panel_width = right_panel_width;
-        let res = run_app(&mut terminal, app);
-
-        disable_raw_mode()?;
-        if cli.inline_picker {
-            if let Some(area) = inline_picker_area {
-                let end_y = area.y.saturating_add(area.height);
-                for row in area.y..end_y {
-                    execute!(
-                        terminal.backend_mut(),
-                        MoveTo(0, row),
-                        Clear(ClearType::CurrentLine)
-                    )?;
-                }
-                execute!(terminal.backend_mut(), MoveTo(0, area.y))?;
-            } else {
-                terminal.clear()?;
+            if cli.inline_picker && (!io::stdin().is_terminal() || !io::stderr().is_terminal()) {
+                bail!("--inline_picker requires an interactive terminal session");
             }
-        } else {
-            execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-        }
-        terminal.show_cursor()?;
 
-        (selection_result, open_editor) = res?;
+            enable_raw_mode()?;
+            let mut stderr = io::stderr();
+            let mut inline_picker_area = None;
+
+            if !cli.inline_picker {
+                execute!(stderr, EnterAlternateScreen)?;
+            }
+
+            let backend = CrosstermBackend::new(stderr);
+            let mut terminal = if cli.inline_picker {
+                let inline_height = cli
+                    .inline_height
+                    .unwrap_or(DEFAULT_INLINE_PICKER_HEIGHT)
+                    .max(MIN_INLINE_PICKER_HEIGHT);
+
+                let mut backend = backend;
+                let picker_area =
+                    compute_inline_picker_area(&mut backend, inline_height).map_err(|err| {
+                        anyhow!("--inline_picker requires an interactive terminal session ({err})")
+                    })?;
+                inline_picker_area = Some(picker_area);
+
+                Terminal::with_options(
+                    backend,
+                    TerminalOptions {
+                        viewport: Viewport::Fixed(picker_area),
+                    },
+                )?
+            } else {
+                Terminal::new(backend)?
+            };
+
+            let mut app = App::new(
+                tries_dir.clone(),
+                theme,
+                editor_cmd.clone(),
+                config_path.clone(),
+                apply_date_prefix,
+                transparent_background.unwrap_or(true),
+                query,
+                tries_dirs.clone(),
+                active_tab,
+            );
+            app.show_disk = show_disk;
+            app.show_preview = show_preview;
+            app.show_legend = show_legend;
+            app.right_panel_visible = show_right_panel;
+            app.right_panel_width = right_panel_width;
+            let res = run_app(&mut terminal, app);
+
+            disable_raw_mode()?;
+            if cli.inline_picker {
+                if let Some(area) = inline_picker_area {
+                    let end_y = area.y.saturating_add(area.height);
+                    for row in area.y..end_y {
+                        execute!(
+                            terminal.backend_mut(),
+                            MoveTo(0, row),
+                            Clear(ClearType::CurrentLine)
+                        )?;
+                    }
+                    execute!(terminal.backend_mut(), MoveTo(0, area.y))?;
+                } else {
+                    terminal.clear()?;
+                }
+            } else {
+                execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+            }
+            terminal.show_cursor()?;
+
+            (selection_result, open_editor) = res?;
+        }
     }
 
     match selection_result {

@@ -10,6 +10,7 @@ use std::{
     fs,
     io::{self},
     path::{Path, PathBuf},
+    rc::Rc,
     sync::{
         Arc,
         atomic::{AtomicU64, Ordering},
@@ -78,6 +79,10 @@ pub struct App {
     pub right_panel_visible: bool,
     pub right_panel_width: u16,
 
+    pub tries_dirs: Vec<PathBuf>,
+    pub active_tab: usize,
+    pub tab_list_state: ListState,
+
     pub available_themes: Vec<Theme>,
     pub theme_list_state: ListState,
     pub original_theme: Option<Theme>,
@@ -132,6 +137,8 @@ impl App {
         apply_date_prefix: Option<bool>,
         transparent_background: bool,
         query: Option<String>,
+        tries_dirs: Vec<PathBuf>,
+        active_tab: usize,
     ) -> Self {
         let mut entries = Vec::new();
         let mut current_entries = HashSet::new();
@@ -244,6 +251,9 @@ impl App {
             show_legend: true,
             right_panel_visible: true,
             right_panel_width: 25,
+            tries_dirs: tries_dirs.clone(),
+            active_tab,
+            tab_list_state: ListState::default(),
             available_themes: themes,
             theme_list_state: theme_state,
             original_theme: None,
@@ -267,6 +277,110 @@ impl App {
 
         app.update_search();
         app
+    }
+
+    pub fn switch_tab(&mut self, new_tab: usize) {
+        if new_tab >= self.tries_dirs.len() {
+            return;
+        }
+        self.active_tab = new_tab;
+        self.base_path = self.tries_dirs[new_tab].clone();
+        self.cached_free_space_mb = utils::get_free_disk_space_mb(&self.base_path);
+        self.folder_size_mb = Arc::new(AtomicU64::new(0));
+        
+        let path_clone = self.base_path.clone();
+        let folder_size_arc = Arc::clone(&self.folder_size_mb);
+        thread::spawn(move || {
+            let size = utils::get_folder_size_mb(&path_clone);
+            folder_size_arc.store(size, Ordering::Relaxed);
+        });
+
+        self.query.clear();
+        self.load_entries();
+        self.update_search();
+    }
+
+    fn load_entries(&mut self) {
+        self.all_entries.clear();
+        let cwd_unresolved = std::env::var_os("PWD")
+            .map(PathBuf::from)
+            .filter(|p| !p.as_os_str().is_empty())
+            .or_else(|| std::env::current_dir().ok())
+            .unwrap_or_else(|| PathBuf::from("."));
+        let cwd_real = std::env::current_dir()
+            .ok()
+            .and_then(|cwd| cwd.canonicalize().ok())
+            .unwrap_or_else(|| cwd_unresolved.clone());
+        let base_real = self.base_path.canonicalize().unwrap_or_else(|_| self.base_path.clone());
+
+        if let Ok(read_dir) = fs::read_dir(&self.base_path) {
+            for entry in read_dir.flatten() {
+                if let Ok(metadata) = entry.metadata()
+                    && metadata.is_dir()
+                {
+                    let entry_path = entry.path();
+                    let name = entry.file_name().to_string_lossy().to_string();
+                    let git_path = entry_path.join(".git");
+                    let is_git = git_path.exists();
+                    let is_worktree = git_path.is_file();
+                    let is_worktree_locked = utils::is_git_worktree_locked(&entry_path);
+                    let is_gitmodules = entry_path.join(".gitmodules").exists();
+                    let is_mise = entry_path.join("mise.toml").exists();
+                    let is_cargo = entry_path.join("Cargo.toml").exists();
+                    let is_maven = entry_path.join("pom.xml").exists();
+                    let is_symlink = entry
+                        .file_type()
+                        .map(|kind| kind.is_symlink())
+                        .unwrap_or(false);
+                    let is_current = Self::is_current_entry(
+                        &entry_path,
+                        &name,
+                        is_symlink,
+                        &cwd_unresolved,
+                        &cwd_real,
+                        &base_real,
+                    );
+
+                    let created;
+                    let display_name;
+                    if let Some((date_prefix, remainder)) = utils::extract_prefix_date(&name) {
+                        created = date_prefix;
+                        display_name = remainder;
+                    } else {
+                        created = metadata.created().unwrap_or(SystemTime::UNIX_EPOCH);
+                        display_name = name.clone();
+                    }
+                    let display_offset = name
+                        .chars()
+                        .count()
+                        .saturating_sub(display_name.chars().count());
+                    let is_flutter = entry_path.join("pubspec.yaml").exists();
+                    let is_go = entry_path.join("go.mod").exists();
+                    let is_python = entry_path.join("pyproject.toml").exists()
+                        || entry_path.join("requirements.txt").exists();
+                    self.all_entries.push(TryEntry {
+                        name,
+                        display_name,
+                        display_offset,
+                        match_indices: Vec::new(),
+                        modified: metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                        created,
+                        score: 0,
+                        is_git,
+                        is_worktree,
+                        is_worktree_locked,
+                        is_gitmodules,
+                        is_mise,
+                        is_cargo,
+                        is_maven,
+                        is_flutter,
+                        is_go,
+                        is_python,
+                    });
+                }
+            }
+        }
+        self.all_entries.sort_by(|a, b| b.modified.cmp(&a.modified));
     }
 
     pub fn has_exact_match(&self) -> bool {
@@ -746,15 +860,61 @@ pub fn run_app(
                     Constraint::Percentage(right_panel_width),
                 ]
             };
+
+            let show_tabs = app.tries_dirs.len() > 1;
+            let tab_height = 1;
+            let content_with_tabs = if show_tabs {
+                Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints([
+                        Constraint::Min(1),
+                        Constraint::Length(tab_height),
+                    ])
+                    .split(chunks[0])
+            } else {
+                Rc::new([chunks[0], chunks[0]])
+            };
+
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints(content_constraints)
-                .split(chunks[0]);
+                .split(if show_tabs { content_with_tabs[0] } else { chunks[0] });
 
             let left_chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Length(3), Constraint::Min(1)])
+                .constraints([
+                    Constraint::Length(3),
+                    Constraint::Min(1),
+                ])
                 .split(content_chunks[0]);
+
+            if show_tabs {
+                let tab_names: Vec<Span> = app
+                    .tries_dirs
+                    .iter()
+                    .enumerate()
+                    .map(|(i, p)| {
+                        let name = p.file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_else(|| p.to_string_lossy().to_string());
+                        if i == app.active_tab {
+                            Span::styled(
+                                format!("[{}]", name),
+                                Style::default()
+                                    .fg(app.theme.list_highlight_fg)
+                                    .add_modifier(Modifier::BOLD),
+                            )
+                        } else {
+                            Span::raw(format!(" {}", name))
+                        }
+                    })
+                    .collect();
+                
+                let tab_line = Paragraph::new(Line::from(tab_names))
+                    .style(Style::default().fg(app.theme.helpers_colors))
+                    .alignment(Alignment::Left);
+                f.render_widget(tab_line, content_with_tabs[1]);
+            }
 
             let search_text = Paragraph::new(app.query.clone())
                 .style(Style::default().fg(app.theme.search_title))
@@ -1181,7 +1341,7 @@ pub fn run_app(
                         .add_modifier(Modifier::BOLD),
                 )])
             } else {
-                Line::from(vec![
+                let mut help_parts = vec![
                     Span::styled("↑↓", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Nav | "),
                     Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
@@ -1194,13 +1354,25 @@ pub fn run_app(
                     Span::raw(" Edit | "),
                     Span::styled("Ctrl-T", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Theme | "),
-                    Span::styled("Ctrl-A", Style::default().add_modifier(Modifier::BOLD)),
+                ];
+
+                if app.tries_dirs.len() > 1 {
+                    help_parts.extend(vec![
+                        Span::styled("←→", Style::default().add_modifier(Modifier::BOLD)),
+                        Span::raw(" Tab | "),
+                    ]);
+                }
+
+                help_parts.extend(vec![
+                    Span::styled("Ctrl+A", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" About | "),
                     Span::styled("Alt-P", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Panel | "),
                     Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Quit"),
-                ])
+                ]);
+
+                Line::from(help_parts)
             };
 
             let help_message = Paragraph::new(help_text)
@@ -1359,6 +1531,22 @@ pub fn run_app(
                             app.selected_index += 1;
                         }
                     }
+                    KeyCode::Left => {
+                        if app.tries_dirs.len() > 1 {
+                            let prev = if app.active_tab == 0 {
+                                app.tries_dirs.len() - 1
+                            } else {
+                                app.active_tab - 1
+                            };
+                            app.switch_tab(prev);
+                        }
+                    }
+                    KeyCode::Right => {
+                        if app.tries_dirs.len() > 1 {
+                            let next = (app.active_tab + 1) % app.tries_dirs.len();
+                            app.switch_tab(next);
+                        }
+                    }
                     KeyCode::Enter => {
                         let is_new_selected =
                             app.show_new_option && app.selected_index == app.filtered_entries.len();
@@ -1484,7 +1672,7 @@ pub fn run_app(
                                     if let Err(e) = save_config(
                                         path,
                                         &app.theme,
-                                        &app.base_path,
+                                        &app.tries_dirs,
                                         &app.editor_cmd,
                                         app.apply_date_prefix,
                                         Some(app.transparent_background),
@@ -1573,7 +1761,7 @@ pub fn run_app(
                             if let Err(e) = save_config(
                                 &path,
                                 &app.theme,
-                                &app.base_path,
+                                &app.tries_dirs,
                                 &app.editor_cmd,
                                 app.apply_date_prefix,
                                 Some(app.transparent_background),

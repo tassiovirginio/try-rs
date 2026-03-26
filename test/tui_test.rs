@@ -102,6 +102,8 @@ fn app_new_with_empty_directory() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert!(app.all_entries.is_empty());
@@ -124,6 +126,8 @@ fn app_new_with_folders() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 2);
@@ -146,6 +150,8 @@ fn app_new_detects_git() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -168,6 +174,8 @@ fn app_new_detects_cargo() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -190,6 +198,8 @@ fn app_new_detects_python() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -210,6 +220,8 @@ fn app_new_with_date_prefix() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -232,6 +244,8 @@ fn app_new_with_query() {
         None,
         false,
         Some("alpha".to_string()),
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.query, "alpha");
@@ -254,6 +268,8 @@ fn app_update_search_empty_query() {
         None,
         false,
         Some("test".to_string()),
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query.clear();
@@ -277,6 +293,8 @@ fn app_update_search_with_match() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "alpha".to_string();
@@ -300,6 +318,8 @@ fn app_update_search_populates_match_indices() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "alp".to_string();
@@ -323,6 +343,8 @@ fn app_update_search_maps_indices_for_prefixed_names() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "pro".to_string();
@@ -347,6 +369,8 @@ fn app_update_search_no_match() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "nonexistent".to_string();
@@ -371,6 +395,8 @@ fn app_update_search_resets_index() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.selected_index = 2;
@@ -394,6 +420,8 @@ fn app_delete_selected_removes_entry() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -417,6 +445,8 @@ fn app_delete_selected_sets_status() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.delete_selected();
@@ -438,6 +468,8 @@ fn app_has_all_themes() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.available_themes.len(), 16);
@@ -459,6 +491,8 @@ fn app_detects_mise() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -481,6 +515,8 @@ fn app_detects_maven() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -503,6 +539,8 @@ fn app_detects_go() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -525,6 +563,8 @@ fn app_detects_flutter() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -547,6 +587,8 @@ fn app_detects_python_requirements() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -569,6 +611,8 @@ fn app_detects_gitmodules() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -593,6 +637,8 @@ fn app_sorted_by_modified() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries[0].name, "newer");
@@ -614,6 +660,8 @@ fn app_ignores_files() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     assert_eq!(app.all_entries.len(), 1);
@@ -635,6 +683,8 @@ fn app_show_new_option_on_partial_match() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "tr".to_string();
@@ -658,6 +708,8 @@ fn app_hide_new_option_on_exact_match() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query = "try".to_string();
@@ -683,6 +735,8 @@ fn app_hide_new_option_on_empty_query() {
         None,
         false,
         None,
+        vec![tmp.path().to_path_buf()],
+        0,
     );
 
     app.query.clear();

@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
+    pub tries_paths: Option<String>,
     pub tries_path: Option<String>,
     pub theme: Option<String>,
     pub editor: Option<String>,
@@ -68,7 +69,8 @@ pub fn load_file_config_toml_if_exists() -> Option<Config> {
 }
 
 pub struct AppConfig {
-    pub tries_dir: PathBuf,
+    pub tries_dirs: Vec<PathBuf>,
+    pub active_tab: usize,
     pub theme: Theme,
     pub editor_cmd: Option<String>,
     pub config_path: Option<PathBuf>,
@@ -90,7 +92,11 @@ pub fn load_configuration() -> AppConfig {
     let mut theme = Theme::default();
     let try_path = std::env::var_os("TRY_PATH");
     let try_path_specified = try_path.is_some();
-    let mut final_path = try_path.map(PathBuf::from).unwrap_or(default_path);
+    let mut final_paths: Vec<PathBuf> = if let Some(path) = try_path {
+        vec![path.into()]
+    } else {
+        vec![default_path]
+    };
     let mut editor_cmd = std::env::var("VISUAL")
         .ok()
         .or_else(|| std::env::var("EDITOR").ok());
@@ -105,10 +111,17 @@ pub fn load_configuration() -> AppConfig {
     let loaded_config_path = find_config_path();
 
     if let Some(config) = load_file_config_toml_if_exists() {
-        if let Some(path_str) = config.tries_path
+        let paths_source = config.tries_paths.or(config.tries_path);
+        
+        if let Some(paths_str) = paths_source
             && !try_path_specified
         {
-            final_path = expand_path(&path_str);
+            final_paths = paths_str
+                .split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .map(expand_path)
+                .collect();
         }
         if let Some(editor) = config.editor {
             editor_cmd = Some(editor);
@@ -128,7 +141,8 @@ pub fn load_configuration() -> AppConfig {
     }
 
     AppConfig {
-        tries_dir: final_path,
+        tries_dirs: final_paths,
+        active_tab: 0,
         theme,
         editor_cmd,
         config_path: loaded_config_path,
@@ -145,7 +159,7 @@ pub fn load_configuration() -> AppConfig {
 pub fn save_config(
     path: &Path,
     theme: &Theme,
-    tries_path: &Path,
+    tries_paths: &[PathBuf],
     editor: &Option<String>,
     apply_date_prefix: Option<bool>,
     transparent_background: Option<bool>,
@@ -155,8 +169,15 @@ pub fn save_config(
     show_right_panel: Option<bool>,
     right_panel_width: Option<u16>,
 ) -> std::io::Result<()> {
+    let paths_string = tries_paths
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .collect::<Vec<_>>()
+        .join(", ");
+
     let config = Config {
-        tries_path: Some(tries_path.to_string_lossy().to_string()),
+        tries_paths: Some(paths_string),
+        tries_path: tries_paths.first().map(|p| p.to_string_lossy().to_string()),
         theme: Some(theme.name.clone()),
         editor: editor.clone(),
         apply_date_prefix,

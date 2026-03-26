@@ -149,9 +149,9 @@ fn matching_folders_exact_and_dated() {
     std::fs::create_dir(base.join("bar")).unwrap();
 
     let matches = matching_folders("foo", &base.to_path_buf());
-    assert!(matches.contains(&"foo".to_string()));
-    assert!(matches.contains(&"2024-01-15 foo".to_string()));
-    assert!(!matches.contains(&"bar".to_string()));
+    assert!(matches.iter().any(|m| m.1 == "foo"));
+    assert!(matches.iter().any(|m| m.1 == "2024-01-15 foo"));
+    assert!(!matches.iter().any(|m| m.1 == "bar"));
 }
 
 #[test]
@@ -186,7 +186,7 @@ fn matching_folders_multiple_dated() {
     std::fs::create_dir(tmp.path().join("other")).unwrap();
     let matches = matching_folders("proj", &tmp.path().to_path_buf());
     assert_eq!(matches.len(), 2);
-    assert!(matches.iter().all(|m| m.contains("proj")));
+    assert!(matches.iter().all(|m| m.1.contains("proj")));
 }
 
 #[test]
