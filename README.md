@@ -245,9 +245,13 @@ By default, experiments are stored in `~/work/tries`. You can customize the path
 
 ```toml
 # config.toml
-tries_paths = "~/Development/playground, ~/Experiments"
-# Or use a single path (no tabs will be shown)
+
+# Single path (works as before, no tabs)
 tries_path = "~/Development/playground"
+
+# Multiple paths separated by comma (tabs will appear at the bottom)
+tries_path = "~/Development/playground, ~/Experiments"
+
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
 transparent_background = true # optional, default is true (uses terminal background)
