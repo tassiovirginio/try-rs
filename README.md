@@ -40,6 +40,7 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
 | **Theming**              | Switch themes at runtime (`Ctrl+T`) or set a default in config.                        |
 | **Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
+| **Tabs**                 | Multiple workspaces in tabs (`←` `→` to switch).                                       |
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
 | **Inline Picker**        | Adds support for a non-fullscreen picker.                                                 |
@@ -244,6 +245,8 @@ By default, experiments are stored in `~/work/tries`. You can customize the path
 
 ```toml
 # config.toml
+tries_paths = "~/Development/playground, ~/Experiments"
+# Or use a single path (no tabs will be shown)
 tries_path = "~/Development/playground"
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
@@ -335,6 +338,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Type`                                                | Filter the list (Fuzzy Search)                         |
 | `↑` / `↓` / `Ctrl+K` / `Ctrl+J` / `Ctrl+P` / `Ctrl+N` | Navigate the list                                      |
 | `Ctrl+U`                                              | Clear the search box                                   |
+| `←` / `→`                                             | Switch tabs (when multiple workspaces configured)       |
 | `Enter`                                               | Select directory (or create new if text doesn't match) |
 | `Ctrl+D`                                              | Delete the selected directory (triggers popup)         |
 | `Ctrl+E`                                              | Open in editor (configured in config.toml)             |
