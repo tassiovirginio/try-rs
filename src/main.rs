@@ -360,6 +360,7 @@ fn main() -> Result<()> {
 
     let selection_result: SelectionResult;
     let mut open_editor = false;
+    let mut selected_dir = tries_dirs[active_tab].clone();
 
     let (matching_folders, query) = match &cli.name_or_url {
         Some(name) => {
@@ -390,10 +391,11 @@ fn main() -> Result<()> {
         if matching_folders.is_empty() {
             selection_result = SelectionResult::New(name.clone());
         } else {
-            let (_matched_dir, folder_name) = matching_folders
+            let (matched_dir, folder_name) = matching_folders
                 .into_iter()
                 .next()
                 .expect("must have exactly 1 items here");
+            selected_dir = matched_dir;
             selection_result = SelectionResult::Folder(folder_name);
         }
     } else {
@@ -483,13 +485,16 @@ fn main() -> Result<()> {
             }
             terminal.show_cursor()?;
 
-            (selection_result, open_editor) = res?;
+            let (result_selection, result_editor, result_tab) = res?;
+            selection_result = result_selection;
+            open_editor = result_editor;
+            selected_dir = tries_dirs[result_tab].clone();
         }
     }
 
     match selection_result {
         SelectionResult::Folder(selection) => {
-            let target_path = tries_dir.join(&selection);
+            let target_path = selected_dir.join(&selection);
             print_cd_or_editor(&target_path, open_editor, &editor_cmd);
         }
         SelectionResult::New(selection) => {
@@ -498,7 +503,7 @@ fn main() -> Result<()> {
                     &selection,
                     cli.destination.clone(),
                     cli.shallow_clone,
-                    &tries_dir,
+                    &selected_dir,
                     apply_date_prefix,
                     open_editor,
                     &editor_cmd,
@@ -506,7 +511,7 @@ fn main() -> Result<()> {
             } else {
                 handle_new_folder(
                     &selection,
-                    &tries_dir,
+                    &selected_dir,
                     apply_date_prefix,
                     open_editor,
                     &editor_cmd,

@@ -828,7 +828,7 @@ fn build_highlighted_name_spans(
 pub fn run_app(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     mut app: App,
-) -> Result<(SelectionResult, bool)> {
+) -> Result<(SelectionResult, bool, usize)> {
     while !app.should_quit {
         terminal.draw(|f| {
             // Render background if not transparent
@@ -1794,7 +1794,7 @@ pub fn run_app(
         }
     }
 
-    Ok((app.final_selection, app.wants_editor))
+    Ok((app.final_selection, app.wants_editor, app.active_tab))
 }
 
 #[cfg(test)]
