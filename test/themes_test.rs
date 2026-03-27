@@ -46,6 +46,19 @@ fn themed_themes_have_background() {
         "Gruvbox Dark",
         "Nord",
         "Tokyo Night",
+        "Monokai Pro",
+        "Solarized Dark",
+        "Night Owl",
+        "Gruvbox Material",
+        "Zenburn",
+        "Solarized Light",
+        "Monokai Pro Light",
+        "Light Owl",
+        "Cyberpunk",
+        "Paper",
+        "Hacker",
+        "Ubuntu",
+        "Man Page",
     ];
     let all = Theme::all();
     for name in named {
@@ -79,6 +92,19 @@ fn known_themes_exist() {
         "Black & White",
         "Matrix",
         "Tron",
+        "Monokai Pro",
+        "Solarized Dark",
+        "Night Owl",
+        "Gruvbox Material",
+        "Zenburn",
+        "Solarized Light",
+        "Monokai Pro Light",
+        "Light Owl",
+        "Cyberpunk",
+        "Paper",
+        "Hacker",
+        "Ubuntu",
+        "Man Page",
     ];
     for name in expected {
         assert!(
@@ -91,7 +117,7 @@ fn known_themes_exist() {
 
 #[test]
 fn theme_count() {
-    assert_eq!(Theme::all().len(), 16);
+    assert_eq!(Theme::all().len(), 29);
 }
 
 #[test]
@@ -128,4 +154,17 @@ fn each_theme_constructor_does_not_panic() {
     let _ = Theme::black_and_white();
     let _ = Theme::matrix();
     let _ = Theme::tron();
+    let _ = Theme::monokai_pro();
+    let _ = Theme::solarized_dark();
+    let _ = Theme::night_owl();
+    let _ = Theme::gruvbox_material();
+    let _ = Theme::zenburn();
+    let _ = Theme::solarized_light();
+    let _ = Theme::monokai_pro_light();
+    let _ = Theme::light_owl();
+    let _ = Theme::cyberpunk();
+    let _ = Theme::paper();
+    let _ = Theme::hacker();
+    let _ = Theme::ubuntu();
+    let _ = Theme::man_page();
 }
