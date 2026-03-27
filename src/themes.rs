@@ -593,6 +593,213 @@ impl Theme {
         }
     }
 
+    pub fn monokai_pro() -> Self {
+        Self {
+            title_try: Color::Rgb(250, 250, 250),
+            title_rs: Color::Rgb(250, 250, 250),
+            search_title: Color::Rgb(252, 196, 7),
+            list_match_fg: Color::Rgb(252, 196, 7),
+            folder_title: Color::Rgb(166, 226, 45),
+            disk_title: Color::Rgb(253, 151, 39),
+            preview_title: Color::Rgb(102, 217, 240),
+            legends_title: Color::Rgb(189, 147, 250),
+            popup_text: Color::Rgb(249, 38, 114),
+            icon_rust: Color::Rgb(230, 100, 50),
+            icon_maven: Color::Rgb(255, 150, 50),
+            icon_flutter: Color::Rgb(2, 123, 222),
+            icon_go: Color::Rgb(0, 173, 216),
+            icon_python: Color::Rgb(255, 220, 80),
+            icon_mise: Color::Rgb(252, 196, 7),
+            icon_worktree: Color::Rgb(166, 226, 45),
+            icon_worktree_lock: Color::Rgb(166, 173, 200),
+            icon_gitmodules: Color::Rgb(189, 147, 250),
+            icon_git: Color::Rgb(249, 38, 114),
+            icon_folder: Color::Rgb(166, 226, 45),
+            icon_file: Color::Rgb(166, 173, 200),
+            name: "Monokai Pro".to_string(),
+            background: Some(Color::Rgb(39, 40, 34)),
+            search_border: Color::Rgb(74, 73, 68),
+            folder_border: Color::Rgb(74, 73, 68),
+            disk_border: Color::Rgb(74, 73, 68),
+            preview_border: Color::Rgb(74, 73, 68),
+            legends_border: Color::Rgb(74, 73, 68),
+            list_date: Color::Rgb(166, 173, 200),
+            list_highlight_bg: Color::Rgb(60, 58, 50),
+            list_highlight_fg: Color::Rgb(250, 250, 250),
+            list_selected_fg: Color::Rgb(250, 250, 250),
+            helpers_colors: Color::Rgb(117, 113, 106),
+            status_message: Color::Rgb(253, 151, 39),
+            popup_bg: Color::Rgb(50, 50, 42),
+        }
+    }
+
+    pub fn solarized_dark() -> Self {
+        Self {
+            search_title: Color::Rgb(133, 153, 0),
+            list_match_fg: Color::Rgb(133, 153, 0),
+            folder_title: Color::Rgb(181, 137, 0),
+            disk_title: Color::Rgb(203, 75, 22),
+            preview_title: Color::Rgb(38, 139, 210),
+            legends_title: Color::Rgb(108, 113, 196),
+            status_message: Color::Rgb(203, 75, 22),
+            icon_rust: Color::Rgb(203, 75, 22),
+            icon_maven: Color::Rgb(211, 54, 130),
+            icon_flutter: Color::Rgb(38, 139, 210),
+            icon_go: Color::Rgb(44, 160, 160),
+            icon_python: Color::Rgb(181, 137, 0),
+            icon_mise: Color::Rgb(133, 153, 0),
+            icon_worktree: Color::Rgb(133, 153, 0),
+            icon_worktree_lock: Color::Rgb(101, 123, 131),
+            icon_gitmodules: Color::Rgb(108, 113, 196),
+            icon_git: Color::Rgb(211, 54, 130),
+            icon_folder: Color::Rgb(181, 137, 0),
+            icon_file: Color::Rgb(101, 123, 131),
+            ..Self::from_palette(
+                "Solarized Dark",
+                Some(Color::Rgb(0, 43, 54)),
+                Palette {
+                    accent1: Color::Rgb(38, 139, 210),  // Blue
+                    accent2: Color::Rgb(211, 54, 130),  // Magenta
+                    warm: Color::Rgb(203, 75, 22),      // Orange
+                    cool: Color::Rgb(44, 160, 160),     // Cyan
+                    green: Color::Rgb(133, 153, 0),     // Green
+                    yellow: Color::Rgb(181, 137, 0),    // Yellow
+                    purple: Color::Rgb(108, 113, 196),  // Violet
+                    overlay: Color::Rgb(88, 110, 117),  // Base01
+                    subtext: Color::Rgb(101, 123, 131), // Base00
+                    surface: Color::Rgb(7, 54, 66),     // Base02
+                    text: Color::Rgb(238, 232, 213),    // Base2
+                    base: Color::Rgb(0, 43, 54),        // Base03
+                },
+            )
+        }
+    }
+
+    pub fn night_owl() -> Self {
+        let cyan = Color::Rgb(136, 192, 208);
+        Self {
+            search_title: Color::Rgb(187, 205, 136),
+            list_match_fg: Color::Rgb(187, 205, 136),
+            folder_title: Color::Rgb(229, 192, 123),
+            disk_title: Color::Rgb(209, 154, 102),
+            preview_title: cyan,
+            legends_title: Color::Rgb(198, 120, 221),
+            popup_text: Color::Rgb(255, 117, 107),
+            icon_rust: Color::Rgb(255, 117, 107),
+            icon_maven: Color::Rgb(255, 117, 107),
+            icon_flutter: cyan,
+            icon_go: cyan,
+            icon_python: Color::Rgb(229, 192, 123),
+            icon_mise: Color::Rgb(187, 205, 136),
+            icon_worktree: Color::Rgb(187, 205, 136),
+            icon_worktree_lock: Color::Rgb(130, 145, 162),
+            icon_gitmodules: Color::Rgb(198, 120, 221),
+            icon_git: Color::Rgb(255, 117, 107),
+            icon_folder: Color::Rgb(229, 192, 123),
+            icon_file: Color::Rgb(130, 145, 162),
+            ..Self::from_palette(
+                "Night Owl",
+                Some(Color::Rgb(10, 14, 30)),
+                Palette {
+                    accent1: Color::Rgb(97, 175, 239),  // Blue
+                    accent2: Color::Rgb(255, 117, 107), // Red
+                    warm: Color::Rgb(209, 154, 102),    // Orange
+                    cool: cyan,
+                    green: Color::Rgb(187, 205, 136),   // Green
+                    yellow: Color::Rgb(229, 192, 123),  // Yellow
+                    purple: Color::Rgb(198, 120, 221),  // Purple
+                    overlay: Color::Rgb(85, 104, 130),  // Comment
+                    subtext: Color::Rgb(130, 145, 162), // Foreground
+                    surface: Color::Rgb(40, 50, 80),    // Selection
+                    text: Color::Rgb(197, 214, 224),    // Foreground
+                    base: Color::Rgb(10, 14, 30),       // Background
+                },
+            )
+        }
+    }
+
+    pub fn gruvbox_material() -> Self {
+        Self {
+            title_rs: Color::Rgb(251, 191, 36),
+            search_title: Color::Rgb(166, 227, 161),
+            list_match_fg: Color::Rgb(166, 227, 161),
+            folder_title: Color::Rgb(251, 191, 36),
+            disk_title: Color::Rgb(254, 128, 25),
+            preview_title: Color::Rgb(131, 165, 152),
+            legends_title: Color::Rgb(211, 134, 155),
+            status_message: Color::Rgb(254, 128, 25),
+            popup_text: Color::Rgb(211, 134, 155),
+            icon_rust: Color::Rgb(251, 73, 52),
+            icon_flutter: Color::Rgb(131, 165, 152),
+            icon_go: Color::Rgb(131, 165, 152),
+            icon_worktree: Color::Rgb(166, 227, 161),
+            icon_worktree_lock: Color::Rgb(168, 153, 132),
+            icon_gitmodules: Color::Rgb(211, 134, 155),
+            icon_folder: Color::Rgb(251, 191, 36),
+            ..Self::from_palette(
+                "Gruvbox Material",
+                Some(Color::Rgb(45, 40, 36)),
+                Palette {
+                    accent1: Color::Rgb(251, 73, 52),   // Red
+                    accent2: Color::Rgb(251, 191, 36),  // Yellow
+                    warm: Color::Rgb(254, 128, 25),     // Orange
+                    cool: Color::Rgb(131, 165, 152),    // Aqua
+                    green: Color::Rgb(166, 227, 161),   // Green
+                    yellow: Color::Rgb(251, 191, 36),   // Yellow
+                    purple: Color::Rgb(211, 134, 155),  // Purple
+                    overlay: Color::Rgb(168, 153, 132), // Grey
+                    subtext: Color::Rgb(146, 131, 116), // Grey
+                    surface: Color::Rgb(60, 54, 48),    // Bg2
+                    text: Color::Rgb(235, 219, 178),    // Fg
+                    base: Color::Rgb(45, 40, 36),       // Bg0
+                },
+            )
+        }
+    }
+
+    pub fn zenburn() -> Self {
+        Self {
+            search_title: Color::Rgb(104, 151, 71),
+            list_match_fg: Color::Rgb(104, 151, 71),
+            folder_title: Color::Rgb(204, 145, 91),
+            disk_title: Color::Rgb(214, 114, 91),
+            preview_title: Color::Rgb(70, 130, 180),
+            legends_title: Color::Rgb(137, 123, 152),
+            status_message: Color::Rgb(214, 114, 91),
+            popup_text: Color::Rgb(214, 114, 91),
+            icon_rust: Color::Rgb(214, 114, 91),
+            icon_maven: Color::Rgb(214, 114, 91),
+            icon_flutter: Color::Rgb(70, 130, 180),
+            icon_go: Color::Rgb(70, 130, 180),
+            icon_python: Color::Rgb(204, 145, 91),
+            icon_mise: Color::Rgb(104, 151, 71),
+            icon_worktree: Color::Rgb(104, 151, 71),
+            icon_worktree_lock: Color::Rgb(136, 136, 136),
+            icon_gitmodules: Color::Rgb(137, 123, 152),
+            icon_git: Color::Rgb(214, 114, 91),
+            icon_folder: Color::Rgb(204, 145, 91),
+            icon_file: Color::Rgb(136, 136, 136),
+            ..Self::from_palette(
+                "Zenburn",
+                Some(Color::Rgb(48, 48, 48)),
+                Palette {
+                    accent1: Color::Rgb(70, 130, 180),  // Steel Blue
+                    accent2: Color::Rgb(214, 114, 91),  // Red
+                    warm: Color::Rgb(204, 145, 91),     // Orange
+                    cool: Color::Rgb(70, 130, 180),     // Steel Blue
+                    green: Color::Rgb(104, 151, 71),    // Green
+                    yellow: Color::Rgb(204, 145, 91),   // Orange
+                    purple: Color::Rgb(137, 123, 152),  // Purple
+                    overlay: Color::Rgb(100, 100, 100), // Grey
+                    subtext: Color::Rgb(136, 136, 136), // Grey
+                    surface: Color::Rgb(60, 60, 60),    // Bg2
+                    text: Color::Rgb(192, 192, 192),    // Fg
+                    base: Color::Rgb(48, 48, 48),       // Bg
+                },
+            )
+        }
+    }
+
     pub fn all() -> Vec<Theme> {
         vec![
             Theme::default_theme(),
@@ -611,6 +818,11 @@ impl Theme {
             Theme::black_and_white(),
             Theme::matrix(),
             Theme::tron(),
+            Theme::monokai_pro(),
+            Theme::solarized_dark(),
+            Theme::night_owl(),
+            Theme::gruvbox_material(),
+            Theme::zenburn(),
         ]
     }
 }
