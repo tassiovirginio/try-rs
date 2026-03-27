@@ -81,7 +81,6 @@ pub struct App {
 
     pub tries_dirs: Vec<PathBuf>,
     pub active_tab: usize,
-    pub tab_list_state: ListState,
 
     pub available_themes: Vec<Theme>,
     pub theme_list_state: ListState,
@@ -253,7 +252,6 @@ impl App {
             right_panel_width: 25,
             tries_dirs: tries_dirs.clone(),
             active_tab,
-            tab_list_state: ListState::default(),
             available_themes: themes,
             theme_list_state: theme_state,
             original_theme: None,
@@ -302,16 +300,6 @@ impl App {
 
     fn load_entries(&mut self) {
         self.all_entries.clear();
-        let cwd_unresolved = std::env::var_os("PWD")
-            .map(PathBuf::from)
-            .filter(|p| !p.as_os_str().is_empty())
-            .or_else(|| std::env::current_dir().ok())
-            .unwrap_or_else(|| PathBuf::from("."));
-        let cwd_real = std::env::current_dir()
-            .ok()
-            .and_then(|cwd| cwd.canonicalize().ok())
-            .unwrap_or_else(|| cwd_unresolved.clone());
-        let base_real = self.base_path.canonicalize().unwrap_or_else(|_| self.base_path.clone());
 
         if let Ok(read_dir) = fs::read_dir(&self.base_path) {
             for entry in read_dir.flatten() {
@@ -328,18 +316,6 @@ impl App {
                     let is_mise = entry_path.join("mise.toml").exists();
                     let is_cargo = entry_path.join("Cargo.toml").exists();
                     let is_maven = entry_path.join("pom.xml").exists();
-                    let is_symlink = entry
-                        .file_type()
-                        .map(|kind| kind.is_symlink())
-                        .unwrap_or(false);
-                    let is_current = Self::is_current_entry(
-                        &entry_path,
-                        &name,
-                        is_symlink,
-                        &cwd_unresolved,
-                        &cwd_real,
-                        &base_real,
-                    );
 
                     let created;
                     let display_name;
