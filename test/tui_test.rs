@@ -472,7 +472,7 @@ fn app_has_all_themes() {
         0,
     );
 
-    assert_eq!(app.available_themes.len(), 16);
+    assert_eq!(app.available_themes.len(), 29);
 }
 
 #[test]
