@@ -31,12 +31,19 @@ pub fn get_config_dir() -> PathBuf {
         .unwrap_or_else(|| get_base_config_dir().join("try-rs"))
 }
 
+/// Returns the base configuration directory.
+/// Respects $XDG_CONFIG_HOME on all platforms (including macOS),
+/// falling back to the platform-specific default from `dirs::config_dir()`,
+/// and finally to `~/.config`.
 pub fn get_base_config_dir() -> PathBuf {
-    dirs::config_dir().unwrap_or_else(|| {
-        dirs::home_dir()
-            .expect("Could not find home directory")
-            .join(".config")
-    })
+    std::env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .or_else(dirs::config_dir)
+        .unwrap_or_else(|| {
+            dirs::home_dir()
+                .expect("Could not find home directory")
+                .join(".config")
+        })
 }
 
 /// Returns candidate config file paths in priority order.
@@ -47,9 +54,8 @@ fn config_candidates() -> Vec<PathBuf> {
     if let Some(env_dir) = std::env::var_os("TRY_CONFIG_DIR") {
         candidates.push(PathBuf::from(env_dir).join(&config_name));
     }
-    if let Some(dir) = dirs::config_dir() {
-        candidates.push(dir.join("try-rs").join(&config_name));
-    }
+    let base_dir = get_base_config_dir();
+    candidates.push(base_dir.join("try-rs").join(&config_name));
     if let Some(home) = dirs::home_dir() {
         candidates.push(home.join(".config").join("try-rs").join(&config_name));
     }
