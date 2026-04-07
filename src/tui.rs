@@ -34,6 +34,7 @@ pub enum AppMode {
     ConfigSavePrompt,
     ConfigSaveLocationSelect,
     About,
+    MoveFolder,
 }
 
 #[derive(Clone)]
@@ -94,6 +95,7 @@ pub struct App {
     pub folder_size_mb: Arc<AtomicU64>,
 
     pub rename_input: String,
+    pub move_folder_state: ListState,
 
     current_entries: HashSet<String>,
     matcher: SkimMatcherV2,
@@ -262,6 +264,7 @@ impl App {
             cached_free_space_mb: if show_disk { utils::get_free_disk_space_mb(&path) } else { None },
             folder_size_mb: Arc::new(AtomicU64::new(0)),
             rename_input: String::new(),
+            move_folder_state: ListState::default(),
             current_entries,
             matcher: SkimMatcherV2::default(),
         };
@@ -671,6 +674,62 @@ fn draw_config_location_select(f: &mut Frame, app: &mut App) {
         .highlight_symbol(">> ");
 
     f.render_stateful_widget(list, popup_area, &mut app.config_location_state);
+}
+
+fn draw_move_folder_select(f: &mut Frame, app: &mut App) {
+    let area = f.area();
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage(30),
+            Constraint::Min(6),
+            Constraint::Percentage(30),
+        ])
+        .split(area);
+
+    let popup_area = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage(25),
+            Constraint::Percentage(50),
+            Constraint::Percentage(25),
+        ])
+        .split(popup_layout[1])[1];
+
+    f.render_widget(Clear, popup_area);
+
+    let block = Block::default()
+        .title(" Move Folder To ")
+        .borders(Borders::ALL)
+        .padding(Padding::horizontal(1))
+        .style(Style::default().bg(app.theme.popup_bg));
+
+    let items: Vec<ListItem> = app
+        .tries_dirs
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let name = p
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| p.to_string_lossy().to_string());
+            let marker = if i == app.active_tab { " (current)" } else { "" };
+            ListItem::new(format!("{}{}", name, marker))
+                .style(Style::default().fg(app.theme.list_highlight_fg))
+        })
+        .collect();
+
+    let list = List::new(items)
+        .block(block)
+        .highlight_style(
+            Style::default()
+                .bg(app.theme.list_highlight_bg)
+                .fg(app.theme.list_selected_fg)
+                .add_modifier(Modifier::BOLD),
+        )
+        .highlight_symbol(">> ");
+
+    f.render_stateful_widget(list, popup_area, &mut app.move_folder_state);
 }
 
 fn draw_about_popup(f: &mut Frame, theme: &Theme) {
@@ -1327,13 +1386,13 @@ pub fn run_app(
                     Span::raw(" Nav | "),
                     Span::styled("Enter", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Select | "),
-                    Span::styled("Ctrl-D", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::styled("Ctrl+D", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Del | "),
-                    Span::styled("Ctrl-R", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::styled("Ctrl+R", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Rename | "),
-                    Span::styled("Ctrl-E", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::styled("Ctrl+E", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Edit | "),
-                    Span::styled("Ctrl-T", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::styled("Ctrl+T", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Theme | "),
                 ];
 
@@ -1347,7 +1406,9 @@ pub fn run_app(
                 help_parts.extend(vec![
                     Span::styled("Ctrl+A", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" About | "),
-                    Span::styled("Alt-P", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::styled("Alt+M", Style::default().add_modifier(Modifier::BOLD)),
+                    Span::raw(" Move | "),
+                    Span::styled("Alt+P", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Panel | "),
                     Span::styled("Esc/Ctrl+C", Style::default().add_modifier(Modifier::BOLD)),
                     Span::raw(" Quit"),
@@ -1393,6 +1454,10 @@ pub fn run_app(
 
             if app.mode == AppMode::About {
                 draw_about_popup(f, &app.theme);
+            }
+
+            if app.mode == AppMode::MoveFolder {
+                draw_move_folder_select(f, &mut app);
             }
         })?;
 
@@ -1462,6 +1527,16 @@ pub fn run_app(
                             app.mode = AppMode::ThemeSelect;
                         } else if c == 'a' && key.modifiers.contains(event::KeyModifiers::CONTROL) {
                             app.mode = AppMode::About;
+                        } else if matches!(c, 'm')
+                            && key.modifiers.contains(event::KeyModifiers::ALT)
+                        {
+                            if !app.filtered_entries.is_empty() {
+                                app.move_folder_state.select(Some(0));
+                                app.mode = AppMode::MoveFolder;
+                            } else {
+                                app.status_message =
+                                    Some("No folder selected to move".to_string());
+                            }
                         } else if matches!(c, 'p')
                             && key.modifiers.contains(event::KeyModifiers::ALT)
                         {
@@ -1767,6 +1842,57 @@ pub fn run_app(
                         app.mode = AppMode::Normal;
                     }
                     KeyCode::Char('c') if key.modifiers.contains(event::KeyModifiers::CONTROL) => {
+                        app.mode = AppMode::Normal;
+                    }
+                    _ => {}
+                },
+                AppMode::MoveFolder => match key.code {
+                    KeyCode::Esc | KeyCode::Char('c')
+                        if key.modifiers.contains(event::KeyModifiers::CONTROL) =>
+                    {
+                        app.mode = AppMode::Normal;
+                    }
+                    KeyCode::Up | KeyCode::Char('k' | 'p') => {
+                        let i = match app.move_folder_state.selected() {
+                            Some(i) => i.saturating_sub(1),
+                            None => 0,
+                        };
+                        app.move_folder_state.select(Some(i));
+                    }
+                    KeyCode::Down | KeyCode::Char('j' | 'n') => {
+                        let i = match app.move_folder_state.selected() {
+                            Some(i) => (i + 1).min(app.tries_dirs.len().saturating_sub(1)),
+                            None => 0,
+                        };
+                        app.move_folder_state.select(Some(i));
+                    }
+                    KeyCode::Enter => {
+                        if let Some(target_idx) = app.move_folder_state.selected() {
+                            if let Some(selected_entry) =
+                                app.filtered_entries.get(app.selected_index)
+                            {
+                                let name = selected_entry.name.clone();
+                                let src = app.base_path.join(&name);
+                                let dst = app.tries_dirs[target_idx].join(&name);
+                                if src.exists() && dst.exists() {
+                                    app.status_message = Some(format!(
+                                        "Folder '{}' already exists in target",
+                                        name
+                                    ));
+                                } else if let Err(e) = fs::rename(&src, &dst) {
+                                    app.status_message =
+                                        Some(format!("Error moving folder: {}", e));
+                                } else {
+                                    app.all_entries.retain(|e| e.name != name);
+                                    app.update_search();
+                                    app.status_message = Some(format!(
+                                        "Moved '{}' to {}",
+                                        name,
+                                        app.tries_dirs[target_idx].display()
+                                    ));
+                                }
+                            }
+                        }
                         app.mode = AppMode::Normal;
                     }
                     _ => {}
