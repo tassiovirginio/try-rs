@@ -138,6 +138,7 @@ impl App {
         query: Option<String>,
         tries_dirs: Vec<PathBuf>,
         active_tab: usize,
+        show_disk: bool,
     ) -> Self {
         let mut entries = Vec::new();
         let mut current_entries = HashSet::new();
@@ -245,7 +246,7 @@ impl App {
             apply_date_prefix,
             transparent_background,
             show_new_option: false,
-            show_disk: true,
+            show_disk,
             show_preview: true,
             show_legend: true,
             right_panel_visible: true,
@@ -258,20 +259,22 @@ impl App {
             original_transparent_background: None,
             config_path,
             config_location_state: ListState::default(),
-            cached_free_space_mb: utils::get_free_disk_space_mb(&path),
+            cached_free_space_mb: if show_disk { utils::get_free_disk_space_mb(&path) } else { None },
             folder_size_mb: Arc::new(AtomicU64::new(0)),
             rename_input: String::new(),
             current_entries,
             matcher: SkimMatcherV2::default(),
         };
 
-        // Spawn background thread to calculate folder size
-        let folder_size_arc = Arc::clone(&app.folder_size_mb);
-        let path_clone = path.clone();
-        thread::spawn(move || {
-            let size = utils::get_folder_size_mb(&path_clone);
-            folder_size_arc.store(size, Ordering::Relaxed);
-        });
+        // Spawn background thread to calculate folder size (only if disk panel is visible)
+        if show_disk {
+            let folder_size_arc = Arc::clone(&app.folder_size_mb);
+            let path_clone = path.clone();
+            thread::spawn(move || {
+                let size = utils::get_folder_size_mb(&path_clone);
+                folder_size_arc.store(size, Ordering::Relaxed);
+            });
+        }
 
         app.update_search();
         app
@@ -283,15 +286,17 @@ impl App {
         }
         self.active_tab = new_tab;
         self.base_path = self.tries_dirs[new_tab].clone();
-        self.cached_free_space_mb = utils::get_free_disk_space_mb(&self.base_path);
         self.folder_size_mb = Arc::new(AtomicU64::new(0));
-        
-        let path_clone = self.base_path.clone();
-        let folder_size_arc = Arc::clone(&self.folder_size_mb);
-        thread::spawn(move || {
-            let size = utils::get_folder_size_mb(&path_clone);
-            folder_size_arc.store(size, Ordering::Relaxed);
-        });
+
+        if self.show_disk {
+            self.cached_free_space_mb = utils::get_free_disk_space_mb(&self.base_path);
+            let path_clone = self.base_path.clone();
+            let folder_size_arc = Arc::clone(&self.folder_size_mb);
+            thread::spawn(move || {
+                let size = utils::get_folder_size_mb(&path_clone);
+                folder_size_arc.store(size, Ordering::Relaxed);
+            });
+        }
 
         self.query.clear();
         self.load_entries();

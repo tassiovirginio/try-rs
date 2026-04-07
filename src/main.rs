@@ -457,8 +457,8 @@ fn main() -> Result<()> {
                 query,
                 tries_dirs.clone(),
                 active_tab,
+                show_disk,
             );
-            app.show_disk = show_disk;
             app.show_preview = show_preview;
             app.show_legend = show_legend;
             app.right_panel_visible = show_right_panel;
