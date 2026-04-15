@@ -266,33 +266,20 @@ _try_rs_get_tries_path() {
 }
 
 _try_rs_complete() {
-    local cur="${COMP_WORDS[COMP_CWORD]}"
-    local tries_paths=$(_try_rs_get_tries_path)
     local -a dirs=()
-    
-    # Split by comma if multiple paths
-    IFS=',' read -ra PATH_ARRAY <<< "$tries_paths"
-    
-    for tries_path in "${PATH_ARRAY[@]}"; do
-        # Trim whitespace
-        tries_path=$(echo "$tries_path" | xargs)
-        
+    local tries_path
+
+    while IFS= read -r tries_path; do
         if [[ -d "$tries_path" ]]; then
-            # Get list of directories
-            while IFS= read -r dir; do
-                dirs+=("$dir")
-            done < <(ls -1 "$tries_path" 2>/dev/null | while read -r dir; do
-                if [[ -d "$tries_path/$dir" ]]; then
-                    echo "$dir"
-                fi
-            done)
+            local -a entries=("$tries_path"/*(N-/))
+            dirs+=("${entries[@]:t}")
         fi
-    done
-    
-    COMPREPLY=($(compgen -W "${dirs[*]}" -- "$cur"))
+    done < <(_try_rs_get_tries_path)
+
+    compadd -a dirs
 }
 
-complete -o default -F _try_rs_complete try-rs
+compdef _try_rs_complete try-rs
 "#.to_string()
         }
         Shell::Bash => {
