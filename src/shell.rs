@@ -197,7 +197,7 @@ function __try_rs_get_tries_path
     for config_path in $config_paths
         if test -f $config_path
             # Try tries_path (supports single or multiple paths with comma)
-            set -l tries_path (command grep -E '^\s*tries_path\s*=' $config_path 2>/dev/null | command sed 's/.*=\s*"\?\([^"]*\)"\?.*/\1/' | command sed "s|~|$HOME|" | string trim)
+            set -l tries_path (command grep -E '^\s*tries_path\s*=' $config_path 2>/dev/null | command sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | command sed "s|~|$HOME|" | string trim)
             if test -n "$tries_path"
                 # Check if it contains comma (multiple paths)
                 if echo "$tries_path" | command grep -q ","
@@ -249,7 +249,7 @@ _try_rs_get_tries_path() {
     for config_path in "${config_paths[@]}"; do
         if [[ -f "$config_path" ]]; then
             # Try tries_path (supports single or multiple paths with comma)
-            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed 's/.*=[[:space:]]*"\?\([^"]*\)"\?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
+            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
             if [[ -n "$tries_path" ]]; then
                 if [[ "$tries_path" == *","* ]]; then
                     echo "$tries_path" | tr ',' '\n'
@@ -313,7 +313,7 @@ _try_rs_get_tries_path() {
     for config_path in "${config_paths[@]}"; do
         if [[ -f "$config_path" ]]; then
             # Try tries_path (supports single or multiple paths with comma)
-            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed 's/.*=[[:space:]]*"\?\([^"]*\)"\?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
+            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
             if [[ -n "$tries_path" ]]; then
                 if [[ "$tries_path" == *","* ]]; then
                     echo "$tries_path" | tr ',' '\n'
