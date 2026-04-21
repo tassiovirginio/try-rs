@@ -120,6 +120,7 @@ fn handle_worktree(
     branch_name: &str,
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
+    date_prefix_format: Option<&str>,
 ) -> Result<()> {
     if !utils::is_inside_git_repo(".") {
         eprintln!("Error: Not inside a git repository.");
@@ -129,7 +130,7 @@ fn handle_worktree(
 
     let mut folder_name = branch_name.to_string();
     if Some(true) == apply_date_prefix {
-        folder_name = format!("{} {}", generate_prefix_date(), folder_name);
+        folder_name = format!("{} {}", generate_prefix_date(date_prefix_format), folder_name);
     }
 
     let new_path = tries_dir.join(&folder_name);
@@ -227,13 +228,14 @@ fn handle_clone(
     shallow: bool,
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
+    date_prefix_format: Option<&str>,
     open_editor: bool,
     editor_cmd: &Option<String>,
 ) -> Result<()> {
     let repo_name = utils::extract_repo_name(url);
     let mut folder_name = destination.unwrap_or(repo_name);
     if Some(true) == apply_date_prefix {
-        folder_name = format!("{} {}", generate_prefix_date(), folder_name);
+        folder_name = format!("{} {}", generate_prefix_date(date_prefix_format), folder_name);
     }
 
     let new_path = tries_dir.join(&folder_name);
@@ -267,11 +269,12 @@ fn handle_new_folder(
     name: &str,
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
+    date_prefix_format: Option<&str>,
     open_editor: bool,
     editor_cmd: &Option<String>,
 ) -> Result<()> {
     let mut new_name = name.to_string();
-    let date_prefix = generate_prefix_date();
+    let date_prefix = generate_prefix_date(date_prefix_format);
     if Some(true) == apply_date_prefix && !new_name.starts_with(&date_prefix) {
         new_name = format!("{date_prefix} {new_name}");
     }
@@ -298,6 +301,7 @@ fn main() -> Result<()> {
         editor_cmd,
         config_path,
         apply_date_prefix,
+        date_prefix_format,
         transparent_background,
         show_disk,
         show_preview,
@@ -350,7 +354,7 @@ fn main() -> Result<()> {
     }
 
     if let Some(ref worktree_branch_name) = cli.worktree {
-        handle_worktree(worktree_branch_name, &tries_dir, apply_date_prefix)?;
+        handle_worktree(worktree_branch_name, &tries_dir, apply_date_prefix, date_prefix_format.as_deref())?;
         return Ok(());
     }
 
@@ -453,6 +457,7 @@ fn main() -> Result<()> {
                 editor_cmd.clone(),
                 config_path.clone(),
                 apply_date_prefix,
+                date_prefix_format.clone(),
                 transparent_background.unwrap_or(true),
                 query,
                 tries_dirs.clone(),
@@ -505,6 +510,7 @@ fn main() -> Result<()> {
                     cli.shallow_clone,
                     &selected_dir,
                     apply_date_prefix,
+                    date_prefix_format.as_deref(),
                     open_editor,
                     &editor_cmd,
                 )?;
@@ -513,6 +519,7 @@ fn main() -> Result<()> {
                     &selection,
                     &selected_dir,
                     apply_date_prefix,
+                    date_prefix_format.as_deref(),
                     open_editor,
                     &editor_cmd,
                 )?;

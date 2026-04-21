@@ -11,12 +11,13 @@ fn save_and_reload_config() {
     let theme = Theme::default();
     let tries_path = PathBuf::from("/tmp/tries");
 
-    save_config(
+save_config(
         &config_path,
         &theme,
         &[tries_path],
         &Some("code".to_string()),
         Some(true),
+        None,
         Some(false),
         Some(false),
         Some(true),
@@ -58,6 +59,7 @@ fn save_config_creates_parent_dirs() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -75,6 +77,7 @@ fn save_config_none_optionals() {
         &theme,
         &[PathBuf::from("/tmp/t")],
         &None,
+        None,
         None,
         None,
         None,
@@ -105,6 +108,7 @@ fn config_serialization_roundtrip() {
         theme: Some("Tokyo Night".to_string()),
         editor: Some("nvim".to_string()),
         apply_date_prefix: Some(true),
+        date_prefix_format: None,
         transparent_background: Some(true),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -194,6 +198,7 @@ fn save_config_preserves_theme_name() {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -243,6 +248,7 @@ fn config_save_and_load_roundtrip() {
         &[PathBuf::from("~/tries")],
         &Some("nvim".to_string()),
         Some(true),
+        None,
         Some(true),
         Some(false),
         Some(true),
@@ -301,6 +307,7 @@ fn config_preserve_booleans_exact() {
         theme: None,
         editor: None,
         apply_date_prefix: Some(true),
+        date_prefix_format: None,
         transparent_background: Some(false),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -332,6 +339,7 @@ fn config_with_empty_strings() {
         theme: Some("".to_string()),
         editor: Some("".to_string()),
         apply_date_prefix: None,
+        date_prefix_format: None,
         transparent_background: None,
         show_disk: None,
         show_preview: None,
@@ -366,6 +374,7 @@ fn config_save_overwrites_existing() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -376,6 +385,7 @@ fn config_save_overwrites_existing() {
         &[PathBuf::from("/path2")],
         &Some("editor2".to_string()),
         Some(false),
+        None,
         Some(true),
         Some(true),
         Some(false),
@@ -408,6 +418,7 @@ fn config_serialization_order() {
         tries_paths: None,
         editor: Some("vim".to_string()),
         apply_date_prefix: Some(true),
+        date_prefix_format: None,
         transparent_background: Some(false),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -487,6 +498,7 @@ fn config_handles_very_long_values() {
         theme: None,
         editor: None,
         apply_date_prefix: None,
+        date_prefix_format: None,
         transparent_background: None,
         show_disk: None,
         show_preview: None,

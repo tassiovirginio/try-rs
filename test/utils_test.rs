@@ -102,7 +102,7 @@ fn extract_prefix_date_wrong_format() {
 
 #[test]
 fn generate_prefix_date_format() {
-    let date = generate_prefix_date();
+    let date = generate_prefix_date(None);
     assert_eq!(date.len(), 10);
     assert_eq!(&date[4..5], "-");
     assert_eq!(&date[7..8], "-");
@@ -110,7 +110,7 @@ fn generate_prefix_date_format() {
 
 #[test]
 fn generate_prefix_date_matches_today() {
-    let date = generate_prefix_date();
+    let date = generate_prefix_date(None);
     let today = Local::now().format("%Y-%m-%d").to_string();
     assert_eq!(date, today);
 }
@@ -468,8 +468,8 @@ fn selection_result_variants() {
 
 #[test]
 fn generate_prefix_date_consistency() {
-    let date1 = generate_prefix_date();
-    let date2 = generate_prefix_date();
+    let date1 = generate_prefix_date(None);
+    let date2 = generate_prefix_date(None);
     // Same call should produce same result
     assert_eq!(date1, date2);
 

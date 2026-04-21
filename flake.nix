@@ -34,7 +34,7 @@
             lockFile = ./Cargo.lock;
           };
 
-          nativeBuildInputs = [ pkgs.rust-bin.stable.latest.default ];
+          nativeBuildInputs = [ pkgs.rust-bin.stable.latest.default pkgs.git ];
 
           meta = with pkgs.lib; {
             description = "Temporary workspace manager with TUI";
@@ -50,6 +50,7 @@
           buildInputs = [
             pkgs.rust-bin.stable.latest.default
             pkgs.cargo
+            pkgs.git
           ];
         };
       }
