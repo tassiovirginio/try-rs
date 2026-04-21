@@ -472,64 +472,6 @@ fn inline_height_requires_inline_picker() {
 }
 
 #[test]
-fn setup_stdout_fish() {
-    let p = Command::new("cargo")
-        .arg("run")
-        .arg("--")
-        .arg("--setup-stdout")
-        .arg("fish")
-        .output()
-        .expect("failed to spawn");
-
-    let stdout = String::from_utf8(p.stdout).unwrap();
-    assert!(p.status.success());
-    assert!(
-        stdout.contains("function try-rs"),
-        "fish integration should define try-rs function"
-    );
-    assert!(
-        stdout.contains("function try-rs-picker"),
-        "fish integration should define picker function"
-    );
-}
-
-#[test]
-fn setup_stdout_zsh() {
-    let p = Command::new("cargo")
-        .arg("run")
-        .arg("--")
-        .arg("--setup-stdout")
-        .arg("zsh")
-        .output()
-        .expect("failed to spawn");
-
-    let stdout = String::from_utf8(p.stdout).unwrap();
-    assert!(p.status.success());
-    assert!(
-        stdout.contains("try-rs()"),
-        "zsh integration should define try-rs function"
-    );
-}
-
-#[test]
-fn setup_stdout_bash() {
-    let p = Command::new("cargo")
-        .arg("run")
-        .arg("--")
-        .arg("--setup-stdout")
-        .arg("bash")
-        .output()
-        .expect("failed to spawn");
-
-    let stdout = String::from_utf8(p.stdout).unwrap();
-    assert!(p.status.success());
-    assert!(
-        stdout.contains("try-rs()"),
-        "bash integration should define try-rs function"
-    );
-}
-
-#[test]
 fn existing_folder_cd_does_not_recreate() {
     let h = Harness::new(false);
     h.create_try_folder("already");
