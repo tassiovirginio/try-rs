@@ -35,11 +35,13 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Rich TUI**             | Beautiful terminal interface built with [Ratatui](https://github.com/ratatui/ratatui). |
 | **Fuzzy Search**         | Instantly find old experiments with smart matching.                                    |
 | **Auto-Dating**          | Creates directories like `rust-test` automatically.                                    |
+| **Custom Date Format**   | Configure date prefix format using chrono strings (e.g., `%Y-%m-%d`)                   |
 | **Git Integration**      | Auto-clones URLs (`try-rs <url>`) and marks repos with ().                            |
 | **Content Preview**      | Inspect files inside a folder before entering it.                                      |
 | **Editor Integration**   | Open experiments directly in your editor (`Ctrl+E`).                                   |
 | **Theming**              | Switch themes at runtime (`Ctrl+T`) or set a default in config.                        |
 | **Safe Deletion**        | Delete old experiments via UI with confirmation (`Ctrl+D`).                            |
+| **Folder Move**          | Move experiments to different directories within the TUI (`Alt+M`)                     |
 | **Tabs**                 | Multiple workspaces in tabs (`←` `→` to switch).                                       |
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
 | **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
@@ -254,17 +256,8 @@ tries_path = "~/Development/playground, ~/Experiments"
 
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
+date_prefix_format = "%Y-%m-%d" # optional, default is %Y-%m-%d (chrono format string)
 transparent_background = true # optional, default is true (uses terminal background)
-
-# ui configuration
-show_right_panel = true # optional, default is true
-right_panel_width = 25 # optional, right panel width in percentage (20-80)
-show_disk = true # optional, default is true
-show_preview = true # optional, default is true
-show_legend = true # optional, default is true
-
-# Theme configuration (choose one of the available themes)
-theme = "Catppuccin Mocha"
 ```
 
 **Background Transparency:**
@@ -349,6 +342,7 @@ Simply type try-rs (or your alias) in your terminal.
 | `Ctrl+T`                                              | Open theme selector                                    |
 | `Ctrl+A`                                              | Open about popup                                       |
 | `Alt+P`                                               | Toggle right panel (disk/preview/etc)                  |
+| `Alt+M`                                               | Move selected folder to another directory              |
 | `Esc/Ctrl+C`                                          | Cancel / Close Popup / Exit                            |
 
 #### Theme Selector Key Bindings
