@@ -405,7 +405,7 @@ Note: each `--show-*` flag can be overridden by its `--hide-*` counterpart.
 
 ## Contribution
 
-Thank you to all the people who already contributed to Thaw!
+Thank you to all the people who already contributed to tr-rs!
 
 <a href="https://github.com/tassiovirginio/try-rsgraphs/contributors">
   <img src="https://contrib.rocks/image?repo=tassiovirginio/try-rs" />
