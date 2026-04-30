@@ -405,7 +405,7 @@ Note: each `--show-*` flag can be overridden by its `--hide-*` counterpart.
 
 ## Contribution
 
-Thank you to all the people who already contributed to tr-rs!
+Thank you to all the people who already contributed to try-rs!
 
 <a href="https://github.com/tassiovirginio/try-rsgraphs/contributors">
   <img src="https://contrib.rocks/image?repo=tassiovirginio/try-rs" />
