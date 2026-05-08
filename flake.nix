@@ -65,6 +65,10 @@
         with lib;
         let
           cfg = config.programs.try-rs;
+          mkInitScript = shell:
+            pkgs.runCommand "try-rs-init.${shell}" { } ''
+              ${cfg.package}/bin/try-rs --setup-stdout ${shell} > $out
+            '';
         in
         {
           options.programs.try-rs = {
@@ -116,15 +120,15 @@
             };
 
             programs.bash.initExtra = mkIf (cfg.enableBashIntegration && config.programs.bash.enable) ''
-              eval "$(${cfg.package}/bin/try-rs --setup-stdout bash)"
+              source ${mkInitScript "bash"}
             '';
 
             programs.zsh.initContent = mkIf (cfg.enableZshIntegration && config.programs.zsh.enable) ''
-              eval "$(${cfg.package}/bin/try-rs --setup-stdout zsh)"
+              source ${mkInitScript "zsh"}
             '';
 
             programs.fish.shellInit = mkIf (cfg.enableFishIntegration && config.programs.fish.enable) ''
-              ${cfg.package}/bin/try-rs --setup-stdout fish | source
+              source ${mkInitScript "fish"}
             '';
           };
         };
