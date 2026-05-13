@@ -327,10 +327,18 @@ fn main() -> Result<()> {
         resolve_visibility(cli.show_right_panel, cli.hide_right_panel, show_right_panel);
     let right_panel_width = right_panel_width.unwrap_or(25).clamp(10, 90);
 
-    let tries_dir = tries_dirs[active_tab].clone();
+    // Handle output-only / config-only short-circuits before touching the
+    // tries directory. These must work in environments where HOME is not
+    // writable (e.g. the Nix build sandbox invoking `--setup-stdout` to
+    // generate shell init scripts at build time).
+    if let Some(shell) = cli.setup_stdout {
+        print!("{}", get_shell_content(&shell));
+        return Ok(());
+    }
 
-    if !tries_dir.exists() {
-        fs::create_dir_all(&tries_dir)?;
+    if let Some(shell) = cli.completions {
+        generate_completions(&shell)?;
+        return Ok(());
     }
 
     if let Some(shell) = cli.setup {
@@ -343,14 +351,10 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    if let Some(shell) = cli.setup_stdout {
-        print!("{}", get_shell_content(&shell));
-        return Ok(());
-    }
+    let tries_dir = tries_dirs[active_tab].clone();
 
-    if let Some(shell) = cli.completions {
-        generate_completions(&shell)?;
-        return Ok(());
+    if !tries_dir.exists() {
+        fs::create_dir_all(&tries_dir)?;
     }
 
     if let Some(ref worktree_branch_name) = cli.worktree {
