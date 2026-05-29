@@ -384,7 +384,7 @@ You can also bypass the UI:
 | `try-rs <name>`                                | Create (or jump to) a named experiment                              |
 | `try-rs <https://github.com/user/repo>`        | Clones a repository into a dated folder                             |
 | `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name (destination)       |
-| `try-rs -s <url>` / `try-rs --shallow-clone`   | Shallow clone (--depth 1) when cloning repositories                 |
+| `try-rs -f <url>` / `try-rs --full-clone`     | Full clone (omit --depth 1) when cloning repositories               |
 | `try-rs -w <name>` / `try-rs --worktree`       | Create a git worktree from current repository (must be inside repo) |
 | `try-rs --setup <shell>`                       | Setup shell integration (fish, zsh, bash, nu-shell, power-shell)    |
 | `try-rs --setup-stdout <shell>`                | Print shell integration script to stdout (for manual setup)         |

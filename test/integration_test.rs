@@ -430,8 +430,8 @@ fn help_contains_expected_flags() {
         "should document --setup-stdout flag"
     );
     assert!(
-        output.contains("--shallow-clone") || output.contains("-s"),
-        "should document shallow clone"
+        output.contains("--full-clone") || output.contains("-f"),
+        "should document full clone"
     );
     assert!(
         output.contains("--worktree") || output.contains("-w"),

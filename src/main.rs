@@ -225,7 +225,7 @@ fn detect_and_setup_shell() -> Result<()> {
 fn handle_clone(
     url: &str,
     destination: Option<String>,
-    shallow: bool,
+    full_clone: bool,
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
     date_prefix_format: Option<&str>,
@@ -243,7 +243,7 @@ fn handle_clone(
 
     let mut cmd = std::process::Command::new("git");
     cmd.arg("clone");
-    if shallow {
+    if !full_clone {
         cmd.arg("--depth").arg("1");
     }
 
@@ -308,7 +308,7 @@ fn main() -> Result<()> {
         show_legend,
         show_right_panel,
         right_panel_width,
-    } = load_configuration();
+    }: AppConfig = load_configuration();
 
     let resolve_visibility = |cli_show: bool, cli_hide: bool, config_show: Option<bool>| -> bool {
         if !cli_hide {
@@ -511,7 +511,7 @@ fn main() -> Result<()> {
                 handle_clone(
                     &selection,
                     cli.destination.clone(),
-                    cli.shallow_clone,
+                    cli.full_clone,
                     &selected_dir,
                     apply_date_prefix,
                     date_prefix_format.as_deref(),

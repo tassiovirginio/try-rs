@@ -9,7 +9,7 @@ fn cli_default_values() {
     assert!(cli.setup.is_none());
     assert!(cli.setup_stdout.is_none());
     assert!(cli.completions.is_none());
-    assert!(!cli.shallow_clone);
+    assert!(!cli.full_clone);
     assert!(cli.worktree.is_none());
     assert!(!cli.show_disk);
     assert!(cli.hide_disk);
@@ -90,20 +90,20 @@ fn cli_completions_flag() {
 }
 
 #[test]
-fn cli_shallow_clone_flag() {
+fn cli_full_clone_flag() {
     let cli = Cli::try_parse_from([
         "try-rs",
-        "--shallow-clone",
+        "--full-clone",
         "https://github.com/user/repo.git",
     ])
     .unwrap();
-    assert!(cli.shallow_clone);
+    assert!(cli.full_clone);
 }
 
 #[test]
-fn cli_shorthand_clone_flag() {
-    let cli = Cli::try_parse_from(["try-rs", "-s", "https://github.com/user/repo.git"]).unwrap();
-    assert!(cli.shallow_clone);
+fn cli_shorthand_full_clone_flag() {
+    let cli = Cli::try_parse_from(["try-rs", "-f", "https://github.com/user/repo.git"]).unwrap();
+    assert!(cli.full_clone);
 }
 
 #[test]
@@ -122,12 +122,12 @@ fn cli_worktree_shorthand() {
 fn cli_multiple_flags() {
     let cli = Cli::try_parse_from([
         "try-rs",
-        "--shallow-clone",
+        "--full-clone",
         "https://github.com/user/repo.git",
         "my-dest",
     ])
     .unwrap();
-    assert!(cli.shallow_clone);
+    assert!(cli.full_clone);
     assert_eq!(
         cli.name_or_url,
         Some("https://github.com/user/repo.git".to_string())

@@ -29,9 +29,9 @@ pub struct Cli {
     #[arg(long)]
     pub completions: Option<Shell>,
 
-    /// Use shallow clone (--depth 1) when cloning repositories
-    #[arg(short, long)]
-    pub shallow_clone: bool,
+    /// Perform a full clone instead of the default shallow clone (--depth 1)
+    #[arg(short = 'f', long)]
+    pub full_clone: bool,
 
     /// Create a git worktree from current repository (must be inside a git repo)
     #[arg(short = 'w', long = "worktree", value_name = "WORKTREE_NAME")]
