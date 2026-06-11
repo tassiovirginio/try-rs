@@ -122,12 +122,19 @@ function try-rs {{
         }}
     }}
 
-    # Captures the output of the binary (stdout) which is the "cd" or editor command
+    # Use file redirect to capture the output path from try-rs.exe.
     # The TUI is rendered on stderr, so it doesn't interfere.
-    $command = (try-rs.exe @args)
-
+    # On Windows, capturing stdout with $(try-rs.exe @args) can fail after the
+    # TUI exits raw mode / alternate screen, causing the "cd" command to print
+    # to the terminal instead of being evaluated. File redirect (>) is a
+    # kernel-level handle redirect set up before the process starts, so it
+    # is not affected by console mode changes.
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    try-rs.exe @args > $tempFile
+    $command = Get-Content $tempFile -Raw
+    Remove-Item $tempFile -ErrorAction SilentlyContinue
     if ($command) {{
-        Invoke-Expression $command
+        Invoke-Expression $command.Trim()
     }}
 }}
 
