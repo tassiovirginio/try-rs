@@ -44,17 +44,17 @@ A blazing fast, Rust-based workspace manager for your temporary experiments.
 | **Folder Move**          | Move experiments to different directories within the TUI (`Alt+M`)                     |
 | **Tabs**                 | Multiple workspaces in tabs (`←` `→` to switch).                                       |
 | **Configurable**         | Supports XDG Base Directory (view section [Configuration](#configuration)).            |
-| **Multi-Shell Support**  | Supports Fish, Zsh, Bash, Power Shell and Nushell.                                     |
+| **Multi-Shell Support**  | Supports Fish, Zsh, Bash, PowerShell and Nushell.                                     |
 | **Inline Picker**        | Adds support for a non-fullscreen picker.                                                 |
 | **Multi-OS Support**     | Supports Linux, macOS and Windows.                                                     |
 | **Shell Tab Completion** | Dynamic tab completion for directory names from your tries path.                       |
-| **Icons Identification** | Supports icons identification projects (` 󰬔     `).                              |
+| **Icons Identification** | Supports icon identification for projects (` 󰬔     `).                              |
 
 ## Installation
 
 ### Prerequisites
 
-- A shell (Fish, Zsh, Bash, Power Shell or Nushell).
+- A shell (Fish, Zsh, Bash, PowerShell or Nushell).
 - A **Nerd Font** installed (required for icons like  and 🦀).
 
 ### Building from source
@@ -77,7 +77,7 @@ cargo install try-rs
 eget tassiovirginio/try-rs
 ```
 
-### Install in Archlinux
+### Install on Arch Linux
 
 ```bash
 yay -S try-rs-bin
@@ -386,7 +386,7 @@ You can also bypass the UI:
 | `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name (destination)       |
 | `try-rs -f <url>` / `try-rs --full-clone`     | Full clone (omit --depth 1) when cloning repositories               |
 | `try-rs -w <name>` / `try-rs --worktree`       | Create a git worktree from current repository (must be inside repo) |
-| `try-rs --setup <shell>`                       | Setup shell integration (fish, zsh, bash, nu-shell, power-shell)    |
+| `try-rs --setup <shell>`                       | Set up shell integration (fish, zsh, bash, nu-shell, power-shell)    |
 | `try-rs --setup-stdout <shell>`                | Print shell integration script to stdout (for manual setup)         |
 | `try-rs --completions <shell>`                 | Generate shell completion script for tab completion                 |
 | `try-rs --inline-picker [--inline-height <n>]` | Open the picker inline (non-fullscreen) in the current terminal     |
