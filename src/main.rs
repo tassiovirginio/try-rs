@@ -253,6 +253,7 @@ fn handle_clone(
     cmd.arg("clone");
     if !full_clone {
         cmd.arg("--depth").arg("1");
+        cmd.arg("--shallow-submodules");
     }
 
     let status = cmd

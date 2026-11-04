@@ -509,7 +509,7 @@ export extern try-rs [
     --setup: string
     --setup-stdout: string
     --completions: string
-    --shallow-clone(-s)
+    --full-clone(-f)
     --worktree(-w): string
 ]
 "#.to_string()
