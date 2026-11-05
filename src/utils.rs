@@ -8,6 +8,13 @@ use chrono::{Local, NaiveDate, NaiveDateTime};
 
 const DATE_PREFIX_FORMAT: &str = "%Y-%m-%d";
 
+/// Default separator placed between the date prefix and the name, and between
+/// the words of a multi-word name.
+pub const DEFAULT_NAME_SEPARATOR: &str = " ";
+
+/// Characters accepted between a date prefix and the rest of a folder name.
+const DATE_PREFIX_SEPARATORS: &[char] = &[' ', '-', '_', '.'];
+
 /// Checks if current directory is inside a git repository
 pub fn is_inside_git_repo<P: AsRef<Path>>(path: P) -> bool {
     Command::new("git")
@@ -159,11 +166,14 @@ pub fn get_free_disk_space_mb(_path: &Path) -> Option<u64> {
 /// Extract a `YYYY-MM-DD` date prefix from a directory name.
 ///
 /// Returns the parsed `SystemTime` and the remainder of the name when the
-/// name starts with a valid date followed by a space. Returns `None` if
-/// the name does not start with a date in the expected format.
+/// name starts with a valid date followed by a separator (space, `-`, `_` or
+/// `.`) and a non-empty name. Returns `None` otherwise.
 pub fn extract_prefix_date(name: &str) -> Option<(SystemTime, String)> {
-    let (lhs, rhs) = name.split_once(' ')?;
-    let naive_date = NaiveDate::parse_from_str(lhs, DATE_PREFIX_FORMAT).ok()?;
+    let (naive_date, rest) = NaiveDate::parse_and_remainder(name, DATE_PREFIX_FORMAT).ok()?;
+    let rhs = rest.strip_prefix(DATE_PREFIX_SEPARATORS)?;
+    if rhs.is_empty() {
+        return None;
+    }
     let dt: NaiveDateTime = naive_date.into();
     let dt_local = dt.and_local_timezone(Local).single()?;
     Some((dt_local.into(), rhs.into()))
@@ -177,6 +187,23 @@ pub fn generate_prefix_date(format: Option<&str>) -> String {
     let now = Local::now();
     let fmt = format.unwrap_or(DATE_PREFIX_FORMAT);
     now.format(fmt).to_string()
+}
+
+/// Join the words of a folder name with the configured separator.
+///
+/// With the default separator (a space) the name is returned unchanged.
+/// With any other separator, each run of whitespace is replaced by it, so
+/// `"aaa bbb  ccc"` becomes `"aaa-bbb-ccc"` with `"-"`.
+pub fn apply_name_separator(name: &str, separator: &str) -> String {
+    if separator == DEFAULT_NAME_SEPARATOR {
+        return name.to_string();
+    }
+    name.split_whitespace().collect::<Vec<_>>().join(separator)
+}
+
+/// Prepend today's date prefix to `name`, joined by `separator`.
+pub fn prefix_with_date(name: &str, format: Option<&str>, separator: &str) -> String {
+    format!("{}{}{}", generate_prefix_date(format), separator, name)
 }
 
 /// Calculate the total size of a directory tree in megabytes.

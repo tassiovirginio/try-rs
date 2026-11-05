@@ -513,6 +513,7 @@ def __try_rs_complete [context: string] {
 export extern try-rs [
     name_or_url?: string@__try_rs_complete
     destination?: string
+    ...words: string
     --setup: string
     --setup-stdout: string
     --completions: string

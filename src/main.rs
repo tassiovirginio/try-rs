@@ -29,7 +29,10 @@ use config::{AppConfig, load_configuration};
 use shell::{clear_shell_setup, generate_completions, get_shell_content, setup_shell};
 use tui::{App, run_app};
 
-use crate::utils::{SelectionResult, generate_prefix_date};
+use crate::utils::{
+    DEFAULT_NAME_SEPARATOR, SelectionResult, apply_name_separator, generate_prefix_date,
+    prefix_with_date,
+};
 
 /// Prints the cd/editor command to stdout for the shell wrapper to eval.
 fn print_cd_or_editor(path: &std::path::Path, open_editor: bool, editor_cmd: &Option<String>) {
@@ -129,6 +132,7 @@ fn handle_worktree(
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
     date_prefix_format: Option<&str>,
+    name_separator: &str,
 ) -> Result<()> {
     if !utils::is_inside_git_repo(".") {
         eprintln!("Error: Not inside a git repository.");
@@ -138,7 +142,7 @@ fn handle_worktree(
 
     let mut folder_name = branch_name.to_string();
     if Some(true) == apply_date_prefix {
-        folder_name = format!("{} {}", generate_prefix_date(date_prefix_format), folder_name);
+        folder_name = prefix_with_date(&folder_name, date_prefix_format, name_separator);
     }
 
     let new_path = tries_dir.join(&folder_name);
@@ -237,13 +241,16 @@ fn handle_clone(
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
     date_prefix_format: Option<&str>,
+    name_separator: &str,
     open_editor: bool,
     editor_cmd: &Option<String>,
 ) -> Result<()> {
     let repo_name = utils::extract_repo_name(url);
-    let mut folder_name = destination.unwrap_or(repo_name);
+    let mut folder_name = destination
+        .map(|d| apply_name_separator(&d, name_separator))
+        .unwrap_or(repo_name);
     if Some(true) == apply_date_prefix {
-        folder_name = format!("{} {}", generate_prefix_date(date_prefix_format), folder_name);
+        folder_name = prefix_with_date(&folder_name, date_prefix_format, name_separator);
     }
 
     let new_path = tries_dir.join(&folder_name);
@@ -279,13 +286,14 @@ fn handle_new_folder(
     tries_dir: &std::path::Path,
     apply_date_prefix: Option<bool>,
     date_prefix_format: Option<&str>,
+    name_separator: &str,
     open_editor: bool,
     editor_cmd: &Option<String>,
 ) -> Result<()> {
-    let mut new_name = name.to_string();
+    let mut new_name = apply_name_separator(name, name_separator);
     let date_prefix = generate_prefix_date(date_prefix_format);
     if Some(true) == apply_date_prefix && !new_name.starts_with(&date_prefix) {
-        new_name = format!("{date_prefix} {new_name}");
+        new_name = prefix_with_date(&new_name, date_prefix_format, name_separator);
     }
 
     let new_path = tries_dir.join(&new_name);
@@ -316,6 +324,7 @@ fn main() -> Result<()> {
         config_path,
         apply_date_prefix,
         date_prefix_format,
+        name_separator,
         transparent_background,
         show_disk,
         show_preview,
@@ -323,6 +332,8 @@ fn main() -> Result<()> {
         show_right_panel,
         right_panel_width,
     }: AppConfig = load_configuration();
+    let config_name_separator = name_separator.clone();
+    let name_separator = name_separator.unwrap_or_else(|| DEFAULT_NAME_SEPARATOR.to_string());
 
     let resolve_visibility = |cli_show: bool, cli_hide: bool, config_show: Option<bool>| -> bool {
         if !cli_hide {
@@ -372,7 +383,13 @@ fn main() -> Result<()> {
     }
 
     if let Some(ref worktree_branch_name) = cli.worktree {
-        handle_worktree(worktree_branch_name, &tries_dir, apply_date_prefix, date_prefix_format.as_deref())?;
+        handle_worktree(
+            worktree_branch_name,
+            &tries_dir,
+            apply_date_prefix,
+            date_prefix_format.as_deref(),
+            &name_separator,
+        )?;
         return Ok(());
     }
 
@@ -384,11 +401,34 @@ fn main() -> Result<()> {
     let mut open_editor = false;
     let mut selected_dir = tries_dirs[active_tab].clone();
 
-    let (matching_folders, query) = match &cli.name_or_url {
+    // Positional arguments: `<url> [destination]` when cloning, otherwise every
+    // word forms a single experiment name (`try-rs my cool idea`).
+    let (name_or_url, destination) = match &cli.name_or_url {
+        Some(first) if utils::is_git_url(first) => {
+            if !cli.words.is_empty() {
+                eprintln!(
+                    "Error: unexpected arguments after the destination: {}",
+                    cli.words.join(" ")
+                );
+                std::process::exit(1);
+            }
+            (Some(first.clone()), cli.destination.clone())
+        }
+        Some(first) => {
+            let words: Vec<&str> = std::iter::once(first.as_str())
+                .chain(cli.destination.as_deref())
+                .chain(cli.words.iter().map(String::as_str))
+                .collect();
+            (Some(apply_name_separator(&words.join(" "), &name_separator)), None)
+        }
+        None => (None, None),
+    };
+
+    let (matching_folders, query) = match &name_or_url {
         Some(name) => {
             let folder_name = if utils::is_git_url(name) {
                 let repo_name = utils::extract_repo_name(name);
-                &cli.destination.clone().unwrap_or(repo_name)
+                &destination.clone().unwrap_or(repo_name)
             } else {
                 name
             };
@@ -407,7 +447,7 @@ fn main() -> Result<()> {
         None => (Vec::<(PathBuf, String)>::new(), None),
     };
 
-    if let Some(name) = &cli.name_or_url
+    if let Some(name) = &name_or_url
         && matching_folders.len() <= 1
     {
         if matching_folders.is_empty() {
@@ -486,6 +526,7 @@ fn main() -> Result<()> {
             app.show_legend = show_legend;
             app.right_panel_visible = show_right_panel;
             app.right_panel_width = right_panel_width;
+            app.name_separator = config_name_separator;
             let res = run_app(&mut terminal, app);
 
             disable_raw_mode()?;
@@ -524,11 +565,12 @@ fn main() -> Result<()> {
             if utils::is_git_url(&selection) {
                 handle_clone(
                     &selection,
-                    cli.destination.clone(),
+                    destination.clone(),
                     cli.full_clone,
                     &selected_dir,
                     apply_date_prefix,
                     date_prefix_format.as_deref(),
+                    &name_separator,
                     open_editor,
                     &editor_cmd,
                 )?;
@@ -538,6 +580,7 @@ fn main() -> Result<()> {
                     &selected_dir,
                     apply_date_prefix,
                     date_prefix_format.as_deref(),
+                    &name_separator,
                     open_editor,
                     &editor_cmd,
                 )?;

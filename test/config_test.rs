@@ -18,6 +18,7 @@ save_config(
         &Some("code".to_string()),
         Some(true),
         None,
+        Some("-".to_string()),
         Some(false),
         Some(false),
         Some(true),
@@ -33,6 +34,7 @@ save_config(
     assert_eq!(loaded.theme.as_deref(), Some("Default"));
     assert_eq!(loaded.editor.as_deref(), Some("code"));
     assert_eq!(loaded.apply_date_prefix, Some(true));
+    assert_eq!(loaded.name_separator.as_deref(), Some("-"));
     assert_eq!(loaded.transparent_background, Some(false));
     assert_eq!(loaded.show_disk, Some(false));
     assert_eq!(loaded.show_preview, Some(true));
@@ -52,6 +54,7 @@ fn save_config_creates_parent_dirs() {
         &theme,
         &[PathBuf::from("/tmp/t")],
         &None,
+        None,
         None,
         None,
         None,
@@ -85,6 +88,7 @@ fn save_config_none_optionals() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -109,6 +113,7 @@ fn config_serialization_roundtrip() {
         editor: Some("nvim".to_string()),
         apply_date_prefix: Some(true),
         date_prefix_format: None,
+        name_separator: None,
         transparent_background: Some(true),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -199,6 +204,7 @@ fn save_config_preserves_theme_name() {
             None,
             None,
             None,
+            None,
         )
         .unwrap();
 
@@ -248,6 +254,7 @@ fn config_save_and_load_roundtrip() {
         &[PathBuf::from("~/tries")],
         &Some("nvim".to_string()),
         Some(true),
+        None,
         None,
         Some(true),
         Some(false),
@@ -308,6 +315,7 @@ fn config_preserve_booleans_exact() {
         editor: None,
         apply_date_prefix: Some(true),
         date_prefix_format: None,
+        name_separator: None,
         transparent_background: Some(false),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -340,6 +348,7 @@ fn config_with_empty_strings() {
         editor: Some("".to_string()),
         apply_date_prefix: None,
         date_prefix_format: None,
+        name_separator: None,
         transparent_background: None,
         show_disk: None,
         show_preview: None,
@@ -375,6 +384,7 @@ fn config_save_overwrites_existing() {
         None,
         None,
         None,
+        None,
     )
     .unwrap();
 
@@ -385,6 +395,7 @@ fn config_save_overwrites_existing() {
         &[PathBuf::from("/path2")],
         &Some("editor2".to_string()),
         Some(false),
+        None,
         None,
         Some(true),
         Some(true),
@@ -419,6 +430,7 @@ fn config_serialization_order() {
         editor: Some("vim".to_string()),
         apply_date_prefix: Some(true),
         date_prefix_format: None,
+        name_separator: None,
         transparent_background: Some(false),
         show_disk: Some(false),
         show_preview: Some(true),
@@ -499,6 +511,7 @@ fn config_handles_very_long_values() {
         editor: None,
         apply_date_prefix: None,
         date_prefix_format: None,
+        name_separator: None,
         transparent_background: None,
         show_disk: None,
         show_preview: None,

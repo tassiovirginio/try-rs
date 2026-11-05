@@ -478,3 +478,52 @@ fn generate_prefix_date_consistency() {
     assert!(date1.chars().nth(4).unwrap() == '-');
     assert!(date1.chars().nth(7).unwrap() == '-');
 }
+
+#[test]
+fn extract_prefix_date_with_dash_separator() {
+    let (_, rest) = extract_prefix_date("2024-06-15-my-project").unwrap();
+    assert_eq!(rest, "my-project");
+}
+
+#[test]
+fn extract_prefix_date_with_underscore_and_dot_separators() {
+    assert_eq!(extract_prefix_date("2024-06-15_idea").unwrap().1, "idea");
+    assert_eq!(extract_prefix_date("2024-06-15.idea").unwrap().1, "idea");
+}
+
+#[test]
+fn extract_prefix_date_rejects_missing_separator_or_name() {
+    assert!(extract_prefix_date("2024-06-15-").is_none());
+    assert!(extract_prefix_date("2024-06-15x").is_none());
+    assert!(extract_prefix_date("2024-06-151 project").is_none());
+}
+
+#[test]
+fn apply_name_separator_default_keeps_name() {
+    assert_eq!(apply_name_separator("aaa bbb  ccc", " "), "aaa bbb  ccc");
+}
+
+#[test]
+fn apply_name_separator_replaces_whitespace_runs() {
+    assert_eq!(apply_name_separator("aaa bbb  ccc", "-"), "aaa-bbb-ccc");
+    assert_eq!(apply_name_separator(" aaa\tbbb ", "_"), "aaa_bbb");
+    assert_eq!(apply_name_separator("single", "-"), "single");
+}
+
+#[test]
+fn prefix_with_date_uses_separator() {
+    let today = generate_prefix_date(None);
+    assert_eq!(prefix_with_date("idea", None, "-"), format!("{today}-idea"));
+    assert_eq!(prefix_with_date("idea", None, " "), format!("{today} idea"));
+}
+
+#[test]
+fn matching_folders_with_dash_separated_date() {
+    let tmp = TempDir::new("match-dash").unwrap();
+    let base = tmp.path();
+    std::fs::create_dir(base.join("2024-01-15-aaa-bbb")).unwrap();
+
+    let matches = matching_folders("aaa-bbb", &base.to_path_buf());
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].1, "2024-01-15-aaa-bbb");
+}

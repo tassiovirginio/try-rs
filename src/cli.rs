@@ -5,13 +5,20 @@ use clap::{Parser, ValueEnum};
 #[command(about = format!("🦀 try-rs {} 🦀\nA blazing fast, Rust-based workspace manager for your temporary experiments.", env!("CARGO_PKG_VERSION")), long_about = None)]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 pub struct Cli {
-    /// Create or jump to an experiment / Clone a git URL. Starts TUI if omitted
+    /// Create or jump to an experiment / Clone a git URL. Starts TUI if omitted.
+    /// Multiple words (`try-rs my cool idea`) form a single name, joined with
+    /// `name_separator` from the config (a space by default)
     #[arg(value_name = "NAME_OR_URL")]
     pub name_or_url: Option<String>,
 
-    /// Destination folder name when cloning a repository
+    /// Destination folder name when cloning a repository; otherwise the second
+    /// word of the experiment name
     #[arg(value_name = "DESTINATION")]
     pub destination: Option<String>,
+
+    /// Remaining words of a multi-word experiment name
+    #[arg(value_name = "WORDS", hide = true)]
+    pub words: Vec<String>,
 
     /// Generate shell integration code for the specified shell
     #[arg(long)]

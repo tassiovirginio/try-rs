@@ -240,3 +240,17 @@ fn cli_ssh_git_url() {
         Some("git@github.com:user/repo.git".to_string())
     );
 }
+
+#[test]
+fn cli_with_multiple_words() {
+    let cli = Cli::try_parse_from(["try-rs", "aaa", "bbb", "ccc", "ddd"]).unwrap();
+    assert_eq!(cli.name_or_url, Some("aaa".to_string()));
+    assert_eq!(cli.destination, Some("bbb".to_string()));
+    assert_eq!(cli.words, vec!["ccc".to_string(), "ddd".to_string()]);
+}
+
+#[test]
+fn cli_words_empty_by_default() {
+    let cli = Cli::try_parse_from(["try-rs", "aaa"]).unwrap();
+    assert!(cli.words.is_empty());
+}

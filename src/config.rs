@@ -14,6 +14,7 @@ pub struct Config {
     pub editor: Option<String>,
     pub apply_date_prefix: Option<bool>,
     pub date_prefix_format: Option<String>,
+    pub name_separator: Option<String>,
     pub transparent_background: Option<bool>,
     pub show_disk: Option<bool>,
     pub show_preview: Option<bool>,
@@ -95,6 +96,7 @@ pub struct AppConfig {
     pub config_path: Option<PathBuf>,
     pub apply_date_prefix: Option<bool>,
     pub date_prefix_format: Option<String>,
+    pub name_separator: Option<String>,
     pub transparent_background: Option<bool>,
     pub show_disk: Option<bool>,
     pub show_preview: Option<bool>,
@@ -126,6 +128,7 @@ pub fn load_configuration() -> AppConfig {
         .or_else(|| std::env::var("EDITOR").ok());
     let mut apply_date_prefix = None;
     let mut date_prefix_format = None;
+    let mut name_separator = None;
     let mut transparent_background = None;
     let mut show_disk = None;
     let mut show_preview = None;
@@ -158,6 +161,7 @@ pub fn load_configuration() -> AppConfig {
         }
         apply_date_prefix = config.apply_date_prefix;
         date_prefix_format = config.date_prefix_format;
+        name_separator = config.name_separator;
         transparent_background = config.transparent_background;
         show_disk = config.show_disk;
         show_preview = config.show_preview;
@@ -174,6 +178,7 @@ pub fn load_configuration() -> AppConfig {
         config_path: loaded_config_path,
         apply_date_prefix,
         date_prefix_format,
+        name_separator,
         transparent_background,
         show_disk,
         show_preview,
@@ -193,6 +198,7 @@ pub fn save_config(
     editor: &Option<String>,
     apply_date_prefix: Option<bool>,
     date_prefix_format: Option<String>,
+    name_separator: Option<String>,
     transparent_background: Option<bool>,
     show_disk: Option<bool>,
     show_preview: Option<bool>,
@@ -213,6 +219,7 @@ pub fn save_config(
         editor: editor.clone(),
         apply_date_prefix,
         date_prefix_format,
+        name_separator,
         transparent_background,
         show_disk,
         show_preview,

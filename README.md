@@ -257,6 +257,7 @@ tries_path = "~/Development/playground, ~/Experiments"
 editor = "code" # Optional: code, nvim, hx, etc.
 apply_date_prefix = true # optional, default is false
 date_prefix_format = "%Y-%m-%d" # optional, default is %Y-%m-%d (chrono format string)
+name_separator = "-" # optional, default is " " (separator between the date and the name, and between words)
 transparent_background = true # optional, default is true (uses terminal background)
 ```
 
@@ -382,6 +383,7 @@ You can also bypass the UI:
 | ---------------------------------------------- | ------------------------------------------------------------------- |
 | `try-rs`                                       | Opens the TUI                                                       |
 | `try-rs <name>`                                | Create (or jump to) a named experiment                              |
+| `try-rs <word> <word> ...`                     | Multi-word name, joined with `name_separator` (e.g. `aaa-bbb-ccc`)  |
 | `try-rs <https://github.com/user/repo>`        | Clones a repository into a dated folder                             |
 | `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name (destination)       |
 | `try-rs -f <url>` / `try-rs --full-clone`     | Full clone (omit --depth 1) when cloning repositories               |
