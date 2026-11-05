@@ -50,6 +50,12 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Install APT tooling
+        # apt-ftparchive (apt-utils) is no longer preinstalled on ubuntu-latest
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends apt-utils dpkg-dev
+
       - name: Create APT repository
         run: |
           mkdir -p apt-repo/dists/stable/main/binary-amd64
