@@ -203,18 +203,21 @@ function __try_rs_get_tries_path
     set -l config_paths "$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml"
     for config_path in $config_paths
         if test -f $config_path
-            # Try tries_path (supports single or multiple paths with comma)
-            set -l tries_path (command grep -E '^\s*tries_path\s*=' $config_path 2>/dev/null | command sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | command sed "s|~|$HOME|" | string trim)
-            if test -n "$tries_path"
-                # Check if it contains comma (multiple paths)
-                if echo "$tries_path" | command grep -q ","
-                    for path in (string split "," $tries_path)
-                        printf '%s\n' (string trim $path)
+            # Try tries_paths first, then tries_path (same order as try-rs itself).
+            # Both support single or multiple paths separated by comma.
+            for key in tries_paths tries_path
+                set -l tries_path (command grep -E "^[[:space:]]*"{$key}"[[:space:]]*=" $config_path 2>/dev/null | command sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | command sed "s|~|$HOME|g" | string trim)
+                if test -n "$tries_path"
+                    # Check if it contains comma (multiple paths)
+                    if echo "$tries_path" | command grep -q ","
+                        for path in (string split "," $tries_path)
+                            printf '%s\n' (string trim $path)
+                        end
+                    else
+                        printf '%s\n' $tries_path
                     end
-                else
-                    printf '%s\n' $tries_path
+                    return
                 end
-                return
             end
         end
     end
@@ -253,18 +256,22 @@ _try_rs_get_tries_path() {
     
     # Try to read from config file
     local config_paths=("$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml")
+    local config_path key tries_path
     for config_path in "${config_paths[@]}"; do
         if [[ -f "$config_path" ]]; then
-            # Try tries_path (supports single or multiple paths with comma)
-            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
-            if [[ -n "$tries_path" ]]; then
-                if [[ "$tries_path" == *","* ]]; then
-                    echo "$tries_path" | tr ',' '\n'
-                else
-                    echo "$tries_path"
+            # Try tries_paths first, then tries_path (same order as try-rs itself).
+            # Both support single or multiple paths separated by comma.
+            for key in tries_paths tries_path; do
+                tries_path=$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|g" | tr -d '[:space:]')
+                if [[ -n "$tries_path" ]]; then
+                    if [[ "$tries_path" == *","* ]]; then
+                        echo "$tries_path" | tr ',' '\n'
+                    else
+                        echo "$tries_path"
+                    fi
+                    return
                 fi
-                return
-            fi
+            done
         fi
     done
     
@@ -304,18 +311,22 @@ _try_rs_get_tries_path() {
     
     # Try to read from config file
     local config_paths=("$HOME/.config/try-rs/config.toml" "$HOME/.try-rs/config.toml")
+    local config_path key tries_path
     for config_path in "${config_paths[@]}"; do
         if [[ -f "$config_path" ]]; then
-            # Try tries_path (supports single or multiple paths with comma)
-            local tries_path=$(grep -E '^[[:space:]]*tries_path[[:space:]]*=' "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|" | tr -d '[:space:]')
-            if [[ -n "$tries_path" ]]; then
-                if [[ "$tries_path" == *","* ]]; then
-                    echo "$tries_path" | tr ',' '\n'
-                else
-                    echo "$tries_path"
+            # Try tries_paths first, then tries_path (same order as try-rs itself).
+            # Both support single or multiple paths separated by comma.
+            for key in tries_paths tries_path; do
+                tries_path=$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "$config_path" 2>/dev/null | sed -E 's/.*=[[:space:]]*"?([^"]*)"?.*/\1/' | sed "s|~|$HOME|g" | tr -d '[:space:]')
+                if [[ -n "$tries_path" ]]; then
+                    if [[ "$tries_path" == *","* ]]; then
+                        echo "$tries_path" | tr ',' '\n'
+                    else
+                        echo "$tries_path"
+                    fi
+                    return
                 fi
-                return
-            fi
+            done
         fi
     done
     
@@ -325,16 +336,14 @@ _try_rs_get_tries_path() {
 
 _try_rs_complete() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local tries_paths=$(_try_rs_get_tries_path)
     local dirs=""
-    
-    # Split by comma if multiple paths
-    IFS=',' read -ra PATH_ARRAY <<< "$tries_paths"
-    
-    for tries_path in "${PATH_ARRAY[@]}"; do
+    local tries_path dir
+
+    # _try_rs_get_tries_path prints one path per line
+    while IFS= read -r tries_path; do
         # Trim whitespace
         tries_path=$(echo "$tries_path" | xargs)
-        
+
         if [[ -d "$tries_path" ]]; then
             # Get list of directories
             while IFS= read -r dir; do
@@ -343,7 +352,7 @@ _try_rs_complete() {
                 fi
             done < <(ls -1 "$tries_path" 2>/dev/null)
         fi
-    done
+    done < <(_try_rs_get_tries_path)
     
     COMPREPLY=($(compgen -W "$dirs" -- "$cur"))
 }
@@ -367,11 +376,15 @@ Register-ArgumentCompleter -CommandName try-rs -ScriptBlock {
         foreach ($configPath in $configPaths) {
             if (Test-Path $configPath) {
                 $content = Get-Content $configPath -Raw
-                # Try tries_path (supports single or multiple paths with comma)
-                if ($content -match 'tries_path\s*=\s*["'']?([^"'']+)["'']?') {
-                    $triesPaths = $matches[1].Replace('~', $env:USERPROFILE).Trim()
-                    break
+                # Try tries_paths first, then tries_path (same order as try-rs itself).
+                # Both support single or multiple paths separated by comma.
+                foreach ($key in @('tries_paths', 'tries_path')) {
+                    if ($content -match ('(?m)^\s*' + $key + '\s*=\s*["'']?([^"''\r\n]+)["'']?')) {
+                        $triesPaths = $matches[1].Replace('~', $env:USERPROFILE).Trim()
+                        break
+                    }
                 }
+                if ($triesPaths) { break }
             }
         }
     }
@@ -421,18 +434,12 @@ export def __try_rs_get_tries_paths [] {
     
     for config_path in $config_paths {
         if ($config_path | path exists) {
-            let content = (open $config_path | str trim)
-            # Try tries_path (supports single or multiple paths with comma)
-            if ($content =~ 'tries_path\\s*=\\s*"?([^"]+)"?') {
-                let path = ($content | parse -r 'tries_path\\s*=\\s*"?([^"]+)"?' | get capture0.0? | default "")
-                if ($path | is-not-empty) {
-                    # Check if contains comma (multiple paths)
-                    if ($path | str contains ",") {
-                        return ($path | split row "," | each { |s| ($s | str trim | str replace "~" $env.HOME) })
-                    else
-                        return ([($path | str replace "~" $env.HOME)])
-                    }
-                }
+            let config = (open $config_path)
+            # Try tries_paths first, then tries_path (same order as try-rs itself).
+            # Both support single or multiple paths separated by comma.
+            let path = ($config.tries_paths? | default ($config.tries_path? | default ""))
+            if ($path | is-not-empty) {
+                return ($path | split row "," | each { |s| ($s | str trim | str replace "~" $env.HOME) } | where { |s| $s | is-not-empty })
             }
         }
     }
@@ -467,39 +474,39 @@ pub fn get_completion_script_only(shell: &Shell) -> String {
             r#"# try-rs tab completion for directory names
 # Add this to your Nushell config
 
-def __try_rs_get_tries_path [] {
+def __try_rs_get_tries_paths [] {
     if ($env.TRY_PATH? | is-not-empty) {
-        return $env.TRY_PATH
+        return ($env.TRY_PATH | split row "," | each { |s| $s | str trim })
     }
-    
+
     let config_paths = [
         ($env.HOME | path join ".config" "try-rs" "config.toml"),
         ($env.HOME | path join ".try-rs" "config.toml")
     ]
-    
+
     for config_path in $config_paths {
         if ($config_path | path exists) {
-            let content = (open $config_path | str trim)
-            if ($content =~ 'tries_path\\s*=\\s*"?([^"]+)"?') {
-                let path = ($content | parse -r 'tries_path\\s*=\\s*"?([^"]+)"?' | get capture0.0? | default "")
-                if ($path | is-not-empty) {
-                    return ($path | str replace "~" $env.HOME)
-                }
+            let config = (open $config_path)
+            # Try tries_paths first, then tries_path (same order as try-rs itself)
+            let path = ($config.tries_paths? | default ($config.tries_path? | default ""))
+            if ($path | is-not-empty) {
+                return ($path | split row "," | each { |s| ($s | str trim | str replace "~" $env.HOME) } | where { |s| $s | is-not-empty })
             }
         }
     }
-    
-    ($env.HOME | path join "work" "tries")
+
+    [($env.HOME | path join "work" "tries")]
 }
 
 def __try_rs_complete [context: string] {
-    let tries_path = (__try_rs_get_tries_path)
-    
-    if ($tries_path | path exists) {
-        ls $tries_path | where type == "dir" | get name | path basename
-    } else {
-        []
+    mut all_dirs = []
+    for tries_path in (__try_rs_get_tries_paths) {
+        if ($tries_path | path exists) {
+            let dirs = (ls $tries_path | where type == "dir" | get name | path basename)
+            $all_dirs = ($all_dirs | append $dirs)
+        }
     }
+    $all_dirs
 }
 
 # Register completion
