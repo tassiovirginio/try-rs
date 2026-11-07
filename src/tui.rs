@@ -271,7 +271,11 @@ impl App {
             original_transparent_background: None,
             config_path,
             config_location_state: ListState::default(),
-            cached_free_space_mb: if show_disk { utils::get_free_disk_space_mb(&path) } else { None },
+            cached_free_space_mb: if show_disk {
+                utils::get_free_disk_space_mb(&path)
+            } else {
+                None
+            },
             folder_size_mb: Arc::new(AtomicU64::new(0)),
             rename_input: String::new(),
             move_folder_state: ListState::default(),
@@ -495,7 +499,7 @@ impl App {
             return;
         }
 
-        if let Err(e) = fs::rename(&old_path, &new_path) {
+        if let Err(e) = utils::move_workspace(&old_path, &new_path) {
             self.status_message = Some(format!("Error renaming: {}", e));
             self.mode = AppMode::Normal;
             return;
@@ -733,7 +737,11 @@ fn draw_move_folder_select(f: &mut Frame, app: &mut App) {
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| p.to_string_lossy().to_string());
-            let marker = if i == app.active_tab { " (current)" } else { "" };
+            let marker = if i == app.active_tab {
+                " (current)"
+            } else {
+                ""
+            };
             ListItem::new(format!("{}{}", name, marker))
                 .style(Style::default().fg(app.theme.list_highlight_fg))
         })
@@ -929,10 +937,7 @@ pub fn run_app(
             let content_with_tabs = if show_tabs {
                 Layout::default()
                     .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Min(1),
-                        Constraint::Length(tab_height),
-                    ])
+                    .constraints([Constraint::Min(1), Constraint::Length(tab_height)])
                     .split(chunks[0])
             } else {
                 Rc::new([chunks[0], chunks[0]])
@@ -941,14 +946,15 @@ pub fn run_app(
             let content_chunks = Layout::default()
                 .direction(Direction::Horizontal)
                 .constraints(content_constraints)
-                .split(if show_tabs { content_with_tabs[0] } else { chunks[0] });
+                .split(if show_tabs {
+                    content_with_tabs[0]
+                } else {
+                    chunks[0]
+                });
 
             let left_chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Length(3),
-                    Constraint::Min(1),
-                ])
+                .constraints([Constraint::Length(3), Constraint::Min(1)])
                 .split(content_chunks[0]);
 
             if show_tabs {
@@ -957,7 +963,8 @@ pub fn run_app(
                     .iter()
                     .enumerate()
                     .map(|(i, p)| {
-                        let name = p.file_name()
+                        let name = p
+                            .file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| p.to_string_lossy().to_string());
                         if i == app.active_tab {
@@ -972,7 +979,7 @@ pub fn run_app(
                         }
                     })
                     .collect();
-                
+
                 let tab_line = Paragraph::new(Line::from(tab_names))
                     .style(Style::default().fg(app.theme.helpers_colors))
                     .alignment(Alignment::Left);
@@ -1557,8 +1564,7 @@ pub fn run_app(
                                 app.move_folder_state.select(Some(0));
                                 app.mode = AppMode::MoveFolder;
                             } else {
-                                app.status_message =
-                                    Some("No folder selected to move".to_string());
+                                app.status_message = Some("No folder selected to move".to_string());
                             }
                         } else if matches!(c, 'p')
                             && key.modifiers.contains(event::KeyModifiers::ALT)
@@ -1902,11 +1908,9 @@ pub fn run_app(
                                 let src = app.base_path.join(&name);
                                 let dst = app.tries_dirs[target_idx].join(&name);
                                 if src.exists() && dst.exists() {
-                                    app.status_message = Some(format!(
-                                        "Folder '{}' already exists in target",
-                                        name
-                                    ));
-                                } else if let Err(e) = fs::rename(&src, &dst) {
+                                    app.status_message =
+                                        Some(format!("Folder '{}' already exists in target", name));
+                                } else if let Err(e) = utils::move_workspace(&src, &dst) {
                                     app.status_message =
                                         Some(format!("Error moving folder: {}", e));
                                 } else {

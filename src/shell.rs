@@ -18,8 +18,11 @@ const FISH_PICKER_FUNCTION: &str = r#"function try-rs-picker
         printf "\n"
     end
 
-    set command (command try-rs $picker_args | string collect)
+    set command (TRY_RS_SHELL=fish command try-rs $picker_args | string collect; test $pipestatus[1] -eq 0)
     set command_status $status
+    if test $command_status -ne 0
+        return $command_status
+    end
 
     if test $command_status -eq 0; and test -n "$command"
         eval $command
@@ -40,9 +43,9 @@ pub fn get_shell_content(shell: &Shell) -> String {
         Shell::Fish => {
             format!(
                 r#"function try-rs
-    # Pass flags/options directly to stdout without capturing
+    # Output-only commands bypass capture; workspace options still navigate.
     for arg in $argv
-        if string match -q -- '-*' $arg
+        if string match -q -- '--help' $arg; or contains -- $arg -h --version -V --setup --setup-stdout --setup-clear --completions
             command try-rs $argv
             return
         end
@@ -50,8 +53,11 @@ pub fn get_shell_content(shell: &Shell) -> String {
 
     # Captures the output of the binary (stdout) which is the "cd" command
     # The TUI is rendered on stderr, so it doesn't interfere.
-    set command (command try-rs $argv | string collect)
+    set command (TRY_RS_SHELL=fish command try-rs $argv | string collect; test $pipestatus[1] -eq 0)
     set command_status $status
+    if test $command_status -ne 0
+        return $command_status
+    end
 
     if test $command_status -eq 0; and test -n "$command"
         eval $command
@@ -67,17 +73,17 @@ end
         Shell::Zsh => {
             format!(
                 r#"try-rs() {{
-    # Pass flags/options directly to stdout without capturing
+    # Output-only commands bypass capture; workspace options still navigate.
     for arg in "$@"; do
         case "$arg" in
-            -*) command try-rs "$@"; return ;;
+            -h|--help|-V|--version|--setup|--setup-stdout|--setup-clear|--completions) command try-rs "$@"; return ;;
         esac
     done
 
     # Captures the output of the binary (stdout) which is the "cd" command
     # The TUI is rendered on stderr, so it doesn't interfere.
     local output
-    output=$(command try-rs "$@")
+    output=$(TRY_RS_SHELL=bash command try-rs "$@") || return $?
 
     if [ -n "$output" ]; then
         eval "$output"
@@ -90,17 +96,17 @@ end
         Shell::Bash => {
             format!(
                 r#"try-rs() {{
-    # Pass flags/options directly to stdout without capturing
+    # Output-only commands bypass capture; workspace options still navigate.
     for arg in "$@"; do
         case "$arg" in
-            -*) command try-rs "$@"; return ;;
+            -h|--help|-V|--version|--setup|--setup-stdout|--setup-clear|--completions) command try-rs "$@"; return ;;
         esac
     done
 
     # Captures the output of the binary (stdout) which is the "cd" command
     # The TUI is rendered on stderr, so it doesn't interfere.
     local output
-    output=$(command try-rs "$@")
+    output=$(TRY_RS_SHELL=bash command try-rs "$@") || return $?
 
     if [ -n "$output" ]; then
         eval "$output"
@@ -114,10 +120,12 @@ end
             format!(
                 r#"# try-rs integration for PowerShell
 function try-rs {{
-    # Pass flags/options directly to stdout without capturing
+    $binaryName = if ([Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT) {{ 'try-rs.exe' }} else {{ 'try-rs' }}
+    $binary = (Get-Command $binaryName -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+    # Output-only commands bypass capture; workspace options still navigate.
     foreach ($a in $args) {{
-        if ($a -like '-*') {{
-            & try-rs.exe @args
+        if ($a -in @('-h', '--help', '-V', '--version', '--setup', '--setup-stdout', '--setup-clear', '--completions')) {{
+            & $binary @args
             return
         }}
     }}
@@ -130,10 +138,21 @@ function try-rs {{
     # kernel-level handle redirect set up before the process starts, so it
     # is not affected by console mode changes.
     $tempFile = [System.IO.Path]::GetTempFileName()
-    try-rs.exe @args > $tempFile
-    $command = Get-Content $tempFile -Raw
-    Remove-Item $tempFile -ErrorAction SilentlyContinue
-    if ($command) {{
+    $previousShell = $env:TRY_RS_SHELL
+    $previousEncoding = [Console]::OutputEncoding
+    try {{
+        $env:TRY_RS_SHELL = 'powershell'
+        # Windows PowerShell 5.1 decodes native stdout using the console code page.
+        [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+        & $binary @args > $tempFile
+        $commandStatus = $LASTEXITCODE
+        $command = Get-Content $tempFile -Raw
+    }} finally {{
+        [Console]::OutputEncoding = $previousEncoding
+        $env:TRY_RS_SHELL = $previousShell
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+    }}
+    if ($commandStatus -eq 0 -and $command) {{
         Invoke-Expression $command.Trim()
     }}
 }}
@@ -149,19 +168,19 @@ function try-rs {{
 ] {{
     let all_args = (if $name_or_url == null {{ [] }} else {{ [$name_or_url] }} | append $args)
 
-    # Pass flags/options directly to stdout without capturing
-    if ($all_args | any {{ |arg| $arg | str starts-with '-' }}) {{
+    # Output-only commands bypass capture; workspace options still navigate.
+    if ($all_args | any {{ |arg| $arg in ['-h' '--help' '-V' '--version' '--setup' '--setup-stdout' '--setup-clear' '--completions'] }}) {{
         ^try-rs ...$all_args
         return
     }}
 
     # Capture output. Stderr (TUI) goes directly to terminal.
-    let output = (^try-rs ...$all_args | str trim)
+    let output = (with-env {{ TRY_RS_SHELL: "nu" }} {{ ^try-rs ...$all_args }} | str trim)
 
     if ($output | is-not-empty) {{
         if ($output | str starts-with "cd ") {{
-            # Grabs the path out of stdout returned by the binary and removes the single quotes
-            let path = ($output | str replace --regex '^cd ' '' | str replace --all "'" "" | str replace --all '"' "")
+            # The cd payload is a literal path; never evaluate it as code.
+            let path = ($output | str replace --regex '^cd ' '')
             if ($path | path exists) {{
                 cd $path
             }}
@@ -776,7 +795,7 @@ pub fn clear_shell_setup() -> Result<()> {
     }
 
     eprintln!("Detected shells: {:?}\n", installed_shells);
-    
+
     eprintln!("Files to be removed:");
 
     for shell in &installed_shells {
@@ -829,12 +848,14 @@ fn clear_shell_config(shell: &Shell) -> Result<()> {
     let rc_files = match shell {
         Shell::Zsh => vec![home_dir.join(".zshrc")],
         Shell::Bash => vec![home_dir.join(".bashrc")],
-        Shell::NuShell => vec![dirs::config_dir()
-            .expect("Could not find config directory")
-            .join("nushell")
-            .join("config.nu")],
+        Shell::NuShell => vec![
+            dirs::config_dir()
+                .expect("Could not find config directory")
+                .join("nushell")
+                .join("config.nu"),
+        ],
         Shell::PowerShell => {
-             let profile_path_ps7 = home_dir
+            let profile_path_ps7 = home_dir
                 .join("Documents")
                 .join("PowerShell")
                 .join("Microsoft.PowerShell_profile.ps1");
@@ -843,7 +864,7 @@ fn clear_shell_config(shell: &Shell) -> Result<()> {
                 .join("WindowsPowerShell")
                 .join("Microsoft.PowerShell_profile.ps1");
             vec![profile_path_ps7, profile_path_ps5]
-        },
+        }
         _ => vec![],
     };
 
@@ -862,12 +883,14 @@ fn remove_source_from_rc(rc_path: &std::path::Path) -> Result<()> {
     if content.contains("try-rs") {
         let mut lines: Vec<String> = content.lines().map(|s| s.to_string()).collect();
         let initial_count = lines.len();
-        
+
         // Remove lines containing try-rs integration marker or typical source commands
         lines.retain(|line| {
-            !line.contains("# try-rs integration") && 
-            !(line.contains("source") && line.contains("try-rs")) &&
-            !(line.contains(".") && line.contains("try-rs") && rc_path.extension().map_or(false, |ext| ext == "ps1"))
+            !line.contains("# try-rs integration")
+                && !(line.contains("source") && line.contains("try-rs"))
+                && !(line.contains(".")
+                    && line.contains("try-rs")
+                    && rc_path.extension().map_or(false, |ext| ext == "ps1"))
         });
 
         if lines.len() < initial_count {
@@ -908,4 +931,3 @@ fn get_shell_config_paths(shell: &Shell) -> Vec<PathBuf> {
 
     paths
 }
-

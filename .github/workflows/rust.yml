@@ -27,5 +27,15 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
-      - name: Check Windows build
-        run: cargo check --target x86_64-pc-windows-msvc --verbose --locked
+      - name: Install Nushell
+        shell: pwsh
+        run: |
+          $nuVersion = "0.116.1"
+          $archive = Join-Path $env:RUNNER_TEMP "nushell.zip"
+          $directory = Join-Path $env:RUNNER_TEMP "nushell"
+          Invoke-WebRequest "https://github.com/nushell/nushell/releases/download/$nuVersion/nu-$nuVersion-x86_64-pc-windows-msvc.zip" -OutFile $archive
+          Expand-Archive $archive $directory
+          $nu = Get-ChildItem $directory -Filter nu.exe -Recurse | Select-Object -First 1
+          $nu.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Run Windows tests
+        run: cargo test --target x86_64-pc-windows-msvc --verbose --locked --no-fail-fast

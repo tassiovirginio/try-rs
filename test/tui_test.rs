@@ -248,7 +248,7 @@ fn app_new_with_query() {
     std::fs::create_dir(tmp.path().join("beta")).unwrap();
 
     let theme = Theme::default();
-let app = App::new(
+    let app = App::new(
         tmp.path().to_path_buf(),
         theme,
         None,

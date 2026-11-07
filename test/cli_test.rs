@@ -91,12 +91,8 @@ fn cli_completions_flag() {
 
 #[test]
 fn cli_full_clone_flag() {
-    let cli = Cli::try_parse_from([
-        "try-rs",
-        "--full-clone",
-        "https://github.com/user/repo.git",
-    ])
-    .unwrap();
+    let cli = Cli::try_parse_from(["try-rs", "--full-clone", "https://github.com/user/repo.git"])
+        .unwrap();
     assert!(cli.full_clone);
 }
 

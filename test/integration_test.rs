@@ -1,6 +1,6 @@
 use std::{
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Command, ExitStatus},
 };
 
@@ -9,6 +9,34 @@ use std::os::unix::process::ExitStatusExt;
 
 use chrono::Local;
 use tempdir::TempDir;
+
+fn cd_command(path: &Path) -> String {
+    if cfg!(windows) {
+        format!(
+            "Set-Location -LiteralPath '{}'",
+            path.display().to_string().replace('\'', "''")
+        )
+    } else {
+        format!("cd '{}'", path.display())
+    }
+}
+
+fn listed_worktrees(output: &str) -> Vec<PathBuf> {
+    output
+        .lines()
+        .filter_map(|line| line.strip_prefix("worktree "))
+        .map(PathBuf::from)
+        .map(|path| path.canonicalize().unwrap())
+        .collect()
+}
+
+fn path_config(path: &Path) -> String {
+    toml::to_string(&std::collections::BTreeMap::from([(
+        "tries_path",
+        path.to_string_lossy().into_owned(),
+    )]))
+    .unwrap()
+}
 
 #[test]
 fn shows_help() {
@@ -73,7 +101,7 @@ fn new_name() {
     // then
     let expected_dir = h.tries_path().join("foo");
     assert_eq!(
-        format!("cd '{}'", expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -94,7 +122,7 @@ fn exact_folder_exists() {
     // then
     let expected_dir = h.tries_path().join(existing);
     assert_eq!(
-        format!("cd '{}'", expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -113,7 +141,7 @@ fn folder_with_date_exists() {
     // then
     let expected_dir = h.tries_path().join(name);
     assert_eq!(
-        format!("cd '{}'", expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -133,7 +161,7 @@ fn new_name_with_date() {
         .tries_path()
         .join(format!("{} {}", Local::now().format("%Y-%m-%d"), name));
     assert_eq!(
-        format!("cd '{}'", expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -153,7 +181,7 @@ fn checkout_git_with_destination() {
     assert!(p.status.success());
     let expected_dir = h.tries_path().join("foo");
     assert_eq!(
-        format!("cd '{}'", &expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -182,7 +210,7 @@ fn checkout_git_without_destination() {
     assert!(p.status.success());
     let expected_dir = h.tries_path().join(EXISTING_GIT_REPO_NAME);
     assert_eq!(
-        format!("cd '{}'", expected_dir.display()),
+        cd_command(&expected_dir),
         p.stdout.trim(),
         "printed command is correct"
     );
@@ -223,11 +251,7 @@ fn new_worktree() {
     // then
     let expected_dir = h.tries_path().join("my-brand-new-feature");
     assert!(output.status.success());
-    assert!(
-        output
-            .stdout
-            .contains(&format!("cd '{}'", expected_dir.display()))
-    );
+    assert!(output.stdout.contains(&cd_command(&expected_dir)));
     assert!(expected_dir.exists());
     assert!(expected_dir.is_dir());
     assert!(
@@ -235,16 +259,18 @@ fn new_worktree() {
             .stderr
             .starts_with("Creating worktree 'my-brand-new-feature'")
     );
-    let git_status = command(&expected_dir, "git", &["worktree", "list"]).unwrap();
+    let git_status = command(&expected_dir, "git", &["worktree", "list", "--porcelain"]).unwrap();
     assert!(
         git_status.status.success(),
         "new directory should be a git repo"
     );
-    let canonical_expected_dir = expected_dir.canonicalize().unwrap_or(expected_dir);
-    assert!(git_status.stdout.lines().any(|line| {
-        line.starts_with(&format!("{}", canonical_expected_dir.display()))
-            && line.ends_with("[my-brand-new-feature]")
-    }));
+    assert!(listed_worktrees(&git_status.stdout).contains(&expected_dir.canonicalize().unwrap()));
+    assert!(
+        git_status
+            .stdout
+            .lines()
+            .any(|line| line == "branch refs/heads/my-brand-new-feature")
+    );
 }
 
 const EXISTING_GIT_REPO_NAME: &str = "git-origin";
@@ -325,10 +351,7 @@ impl Harness {
         let dir = TempDir::new("try-test").expect("couldn't generate temp directory for test");
 
         let mut config = String::new();
-        config.push_str(&format!(
-            "tries_path = \"{}\"\n",
-            dir.path().join("tries").display()
-        ));
+        config.push_str(&path_config(&dir.path().join("tries")));
         if with_date_prefix {
             config.push_str("apply_date_prefix = true\n");
         }
@@ -477,7 +500,10 @@ fn existing_folder_cd_does_not_recreate() {
 
     let p = h.run_try(&["already"]);
 
-    assert!(p.stdout.contains("cd"));
+    assert!(
+        p.stdout
+            .contains(&cd_command(&h.tries_path().join("already")))
+    );
     // Marker file should still be there (folder wasn't recreated)
     assert!(h.tries_path().join("already").join("marker.txt").exists());
 }
@@ -485,10 +511,7 @@ fn existing_folder_cd_does_not_recreate() {
 #[test]
 fn config_with_editor_field() {
     let dir = TempDir::new("try-editor-test").unwrap();
-    let config = format!(
-        "tries_path = \"{}\"\neditor = \"vim\"\n",
-        dir.path().join("tries").display()
-    );
+    let config = path_config(&dir.path().join("tries")) + "editor = \"vim\"\n";
     fs::write(dir.path().join("config.toml"), config).unwrap();
 
     let p = Command::new("cargo")
@@ -506,10 +529,7 @@ fn config_with_editor_field() {
 #[test]
 fn config_with_theme() {
     let dir = TempDir::new("try-theme-test").unwrap();
-    let config = format!(
-        "tries_path = \"{}\"\ntheme = \"Dracula\"\n",
-        dir.path().join("tries").display()
-    );
+    let config = path_config(&dir.path().join("tries")) + "theme = \"Dracula\"\n";
     fs::write(dir.path().join("config.toml"), config).unwrap();
 
     let p = Command::new("cargo")
@@ -521,16 +541,16 @@ fn config_with_theme() {
         .expect("failed to spawn");
 
     let output = String::from_utf8(p.stdout).unwrap();
-    assert!(output.contains("cd"), "should produce cd command");
+    assert!(
+        output.contains(if cfg!(windows) { "Set-Location" } else { "cd" }),
+        "should produce navigation command"
+    );
 }
 
 #[test]
 fn config_with_invalid_theme_falls_back() {
     let dir = TempDir::new("try-bad-theme").unwrap();
-    let config = format!(
-        "tries_path = \"{}\"\ntheme = \"NonExistentTheme\"\n",
-        dir.path().join("tries").display()
-    );
+    let config = path_config(&dir.path().join("tries")) + "theme = \"NonExistentTheme\"\n";
     fs::write(dir.path().join("config.toml"), config).unwrap();
 
     let p = Command::new("cargo")
@@ -543,7 +563,10 @@ fn config_with_invalid_theme_falls_back() {
 
     let output = String::from_utf8(p.stdout).unwrap();
     // Should still work, just using default theme
-    assert!(output.contains("cd"), "should still produce cd command");
+    assert!(
+        output.contains(if cfg!(windows) { "Set-Location" } else { "cd" }),
+        "should still produce navigation command"
+    );
 }
 
 #[test]
@@ -563,4 +586,368 @@ fn try_path_env_overrides_config() {
             .contains(&override_dir.path().to_string_lossy().to_string()),
         "TRY_PATH env should override config tries_path"
     );
+}
+
+#[test]
+fn empty_workspace_configuration_falls_back_without_panicking() {
+    const CHILD: &str = "TRY_RS_EMPTY_CONFIG_TEST_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        let config = try_rs::config::load_configuration();
+        assert_eq!(
+            config.tries_dirs,
+            vec![dirs::home_dir().unwrap().join("work").join("tries")]
+        );
+        return;
+    }
+    for paths in ["", " , , "] {
+        let h = Harness::new(false);
+        fs::write(
+            h.dir.path().join("config.toml"),
+            format!("tries_path = {paths:?}\n"),
+        )
+        .unwrap();
+        let p = h.run_try(&["--setup-stdout", "bash"]);
+        assert!(p.status.success(), "{}", p.stderr);
+        let p = Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "empty_workspace_configuration_falls_back_without_panicking",
+            ])
+            .env(CHILD, "1")
+            .env("TRY_CONFIG_DIR", h.dir.path())
+            .env_remove("TRY_PATH")
+            .output()
+            .unwrap();
+        assert!(
+            p.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&p.stdout),
+            String::from_utf8_lossy(&p.stderr)
+        );
+    }
+}
+
+#[test]
+fn failed_clone_returns_failure_and_no_shell_command() {
+    let h = Harness::new(false);
+    let missing = h.dir.path().join("missing.git");
+    let p = h.run_try(&[missing.to_str().unwrap()]);
+    assert!(!p.status.success());
+    assert!(p.stdout.is_empty());
+    assert!(p.stderr.contains("Failed to clone"));
+}
+
+#[cfg(unix)]
+#[test]
+fn wrappers_navigate_with_flags_and_treat_path_as_data() {
+    for shell in ["bash", "zsh", "fish"] {
+        if Command::new(shell).arg("--version").output().is_err() {
+            continue;
+        }
+        let h = Harness::new(false);
+        let bin_dir = h.dir.path().join("bin");
+        fs::create_dir(&bin_dir).unwrap();
+        std::os::unix::fs::symlink(env!("CARGO_BIN_EXE_try-rs"), bin_dir.join("try-rs")).unwrap();
+        let script = h.run_try(&["--setup-stdout", shell]);
+        let init = h.dir.path().join("init");
+        fs::write(&init, script.stdout).unwrap();
+        let name = "O'Brien; $(touch INJECTED) \\ test\nnext";
+        // Pass the name via an environment variable, never shell source.
+        let code = format!(
+            "source '{}'; try-rs --hide-disk \"$TRY_TEST_NAME\"; pwd",
+            init.display()
+        );
+        let result = Command::new(shell)
+            .args(match shell {
+                "fish" => vec!["--no-config"],
+                "zsh" => vec!["-f"],
+                _ => vec!["--noprofile", "--norc"],
+            })
+            .arg("-c")
+            .arg(code)
+            .current_dir(h.dir.path())
+            .env("TRY_TEST_NAME", name)
+            .env("TRY_CONFIG_DIR", h.dir.path())
+            .env_remove("TRY_PATH")
+            .env(
+                "PATH",
+                format!("{}:{}", bin_dir.display(), std::env::var("PATH").unwrap()),
+            )
+            .env("SHELL", shell)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout).trim(),
+            h.tries_path().join(name).to_str().unwrap(),
+            "{shell}"
+        );
+        assert!(!h.dir.path().join("INJECTED").exists());
+        let result = Command::new(shell)
+            .args(match shell {
+                "fish" => vec!["--no-config"],
+                "zsh" => vec!["-f"],
+                _ => vec!["--noprofile", "--norc"],
+            })
+            .args([
+                "-c",
+                &format!(
+                    "source '{}'; try-rs /nonexistent/review-missing.git",
+                    init.display()
+                ),
+            ])
+            .env("TRY_CONFIG_DIR", h.dir.path())
+            .env_remove("TRY_PATH")
+            .env(
+                "PATH",
+                format!("{}:{}", bin_dir.display(), std::env::var("PATH").unwrap()),
+            )
+            .output()
+            .unwrap();
+        assert!(!result.status.success(), "{shell} must preserve failures");
+        assert!(result.stdout.is_empty());
+    }
+}
+
+#[test]
+fn moving_and_renaming_worktrees_preserves_git_registration() {
+    let h = Harness::new(false);
+    let origin = create_git_origin(&h).unwrap();
+    let initial = h.dir.path().join("original");
+    command(
+        &origin,
+        "git",
+        &[
+            "worktree",
+            "add",
+            "-b",
+            "feature",
+            initial.to_str().unwrap(),
+        ],
+    )
+    .unwrap();
+    let renamed = h.dir.path().join("renamed");
+    let mut app = try_rs::tui::App::new(
+        h.dir.path().to_path_buf(),
+        try_rs::tui::Theme::default(),
+        None,
+        None,
+        None,
+        None,
+        true,
+        Some("original".into()),
+        vec![h.dir.path().to_path_buf()],
+        0,
+        false,
+    );
+    app.rename_input = "renamed".into();
+    app.rename_selected();
+    assert!(renamed.exists(), "{:?}", app.status_message);
+    let destination = h.dir.path().join("other-workspace");
+    fs::create_dir(&destination).unwrap();
+    let moved = destination.join("renamed");
+    try_rs::utils::move_workspace(&renamed, &moved).unwrap();
+    command(&moved, "git", &["status", "--porcelain"]).unwrap();
+    let listing = command(&origin, "git", &["worktree", "list", "--porcelain"]).unwrap();
+    let paths = listed_worktrees(&listing.stdout);
+    assert!(paths.contains(&moved.canonicalize().unwrap()));
+    assert_eq!(paths.len(), 2);
+    command(
+        &origin,
+        "git",
+        &["worktree", "lock", moved.to_str().unwrap()],
+    )
+    .unwrap();
+    assert!(try_rs::utils::move_workspace(&moved, &initial).is_err());
+    assert!(moved.exists());
+    command(
+        &origin,
+        "git",
+        &["worktree", "unlock", moved.to_str().unwrap()],
+    )
+    .unwrap();
+    let mut app = try_rs::tui::App::new(
+        destination.clone(),
+        try_rs::tui::Theme::default(),
+        None,
+        None,
+        None,
+        None,
+        true,
+        Some("renamed".into()),
+        vec![destination],
+        0,
+        false,
+    );
+    app.delete_selected();
+    assert!(!moved.exists(), "{:?}", app.status_message);
+}
+
+#[cfg(unix)]
+#[test]
+fn bash_wrapper_enters_created_worktree_and_preserves_failures() {
+    let h = Harness::new(false);
+    let origin = create_git_origin(&h).unwrap();
+    let bin_dir = h.dir.path().join("bin");
+    fs::create_dir(&bin_dir).unwrap();
+    std::os::unix::fs::symlink(env!("CARGO_BIN_EXE_try-rs"), bin_dir.join("try-rs")).unwrap();
+    let init = h.dir.path().join("init");
+    fs::write(&init, h.run_try(&["--setup-stdout", "bash"]).stdout).unwrap();
+    let result = Command::new("bash").args(["--noprofile", "--norc", "-c"])
+        .arg(format!("source '{}'; try-rs -w feature && pwd; try-rs /nonexistent/review-missing.git; exit $?", init.display()))
+        .current_dir(origin).env("TRY_CONFIG_DIR", h.dir.path()).env_remove("TRY_PATH")
+        .env("PATH", format!("{}:{}", bin_dir.display(), std::env::var("PATH").unwrap()))
+        .output().unwrap();
+    assert!(!result.status.success());
+    assert_eq!(
+        String::from_utf8_lossy(&result.stdout).trim(),
+        h.tries_path().join("feature").to_str().unwrap()
+    );
+}
+
+#[test]
+fn powershell_and_nushell_wrappers_navigate_and_report_failures() {
+    for (shell, setup) in [
+        ("pwsh", "power-shell"),
+        ("powershell", "power-shell"),
+        ("nu", "nu-shell"),
+    ] {
+        let available =
+            std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()).any(|directory| {
+                directory.join(shell).is_file()
+                    || cfg!(windows) && directory.join(format!("{shell}.exe")).is_file()
+            });
+        if !available {
+            continue;
+        }
+        let h = Harness::new(false);
+        let origin = create_git_origin(&h).unwrap();
+        let bin_dir = h.dir.path().join("bin");
+        fs::create_dir(&bin_dir).unwrap();
+        fs::copy(
+            env!("CARGO_BIN_EXE_try-rs"),
+            bin_dir.join(if cfg!(windows) {
+                "try-rs.exe"
+            } else {
+                "try-rs"
+            }),
+        )
+        .unwrap();
+        let init = h
+            .dir
+            .path()
+            .join(if shell != "nu" { "init.ps1" } else { "init.nu" });
+        fs::write(&init, h.run_try(&["--setup-stdout", setup]).stdout).unwrap();
+        let name = if cfg!(windows) {
+            "ação 实验 O'Brien; $(touch INJECTED) '# [test]"
+        } else {
+            "ação 实验 O'Brien; $(touch INJECTED) '# [test]\nnext"
+        };
+        let prefix = if shell != "nu" {
+            format!(". '{}'", init.display())
+        } else {
+            format!("source '{}'", init.display())
+        };
+        let run = |code: &str| {
+            let mut cmd = Command::new(shell);
+            #[cfg(windows)]
+            if shell == "powershell" {
+                use std::os::windows::process::CommandExt;
+                // Give legacy PowerShell its own console so code-page changes
+                // cannot affect other tests running in parallel.
+                cmd.creation_flags(0x00000010);
+            }
+            cmd.args(if shell != "nu" {
+                vec![
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                ]
+            } else {
+                vec!["--no-config-file", "-c"]
+            });
+            let encoding = if shell == "powershell" {
+                "[Console]::OutputEncoding = [Text.Encoding]::GetEncoding(437);"
+            } else {
+                ""
+            };
+            cmd.arg(format!("{prefix}; {encoding} {code}"))
+                .current_dir(&origin)
+                .env("TRY_TEST_NAME", name)
+                .env("TRY_CONFIG_DIR", h.dir.path())
+                .env_remove("TRY_PATH")
+                .env("XDG_DATA_HOME", h.dir.path().join("data"))
+                .env("XDG_CACHE_HOME", h.dir.path().join("cache"))
+                .env("XDG_CONFIG_HOME", h.dir.path().join("config"))
+                .env(
+                    "PATH",
+                    std::env::join_paths(std::iter::once(bin_dir.clone()).chain(
+                        std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()),
+                    ))
+                    .unwrap(),
+                );
+            cmd.output().unwrap()
+        };
+        let result = run(if shell != "nu" {
+            "try-rs --hide-disk $env:TRY_TEST_NAME; if ($PSVersionTable.PSVersion.Major -eq 5 -and [Console]::OutputEncoding.CodePage -ne 437) { throw 'Console encoding was not restored' }; [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); [Console]::Write((Get-Location).Path)"
+        } else {
+            "try-rs --hide-disk $env.TRY_TEST_NAME; print --no-newline $env.PWD"
+        });
+        assert!(
+            result.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout),
+            h.tries_path().join(name).to_str().unwrap(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(!origin.join("INJECTED").exists());
+        let result = run(if shell != "nu" {
+            "try-rs -w feature; [Console]::Write((Get-Location).Path)"
+        } else {
+            "try-rs -w feature; print --no-newline $env.PWD"
+        });
+        assert!(
+            result.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&result.stdout),
+            h.tries_path().join("feature").to_str().unwrap(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let result = run(if shell != "nu" {
+            "try-rs /nonexistent/review-missing.git; exit $LASTEXITCODE"
+        } else {
+            "try-rs /nonexistent/review-missing.git; exit $env.LAST_EXIT_CODE"
+        });
+        assert!(
+            !result.status.success(),
+            "{shell} must report clone failure"
+        );
+        assert!(
+            result.stdout.is_empty(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stdout)
+        );
+        let result = run("try-rs --help");
+        assert!(
+            result.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        assert!(String::from_utf8_lossy(&result.stdout).contains("Usage: try-rs"));
+    }
 }

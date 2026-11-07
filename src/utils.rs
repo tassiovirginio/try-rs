@@ -89,11 +89,35 @@ pub fn first_line(bytes: &[u8]) -> OsString {
     OsString::from(String::from_utf8_lossy(&vec).to_string())
 }
 
-/// Remove a git worktree by running `git worktree remove` inside it.
+/// Build a Git command without keeping the worktree directory open.
+/// Windows cannot move or remove a directory used as a process working directory.
+fn worktree_command(path: &Path) -> std::io::Result<Command> {
+    let source = path.canonicalize()?;
+    let dot_git = source.join(".git");
+    let git_dir = if dot_git.is_file() {
+        let administrative_path = parse_dot_git(&dot_git)?;
+        if administrative_path.is_absolute() {
+            administrative_path
+        } else {
+            source.join(administrative_path)
+        }
+    } else {
+        dot_git
+    };
+    let mut command = Command::new("git");
+    command
+        .arg("--git-dir")
+        .arg(git_dir)
+        .current_dir(source.parent().unwrap_or(&source));
+    Ok(command)
+}
+
+/// Remove a Git worktree without locking its directory on Windows.
 pub fn remove_git_worktree(path_to_remove: &Path) -> std::io::Result<std::process::Output> {
-    Command::new("git")
-        .args(["worktree", "remove", "."])
-        .current_dir(path_to_remove)
+    let source = path_to_remove.canonicalize()?;
+    worktree_command(&source)?
+        .args(["worktree", "remove"])
+        .arg(source)
         .output()
 }
 
@@ -126,7 +150,7 @@ pub fn is_git_url(s: &str) -> bool {
 /// the URL is empty or has no identifiable name.
 pub fn extract_repo_name(url: &str) -> String {
     let clean_url = url.trim_end_matches('/').trim_end_matches(".git");
-    if let Some(last_part) = clean_url.rsplit(['/', ':']).next()
+    if let Some(last_part) = clean_url.rsplit(['/', '\\', ':']).next()
         && !last_part.is_empty()
     {
         return last_part.to_string();
@@ -270,4 +294,32 @@ pub enum SelectionResult {
     New(String),
     /// Nothing was selected in the UI, quit
     None,
+}
+
+/// Move a workspace while keeping Git worktree administration consistent.
+pub fn move_workspace(source: &Path, destination: &Path) -> std::io::Result<()> {
+    if is_git_worktree(source) {
+        let source = source.canonicalize()?;
+        let destination = if destination.is_absolute() {
+            destination.to_path_buf()
+        } else {
+            std::env::current_dir()?.join(destination)
+        };
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        let output = worktree_command(&source)?
+            .args(["worktree", "move"])
+            .arg(&source)
+            .arg(&destination)
+            .output()?;
+        if !output.status.success() {
+            return Err(std::io::Error::other(
+                String::from_utf8_lossy(&output.stderr).into_owned(),
+            ));
+        }
+        Ok(())
+    } else {
+        fs::rename(source, destination)
+    }
 }

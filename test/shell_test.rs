@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-use tempdir::TempDir;
 use try_rs::cli::Shell;
 use try_rs::shell::*;
 

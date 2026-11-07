@@ -37,10 +37,48 @@ use crate::utils::{
 /// Prints the cd/editor command to stdout for the shell wrapper to eval.
 fn print_cd_or_editor(path: &std::path::Path, open_editor: bool, editor_cmd: &Option<String>) {
     if open_editor && let Some(cmd) = editor_cmd {
-        println!("{} '{}'", cmd, path.to_string_lossy());
+        println!("{} {}", cmd, shell_path(path));
+    } else if std::env::var("TRY_RS_SHELL").as_deref() == Ok("nu") {
+        println!("cd {}", path.display());
+    } else if std::env::var("TRY_RS_SHELL").as_deref() == Ok("powershell")
+        || cfg!(windows) && std::env::var("TRY_RS_SHELL").is_err()
+    {
+        println!("Set-Location -LiteralPath {}", shell_path(path));
     } else {
-        println!("cd '{}'", path.to_string_lossy());
+        println!("cd {}", shell_path(path));
     }
+}
+
+/// Quote a path as literal data for the shell consuming stdout.
+fn shell_path(path: &std::path::Path) -> String {
+    let shell = std::env::var("TRY_RS_SHELL").unwrap_or_else(|_| {
+        if cfg!(windows) {
+            "powershell".into()
+        } else {
+            std::env::var("SHELL").unwrap_or_default()
+        }
+    });
+    quote_shell_path(path, &shell)
+}
+
+fn quote_shell_path(path: &std::path::Path, shell: &str) -> String {
+    let path = path.to_string_lossy();
+    if shell.contains("nu") {
+        let mut hashes = "#".to_string();
+        while path.contains(&format!("'{hashes}")) {
+            hashes.push('#');
+        }
+        return format!("r{hashes}'{path}'{hashes}");
+    }
+    if shell.contains("powershell") || shell.contains("pwsh") {
+        return format!("'{}'", path.replace('\'', "''"));
+    }
+    let path = if shell.contains("fish") {
+        path.replace('\\', "\\\\")
+    } else {
+        path.into_owned()
+    };
+    format!("'{}'", path.replace('\'', "'\\''"))
 }
 
 #[cfg(not(windows))]
@@ -126,6 +164,22 @@ fn compute_inline_picker_area(
     ))
 }
 
+struct TerminalGuard {
+    alternate: bool,
+    active: bool,
+}
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        if self.active {
+            let _ = disable_raw_mode();
+            if self.alternate {
+                let _ = execute!(io::stderr(), LeaveAlternateScreen);
+            }
+            let _ = execute!(io::stderr(), crossterm::cursor::Show);
+        }
+    }
+}
+
 /// Handles the --worktree flag: creates a git worktree in the tries dir.
 fn handle_worktree(
     branch_name: &str,
@@ -149,7 +203,7 @@ fn handle_worktree(
 
     if new_path.exists() {
         eprintln!("Worktree at '{}' already exists.", folder_name);
-        println!("cd '{}'", new_path.to_string_lossy());
+        print_cd_or_editor(&new_path, false, &None);
         return Ok(());
     }
 
@@ -187,7 +241,7 @@ fn handle_worktree(
 
     match status {
         Ok(s) if s.success() => {
-            println!("cd '{}'", new_path.to_string_lossy());
+            print_cd_or_editor(&new_path, false, &None);
         }
         _ => {
             eprintln!("Error: Failed to create worktree.");
@@ -216,6 +270,10 @@ fn detect_and_setup_shell() -> Result<()> {
             None
         }
     };
+
+    if !io::stdin().is_terminal() {
+        return Ok(());
+    }
 
     if let Some(ref s) = shell_type {
         if !shell::is_shell_integration_configured(s) {
@@ -274,7 +332,8 @@ fn handle_clone(
 
     match status {
         Ok(s) if s.success() => print_cd_or_editor(&new_path, open_editor, editor_cmd),
-        _ => eprintln!("Error: Failed to clone the repository."),
+        Ok(status) => bail!("Failed to clone the repository (exit status: {status})"),
+        Err(err) => return Err(err.into()),
     }
 
     Ok(())
@@ -419,7 +478,10 @@ fn main() -> Result<()> {
                 .chain(cli.destination.as_deref())
                 .chain(cli.words.iter().map(String::as_str))
                 .collect();
-            (Some(apply_name_separator(&words.join(" "), &name_separator)), None)
+            (
+                Some(apply_name_separator(&words.join(" "), &name_separator)),
+                None,
+            )
         }
         None => (None, None),
     };
@@ -439,10 +501,7 @@ fn main() -> Result<()> {
                 all_matches.extend(matches);
             }
 
-            (
-                all_matches,
-                Some(folder_name.to_string()),
-            )
+            (all_matches, Some(folder_name.to_string()))
         }
         None => (Vec::<(PathBuf, String)>::new(), None),
     };
@@ -462,7 +521,7 @@ fn main() -> Result<()> {
         }
     } else {
         let has_multiple_tabs = tries_dirs.len() > 1;
-        
+
         if !has_multiple_tabs && matching_folders.len() > 1 {
             selection_result = matching_folders
                 .into_iter()
@@ -478,6 +537,10 @@ fn main() -> Result<()> {
             }
 
             enable_raw_mode()?;
+            let mut terminal_guard = TerminalGuard {
+                alternate: !cli.inline_picker,
+                active: true,
+            };
             let mut stderr = io::stderr();
             let mut inline_picker_area = None;
 
@@ -548,6 +611,7 @@ fn main() -> Result<()> {
                 execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
             }
             terminal.show_cursor()?;
+            terminal_guard.active = false;
 
             let (result_selection, result_editor, result_tab) = res?;
             selection_result = result_selection;
@@ -590,4 +654,138 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod regression_tests {
+    use super::*;
+
+    #[test]
+    fn quotes_powershell_and_nushell_paths() {
+        let path = std::path::Path::new("O'Brien; $x '# end");
+        assert_eq!(
+            quote_shell_path(path, "powershell"),
+            "'O''Brien; $x ''# end'"
+        );
+        assert_eq!(quote_shell_path(path, "nu"), "r##'O'Brien; $x '# end'##");
+    }
+
+    #[test]
+    fn installed_powershell_and_nushell_keep_editor_arguments_literal() {
+        let temporary = tempdir::TempDir::new("try-shell-literals").unwrap();
+        let value = "O'Brien; $(touch INJECTED) '# '## [test] \\ end\nnext";
+        for (program, shell) in [
+            ("pwsh", "powershell"),
+            ("powershell", "powershell"),
+            ("nu", "nu"),
+        ] {
+            let available = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
+                .any(|directory| {
+                    directory.join(program).is_file()
+                        || cfg!(windows) && directory.join(format!("{program}.exe")).is_file()
+                });
+            if !available {
+                continue;
+            }
+            let quoted = quote_shell_path(std::path::Path::new(value), shell);
+            let mut command = std::process::Command::new(program);
+            if shell == "powershell" {
+                command
+                    .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command"])
+                    .arg(format!("[Console]::Write({quoted})"));
+            } else {
+                command
+                    .args(["--no-config-file", "-c"])
+                    .arg(format!("print --no-newline {quoted}"));
+            }
+            let output = command
+                .current_dir(temporary.path())
+                .env("XDG_DATA_HOME", temporary.path().join("data"))
+                .env("XDG_CACHE_HOME", temporary.path().join("cache"))
+                .env("XDG_CONFIG_HOME", temporary.path().join("config"))
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{program}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert_eq!(
+                String::from_utf8(output.stdout).unwrap(),
+                value,
+                "{program}"
+            );
+            assert!(!temporary.path().join("INJECTED").exists());
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn terminal_guard_restores_real_terminal_after_error() {
+        use std::os::{
+            fd::{AsRawFd, FromRawFd},
+            unix::process::CommandExt,
+        };
+        if std::env::var_os("TRY_RS_TEST_PTY_CHILD").is_some() {
+            let flags = || unsafe {
+                let mut value = std::mem::zeroed();
+                assert_eq!(libc::tcgetattr(0, &mut value), 0);
+                let value: libc::termios = value;
+                (value.c_iflag, value.c_oflag, value.c_cflag, value.c_lflag)
+            };
+            let before = flags();
+            let fail = || -> Result<()> {
+                enable_raw_mode()?;
+                let _guard = TerminalGuard {
+                    alternate: true,
+                    active: true,
+                };
+                assert_ne!(before, flags());
+                bail!("simulated terminal initialization failure")
+            };
+            assert!(fail().is_err());
+            assert_eq!(before, flags());
+            return;
+        }
+        let mut master = -1;
+        let mut slave = -1;
+        unsafe {
+            assert_eq!(
+                libc::openpty(
+                    &mut master,
+                    &mut slave,
+                    std::ptr::null_mut(),
+                    std::ptr::null(),
+                    std::ptr::null()
+                ),
+                0
+            );
+        }
+        let _master = unsafe { fs::File::from_raw_fd(master) };
+        let slave = unsafe { fs::File::from_raw_fd(slave) };
+        let fd = slave.as_raw_fd();
+        let mut command = std::process::Command::new(std::env::current_exe().unwrap());
+        command
+            .args([
+                "--exact",
+                "regression_tests::terminal_guard_restores_real_terminal_after_error",
+            ])
+            .env("TRY_RS_TEST_PTY_CHILD", "1")
+            .stdin(slave.try_clone().unwrap())
+            .stderr(slave.try_clone().unwrap());
+        unsafe {
+            command.pre_exec(move || {
+                if libc::setsid() < 0 || libc::ioctl(fd, libc::TIOCSCTTY as _, 0) < 0 {
+                    return Err(io::Error::last_os_error());
+                }
+                Ok(())
+            });
+        }
+        let output = command.output().unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
+    }
 }

@@ -5,9 +5,9 @@
 #
 # If no version is provided, uses the version from Cargo.toml
 
-git pull
-
 set -e
+
+git pull --ff-only
 
 # Get version from argument or Cargo.toml
 if [ -n "$1" ]; then
@@ -32,6 +32,9 @@ sed -i "s/version = \".*\";.*# update when releasing/version = \"${VERSION}\";  
 echo "🔄 Updating Cargo.lock..."
 cargo update --workspace
 
+echo "🧪 Running tests before publishing..."
+cargo test --locked
+
 # Check for changes
 if git diff --quiet; then
     echo "ℹ️ No changes detected"
@@ -41,11 +44,15 @@ else
     git commit -m "chore: bump version to v${VERSION}"
 fi
 
+# Keep the release commit on the branch as well as the tag.
+echo "📤 Pushing release commit..."
+git push origin HEAD
+
 # Create tag
 echo "🏷️ Creating tag v${VERSION}..."
 git tag "v${VERSION}"
 
-# Push everything
+# Push the release tag
 echo "🚀 Pushing to repository..."
 git push origin v${VERSION}
 
@@ -55,4 +62,4 @@ echo "GitHub workflow will:"
 echo "  - Create the GitHub release"
 echo "  - Publish to crates.io"
 echo "  - Update the APT repository"
-echo "  - Generate new demo GIF"
+echo "  - Build Linux and Windows binaries"

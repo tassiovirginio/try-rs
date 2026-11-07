@@ -11,7 +11,7 @@ fn save_and_reload_config() {
     let theme = Theme::default();
     let tries_path = PathBuf::from("/tmp/tries");
 
-save_config(
+    save_config(
         &config_path,
         &theme,
         &[tries_path],

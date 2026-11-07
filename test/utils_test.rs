@@ -527,3 +527,9 @@ fn matching_folders_with_dash_separated_date() {
     assert_eq!(matches.len(), 1);
     assert_eq!(matches[0].1, "2024-01-15-aaa-bbb");
 }
+
+#[test]
+fn extract_repo_name_from_windows_local_path() {
+    assert_eq!(extract_repo_name(r"C:\Users\Docker\my-repo.git"), "my-repo");
+    assert_eq!(extract_repo_name(r"\\server\share\my-repo.git"), "my-repo");
+}

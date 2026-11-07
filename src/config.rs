@@ -121,7 +121,7 @@ pub fn load_configuration() -> AppConfig {
     let mut final_paths: Vec<PathBuf> = if let Some(path) = try_path {
         vec![path.into()]
     } else {
-        vec![default_path]
+        vec![default_path.clone()]
     };
     let mut editor_cmd = std::env::var("VISUAL")
         .ok()
@@ -140,7 +140,7 @@ pub fn load_configuration() -> AppConfig {
 
     if let Some(config) = load_file_config_toml_if_exists() {
         let paths_source = config.tries_paths.or(config.tries_path);
-        
+
         if let Some(paths_str) = paths_source
             && !try_path_specified
         {
@@ -168,6 +168,10 @@ pub fn load_configuration() -> AppConfig {
         show_legend = config.show_legend;
         show_right_panel = config.show_right_panel;
         right_panel_width = config.right_panel_width;
+    }
+
+    if final_paths.is_empty() {
+        final_paths.push(default_path);
     }
 
     AppConfig {
