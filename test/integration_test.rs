@@ -905,9 +905,13 @@ fn powershell_and_nushell_wrappers_navigate_and_report_failures() {
             "{shell}: {}",
             String::from_utf8_lossy(&result.stderr)
         );
+        // Windows may expose TEMP through an 8.3 alias while shells return
+        // its long name. Both must resolve to the same directory.
         assert_eq!(
-            String::from_utf8_lossy(&result.stdout),
-            h.tries_path().join(name).to_str().unwrap(),
+            Path::new(std::str::from_utf8(&result.stdout).unwrap())
+                .canonicalize()
+                .unwrap(),
+            h.tries_path().join(name).canonicalize().unwrap(),
             "{shell}: {}",
             String::from_utf8_lossy(&result.stderr)
         );
@@ -923,8 +927,10 @@ fn powershell_and_nushell_wrappers_navigate_and_report_failures() {
             String::from_utf8_lossy(&result.stderr)
         );
         assert_eq!(
-            String::from_utf8_lossy(&result.stdout),
-            h.tries_path().join("feature").to_str().unwrap(),
+            Path::new(std::str::from_utf8(&result.stdout).unwrap())
+                .canonicalize()
+                .unwrap(),
+            h.tries_path().join("feature").canonicalize().unwrap(),
             "{shell}: {}",
             String::from_utf8_lossy(&result.stderr)
         );
