@@ -26,7 +26,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: pacman -Sy --noconfirm git openssh pacman-contrib
+        # -Sy alone only refreshes the package DB and leaves the image in an
+        # unsupported partial-upgrade state; -Syu upgrades the system too.
+        run: pacman -Syu --noconfirm --needed git openssh pacman-contrib
 
       - name: Setup SSH
         run: |
