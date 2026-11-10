@@ -1,4 +1,5 @@
 use std::ffi::OsString;
+use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -187,13 +188,9 @@ pub fn get_free_disk_space_mb(_path: &Path) -> Option<u64> {
     None
 }
 
-/// Extract a `YYYY-MM-DD` date prefix from a directory name.
-///
-/// Returns the parsed `SystemTime` and the remainder of the name when the
-/// name starts with a valid date followed by a separator (space, `-`, `_` or
-/// `.`) and a non-empty name. Returns `None` otherwise.
-pub fn extract_prefix_date(name: &str) -> Option<(SystemTime, String)> {
-    let (naive_date, rest) = NaiveDate::parse_and_remainder(name, DATE_PREFIX_FORMAT).ok()?;
+/// Parse a date prefix using `fmt` and return the parsed date plus the name.
+fn extract_prefix_date_with_fmt(name: &str, fmt: &str) -> Option<(SystemTime, String)> {
+    let (naive_date, rest) = NaiveDate::parse_and_remainder(name, fmt).ok()?;
     let rhs = rest.strip_prefix(DATE_PREFIX_SEPARATORS)?;
     if rhs.is_empty() {
         return None;
@@ -203,14 +200,49 @@ pub fn extract_prefix_date(name: &str) -> Option<(SystemTime, String)> {
     Some((dt_local.into(), rhs.into()))
 }
 
+/// Extract a `YYYY-MM-DD` date prefix from a directory name.
+///
+/// Returns the parsed `SystemTime` and the remainder of the name when the
+/// name starts with a valid date followed by a separator (space, `-`, `_` or
+/// `.`) and a non-empty name. Returns `None` otherwise.
+pub fn extract_prefix_date(name: &str) -> Option<(SystemTime, String)> {
+    extract_prefix_date_with_fmt(name, DATE_PREFIX_FORMAT)
+}
+
+/// Extract a date prefix honouring the configured `date_prefix_format`.
+///
+/// The configured format is tried first, then the default `%Y-%m-%d`, so
+/// folders created before the format was changed are still recognised.
+/// A format that does not describe a parseable date (for example `%Y`) simply
+/// fails to parse and falls back to the default format.
+pub fn extract_prefix_date_with_format(
+    name: &str,
+    format: Option<&str>,
+) -> Option<(SystemTime, String)> {
+    if let Some(fmt) = format
+        && fmt != DATE_PREFIX_FORMAT
+        && let Some(result) = extract_prefix_date_with_fmt(name, fmt)
+    {
+        return Some(result);
+    }
+    extract_prefix_date(name)
+}
+
 /// Generate a date string suitable as a directory name prefix.
 ///
 /// Uses `%Y-%m-%d` by default. An optional custom format string can be
-/// provided via the `format` parameter.
+/// provided via the `format` parameter. An invalid format (for example `%Q`)
+/// falls back to the default instead of panicking: `chrono`'s `DelayedFormat`
+/// returns `fmt::Error` while being displayed, which `to_string()` would
+/// otherwise turn into a panic.
 pub fn generate_prefix_date(format: Option<&str>) -> String {
     let now = Local::now();
     let fmt = format.unwrap_or(DATE_PREFIX_FORMAT);
-    now.format(fmt).to_string()
+    let mut out = String::new();
+    if write!(out, "{}", now.format(fmt)).is_ok() && !out.is_empty() {
+        return out;
+    }
+    now.format(DATE_PREFIX_FORMAT).to_string()
 }
 
 /// Join the words of a folder name with the configured separator.
@@ -264,10 +296,25 @@ pub fn get_folder_size_mb(path: &Path) -> u64 {
 ///
 /// Returns a list of `(parent_path, folder_name)` tuples for every immediate
 /// subdirectory whose filename equals `name` or whose date-stripped display
-/// name equals `name`.
+/// name equals `name`. Recognises the default `%Y-%m-%d` date prefix.
+///
+/// This convenience wrapper is part of the library API used by the test suite.
+/// The binary crate re-declares `mod utils` and calls
+/// [`matching_folders_with_format`] instead, hence the `dead_code` allowance.
+#[allow(dead_code)]
 pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<(PathBuf, String)> {
+    matching_folders_with_format(name, path, None)
+}
+
+/// Like [`matching_folders`], but strips date prefixes using the configured
+/// `date_prefix_format`, so folders created with a custom format can be found.
+pub fn matching_folders_with_format(
+    name: &str,
+    path: &PathBuf,
+    date_prefix_format: Option<&str>,
+) -> Vec<(PathBuf, String)> {
     let mut result = vec![];
-    if let Ok(read_dir) = fs::read_dir(&path) {
+    if let Ok(read_dir) = fs::read_dir(path) {
         for entry in read_dir.flatten() {
             if let Ok(metadata) = entry.metadata()
                 && metadata.is_dir()
@@ -275,7 +322,8 @@ pub fn matching_folders(name: &str, path: &PathBuf) -> Vec<(PathBuf, String)> {
                 let filename = entry.file_name().to_string_lossy().to_string();
                 if filename == name {
                     result.push((path.clone(), filename));
-                } else if let Some((_, stripped_name)) = extract_prefix_date(&filename)
+                } else if let Some((_, stripped_name)) =
+                    extract_prefix_date_with_format(&filename, date_prefix_format)
                     && name == stripped_name
                 {
                     result.push((path.clone(), filename));

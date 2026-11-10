@@ -196,7 +196,9 @@ impl App {
 
                     let created;
                     let display_name;
-                    if let Some((date_prefix, remainder)) = utils::extract_prefix_date(&name) {
+                    if let Some((date_prefix, remainder)) =
+                        utils::extract_prefix_date_with_format(&name, date_prefix_format.as_deref())
+                    {
                         created = date_prefix;
                         display_name = remainder;
                     } else {
@@ -343,7 +345,10 @@ impl App {
 
                     let created;
                     let display_name;
-                    if let Some((date_prefix, remainder)) = utils::extract_prefix_date(&name) {
+                    if let Some((date_prefix, remainder)) = utils::extract_prefix_date_with_format(
+                        &name,
+                        self.date_prefix_format.as_deref(),
+                    ) {
                         created = date_prefix;
                         display_name = remainder;
                     } else {
@@ -510,12 +515,15 @@ impl App {
                 continue;
             }
             e.name = new_name.clone();
-            let display_name =
-                if let Some((_date, remainder)) = utils::extract_prefix_date(&new_name) {
-                    remainder
-                } else {
-                    new_name.clone()
-                };
+            let display_name = if let Some((_date, remainder)) =
+                utils::extract_prefix_date_with_format(
+                    &new_name,
+                    self.date_prefix_format.as_deref(),
+                ) {
+                remainder
+            } else {
+                new_name.clone()
+            };
             e.display_offset = new_name
                 .chars()
                 .count()

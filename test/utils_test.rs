@@ -533,3 +533,67 @@ fn extract_repo_name_from_windows_local_path() {
     assert_eq!(extract_repo_name(r"C:\Users\Docker\my-repo.git"), "my-repo");
     assert_eq!(extract_repo_name(r"\\server\share\my-repo.git"), "my-repo");
 }
+
+// ── Regressions: configurable date_prefix_format ───────────────────
+
+#[test]
+fn extract_prefix_date_with_custom_format() {
+    let (_, rest) =
+        extract_prefix_date_with_format("15-06-2024 my-project", Some("%d-%m-%Y")).unwrap();
+    assert_eq!(rest, "my-project");
+
+    let (_, rest) =
+        extract_prefix_date_with_format("15-06-2024-my-project", Some("%d-%m-%Y")).unwrap();
+    assert_eq!(rest, "my-project");
+}
+
+#[test]
+fn extract_prefix_date_with_format_falls_back_to_default() {
+    // Folders created before the format was changed must still be recognised.
+    let (_, rest) =
+        extract_prefix_date_with_format("2024-06-15 my-project", Some("%d-%m-%Y")).unwrap();
+    assert_eq!(rest, "my-project");
+
+    // The default-only helper keeps its original behaviour.
+    assert!(extract_prefix_date("15-06-2024 my-project").is_none());
+}
+
+#[test]
+fn generate_prefix_date_invalid_format_falls_back_to_default() {
+    // chrono returns fmt::Error for `%Q`; `to_string()` would panic.
+    let today = Local::now().format("%Y-%m-%d").to_string();
+    assert_eq!(generate_prefix_date(Some("%Q")), today);
+    assert_eq!(generate_prefix_date(Some("")), today);
+    assert_eq!(generate_prefix_date(Some("%Q")), generate_prefix_date(None));
+}
+
+#[test]
+fn generate_prefix_date_valid_custom_format() {
+    let expected = Local::now().format("%d-%m-%Y").to_string();
+    assert_eq!(generate_prefix_date(Some("%d-%m-%Y")), expected);
+}
+
+#[test]
+fn matching_folders_with_custom_date_format() {
+    let tmp = TempDir::new("match-custom-format").unwrap();
+    let base = tmp.path();
+    std::fs::create_dir(base.join("06-11-2026-demo")).unwrap();
+
+    // The default-only lookup cannot see it...
+    assert!(matching_folders("demo", &base.to_path_buf()).is_empty());
+    // ...but the configured format finds it.
+    let matches = matching_folders_with_format("demo", &base.to_path_buf(), Some("%d-%m-%Y"));
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].1, "06-11-2026-demo");
+}
+
+#[test]
+fn matching_folders_with_format_still_finds_default_dated_folders() {
+    let tmp = TempDir::new("match-mixed-formats").unwrap();
+    let base = tmp.path();
+    std::fs::create_dir(base.join("2024-01-15 demo")).unwrap();
+    std::fs::create_dir(base.join("06-11-2026 demo")).unwrap();
+
+    let matches = matching_folders_with_format("demo", &base.to_path_buf(), Some("%d-%m-%Y"));
+    assert_eq!(matches.len(), 2);
+}

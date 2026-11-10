@@ -350,9 +350,11 @@ fn handle_new_folder(
     editor_cmd: &Option<String>,
 ) -> Result<()> {
     let mut new_name = apply_name_separator(name, name_separator);
-    let date_prefix = generate_prefix_date(date_prefix_format);
-    if Some(true) == apply_date_prefix && !new_name.starts_with(&date_prefix) {
-        new_name = prefix_with_date(&new_name, date_prefix_format, name_separator);
+    if Some(true) == apply_date_prefix {
+        let date_prefix = generate_prefix_date(date_prefix_format);
+        if !new_name.starts_with(&date_prefix) {
+            new_name = prefix_with_date(&new_name, date_prefix_format, name_separator);
+        }
     }
 
     let new_path = tries_dir.join(&new_name);
@@ -497,7 +499,11 @@ fn main() -> Result<()> {
 
             let mut all_matches: Vec<(PathBuf, String)> = Vec::new();
             for dir in &tries_dirs {
-                let matches = utils::matching_folders(folder_name, dir);
+                let matches = utils::matching_folders_with_format(
+                    folder_name,
+                    dir,
+                    date_prefix_format.as_deref(),
+                );
                 all_matches.extend(matches);
             }
 

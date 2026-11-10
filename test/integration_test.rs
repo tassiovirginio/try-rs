@@ -957,3 +957,49 @@ fn powershell_and_nushell_wrappers_navigate_and_report_failures() {
         assert!(String::from_utf8_lossy(&result.stdout).contains("Usage: try-rs"));
     }
 }
+
+// ── Regressions: configurable date_prefix_format ───────────────────
+
+#[test]
+fn invalid_date_format_does_not_panic_when_prefix_disabled() {
+    let h = Harness::new(false);
+    fs::write(
+        h.dir.path().join("config.toml"),
+        format!(
+            "{}apply_date_prefix = false\ndate_prefix_format = \"%Q\"\n",
+            path_config(&h.tries_path())
+        ),
+    )
+    .expect("could not write config");
+
+    let p = h.run_try(&["brand-new"]);
+
+    assert!(p.status.success(), "stderr: {}", p.stderr);
+    assert!(!p.stderr.contains("panicked"), "stderr: {}", p.stderr);
+    assert!(h.tries_path().join("brand-new").exists());
+}
+
+#[test]
+fn custom_date_format_folder_is_reused_instead_of_recreated() {
+    let h = Harness::new(false);
+    fs::write(
+        h.dir.path().join("config.toml"),
+        format!(
+            "{}apply_date_prefix = true\ndate_prefix_format = \"%d-%m-%Y\"\n",
+            path_config(&h.tries_path())
+        ),
+    )
+    .expect("could not write config");
+
+    let existing = "06-11-2026-demo";
+    h.create_try_folder(existing);
+
+    let p = h.run_try(&["demo"]);
+
+    assert_eq!(cd_command(&h.tries_path().join(existing)), p.stdout.trim());
+    assert_eq!(
+        fs::read_dir(h.tries_path()).unwrap().count(),
+        1,
+        "no second folder should be created"
+    );
+}

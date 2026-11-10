@@ -798,3 +798,28 @@ fn app_hide_new_option_on_empty_query() {
 
     assert!(!app.show_new_option);
 }
+
+#[test]
+fn app_new_with_custom_date_prefix_format() {
+    let tmp = TempDir::new("app-custom-dated").unwrap();
+    std::fs::create_dir(tmp.path().join("06-11-2026-demo")).unwrap();
+
+    let app = App::new(
+        tmp.path().to_path_buf(),
+        Theme::default(),
+        None,
+        None,
+        None,
+        Some("%d-%m-%Y".to_string()),
+        false,
+        None,
+        vec![tmp.path().to_path_buf()],
+        0,
+        false,
+    );
+
+    assert_eq!(app.all_entries.len(), 1);
+    assert_eq!(app.all_entries[0].name, "06-11-2026-demo");
+    assert_eq!(app.all_entries[0].display_name, "demo");
+    assert_eq!(app.all_entries[0].display_offset, 11);
+}
