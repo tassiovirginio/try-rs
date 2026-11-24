@@ -68,6 +68,38 @@ fn extract_repo_name_fallback() {
 }
 
 #[test]
+fn parses_github_pull_request_url() {
+    assert_eq!(
+        parse_github_pull_request_url("https://github.com/owner/repo/pull/123"),
+        Some(("https://github.com/owner/repo.git".to_string(), 123))
+    );
+}
+
+#[test]
+fn parses_github_pull_request_url_with_suffix_and_query() {
+    assert_eq!(
+        parse_github_pull_request_url("https://www.github.com/owner/repo.git/pull/42/files?x=1"),
+        Some(("https://github.com/owner/repo.git".to_string(), 42))
+    );
+}
+
+#[test]
+fn parses_github_pull_request_url_rejects_non_pr_urls() {
+    assert_eq!(
+        parse_github_pull_request_url("https://github.com/owner/repo"),
+        None
+    );
+    assert_eq!(
+        parse_github_pull_request_url("https://example.com/owner/repo/pull/42"),
+        None
+    );
+    assert_eq!(
+        parse_github_pull_request_url("https://github.com/owner/repo/pull/0"),
+        None
+    );
+}
+
+#[test]
 fn extract_prefix_date_valid() {
     let result = extract_prefix_date("2024-06-15 my-project");
     assert!(result.is_some());

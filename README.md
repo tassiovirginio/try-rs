@@ -386,6 +386,7 @@ You can also bypass the UI:
 | `try-rs <word> <word> ...`                     | Multi-word name, joined with `name_separator` (e.g. `aaa-bbb-ccc`)  |
 | `try-rs <https://github.com/user/repo>`        | Clones a repository into a dated folder                             |
 | `try-rs <https://github.com/user/repo> <name>` | Clones a repository into a specific folder name (destination)       |
+| `try-rs <https://github.com/user/repo/pull/123>` | Clones the repository and checks out pull request #123             |
 | `try-rs -f <url>` / `try-rs --full-clone`     | Full clone (omit --depth 1) when cloning repositories               |
 | `try-rs -w <name>` / `try-rs --worktree`       | Create a git worktree from current repository (must be inside repo) |
 | `try-rs --setup <shell>`                       | Setup shell integration (fish, zsh, bash, nu-shell, power-shell)    |

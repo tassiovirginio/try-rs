@@ -159,6 +159,30 @@ pub fn extract_repo_name(url: &str) -> String {
     "cloned-repo".to_string()
 }
 
+/// Parse a GitHub pull request URL into the repository clone URL and PR number.
+///
+/// Accepts URLs such as `https://github.com/owner/repo/pull/123` (including
+/// trailing path segments, query strings, and an optional `.git` suffix).
+pub fn parse_github_pull_request_url(url: &str) -> Option<(String, u64)> {
+    let rest = url
+        .strip_prefix("https://github.com/")
+        .or_else(|| url.strip_prefix("http://github.com/"))
+        .or_else(|| url.strip_prefix("https://www.github.com/"))
+        .or_else(|| url.strip_prefix("http://www.github.com/"))?;
+    let path = rest.split(['?', '#']).next()?;
+    let mut parts = path.trim_end_matches('/').split('/');
+    let owner = parts.next()?;
+    let repo = parts.next()?.trim_end_matches(".git");
+    if parts.next()? != "pull" {
+        return None;
+    }
+    let number = parts.next()?.parse::<u64>().ok()?;
+    if number == 0 || owner.is_empty() || repo.is_empty() {
+        return None;
+    }
+    Some((format!("https://github.com/{owner}/{repo}.git"), number))
+}
+
 /// Get the free disk space on the filesystem containing `path`, in megabytes.
 ///
 /// Uses `statvfs` on Unix. Returns `None` when the path is invalid or when

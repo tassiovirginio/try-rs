@@ -5,7 +5,7 @@ use clap::{Parser, ValueEnum};
 #[command(about = format!("🦀 try-rs {} 🦀\nA blazing fast, Rust-based workspace manager for your temporary experiments.", env!("CARGO_PKG_VERSION")), long_about = None)]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 pub struct Cli {
-    /// Create or jump to an experiment / Clone a git URL. Starts TUI if omitted.
+    /// Create or jump to an experiment / Clone a git URL or GitHub pull request URL. Starts TUI if omitted.
     /// Multiple words (`try-rs my cool idea`) form a single name, joined with
     /// `name_separator` from the config (a space by default)
     #[arg(value_name = "NAME_OR_URL")]

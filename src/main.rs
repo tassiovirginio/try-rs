@@ -303,7 +303,12 @@ fn handle_clone(
     open_editor: bool,
     editor_cmd: &Option<String>,
 ) -> Result<()> {
-    let repo_name = utils::extract_repo_name(url);
+    let pull_request = utils::parse_github_pull_request_url(url);
+    let clone_url = pull_request
+        .as_ref()
+        .map(|(clone_url, _)| clone_url.as_str())
+        .unwrap_or(url);
+    let repo_name = utils::extract_repo_name(clone_url);
     let mut folder_name = destination
         .map(|d| apply_name_separator(&d, name_separator))
         .unwrap_or(repo_name);
@@ -322,7 +327,7 @@ fn handle_clone(
     }
 
     let status = cmd
-        .arg(url)
+        .arg(clone_url)
         .arg(&new_path)
         .arg("--recurse-submodules")
         .arg("--no-single-branch")
@@ -331,7 +336,31 @@ fn handle_clone(
         .status();
 
     match status {
-        Ok(s) if s.success() => print_cd_or_editor(&new_path, open_editor, editor_cmd),
+        Ok(s) if s.success() => {
+            if let Some((_, number)) = pull_request {
+                let fetch_ref = format!("pull/{number}/head");
+                let fetch_status = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&new_path)
+                    .arg("fetch")
+                    .arg("origin")
+                    .arg(&fetch_ref)
+                    .status()?;
+                if !fetch_status.success() {
+                    bail!("Failed to fetch GitHub pull request #{number}");
+                }
+
+                let checkout_status = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(&new_path)
+                    .args(["checkout", "--detach", "FETCH_HEAD"])
+                    .status()?;
+                if !checkout_status.success() {
+                    bail!("Failed to check out GitHub pull request #{number}");
+                }
+            }
+            print_cd_or_editor(&new_path, open_editor, editor_cmd)
+        }
         Ok(status) => bail!("Failed to clone the repository (exit status: {status})"),
         Err(err) => return Err(err.into()),
     }
@@ -761,8 +790,8 @@ mod regression_tests {
                     &mut master,
                     &mut slave,
                     std::ptr::null_mut(),
-                    std::ptr::null(),
-                    std::ptr::null()
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut()
                 ),
                 0
             );
