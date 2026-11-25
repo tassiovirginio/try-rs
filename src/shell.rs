@@ -30,7 +30,12 @@ const FISH_PICKER_FUNCTION: &str = r#"function try-rs-picker
 
     if status --is-interactive
         printf "\033[A"
-        commandline -f repaint
+        # oh-my-posh caches the prompt; plain repaint keeps the old path after cd.
+        if functions -q omp_repaint_prompt
+            omp_repaint_prompt
+        else
+            commandline -f repaint
+        end
     end
 end
 "#;
